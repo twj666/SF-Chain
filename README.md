@@ -2,7 +2,7 @@
 
 <div align="center">
   <img src="https://twj666.oss-cn-hangzhou.aliyuncs.com/QQ20250415-235841.png" alt="SF-Chain Logo" width="180" />
-  <h3>简化AI大模型调用的Java框架</h3>
+  <h3>AI大模型调度框架</h3>
   <p><em>一个框架连接所有AI大模型，让开发者专注于业务逻辑</em></p>
 </div>
 
