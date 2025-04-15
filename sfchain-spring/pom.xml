@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.sfchain</groupId>
+        <artifactId>sfchain-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>sfchain-spring</artifactId>
+    <name>SFChain Spring</name>
+    <description>Spring integration for SFChain framework</description>
+
+    <dependencies>
+        <!-- 内部依赖 -->
+        <dependency>
+            <groupId>com.sfchain</groupId>
+            <artifactId>sfchain-core</artifactId>
+        </dependency>
+
+        <!-- 添加对模型模块的依赖 -->
+        <dependency>
+            <groupId>com.sfchain</groupId>
+            <artifactId>sfchain-models-deepseek</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.sfchain</groupId>
+            <artifactId>sfchain-models-openai</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.sfchain</groupId>
+            <artifactId>sfchain-models-qwen</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- 添加对操作模块的依赖 -->
+        <dependency>
+            <groupId>com.sfchain</groupId>
+            <artifactId>sfchain-operations-common</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Spring依赖 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- 工具 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!-- 测试 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

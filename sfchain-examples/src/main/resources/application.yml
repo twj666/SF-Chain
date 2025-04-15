@@ -1,0 +1,39 @@
+# SFChain配置
+sfchain:
+  models:
+    # OpenAI配置
+    openai:
+      base-url: https://api.openai.com/v1
+      api-key: ${OPENAI_API_KEY:your-openai-api-key}
+      version: gpt-4o
+      temperature: 0.7
+      max-tokens: 4096
+
+    # DeepSeek配置
+    deepseek:
+      base-url: https://api.deepseek.com/v1/chat/completions
+      api-key: ${DEEPSEEK_API_KEY:your-deepseek-api-key}
+      version: deepseek-chat
+      temperature: 0.7
+      max-tokens: 4096
+
+    # 千问配置
+    qwen:
+      base-url: https://api.qwen.ai/v1
+      api-key: ${QWEN_API_KEY:your-qwen-api-key}
+      version: qwen-plus
+      system-prompt: "You are an expert in java back-end programming"
+
+
+    # SiliconFlow配置
+    siliconflow:
+      base-url: https://api.siliconflow.com/v1
+      api-key: ${SILICONFLOW_API_KEY:your-siliconflow-api-key}
+      temperature: 0.7
+      max-tokens: 4096
+
+# 日志配置
+logging:
+  level:
+    com.sfchain: debug
+    root: info
