@@ -23,14 +23,20 @@
 将SF-Chain添加到您的Maven项目中：
 
 ```xml
-<!-- 核心Starter，包含基础功能 -->
+<!-- 全功能包（一行依赖搞定所有） -->
+<dependency>
+    <groupId>com.sfchain</groupId>
+    <artifactId>sfchain-starter-all</artifactId>
+    <version>1.0.0</version>
+</dependency>
+
+<!-- 或按需引入 -->
 <dependency>
     <groupId>com.sfchain</groupId>
     <artifactId>sfchain-spring-boot-starter</artifactId>
     <version>1.0.0</version>
 </dependency>
 
-<!-- 按需添加模型实现 -->
 <dependency>
     <groupId>com.sfchain</groupId>
     <artifactId>sfchain-models-deepseek</artifactId>
