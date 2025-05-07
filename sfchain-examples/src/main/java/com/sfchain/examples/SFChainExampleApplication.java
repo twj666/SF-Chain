@@ -25,6 +25,12 @@ public class SFChainExampleApplication {
     @Value("${sfchain.default-model:deepseek-chat}")
     private String defaultModel;
 
+    @Value("${sfchain.app.name:SFChain Assistant}")
+    private String appName;
+
+    @Value("${sfchain.app.version:1.0.0}")
+    private String appVersion;
+
     public static void main(String[] args) {
         SpringApplication.run(SFChainExampleApplication.class, args);
     }
@@ -39,6 +45,11 @@ public class SFChainExampleApplication {
 
             // 当前使用的模型
             AtomicReference<String> currentModel = new AtomicReference<>(defaultModel);
+
+            // 当前系统提示词
+            AtomicReference<String> systemPrompt = new AtomicReference<>(
+                    "You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe."
+            );
 
             // 会话历史
             List<Map<String, String>> conversationHistory = new ArrayList<>();
@@ -77,6 +88,13 @@ public class SFChainExampleApplication {
                         System.err.println("Invalid temperature value. Please enter a number between 0.0 and 2.0");
                     }
                     continue;
+                } else if (input.startsWith("system ")) {
+                    String newSystemPrompt = input.substring(7).trim();
+                    setSystemPrompt(newSystemPrompt, systemPrompt);
+                    continue;
+                } else if (input.equalsIgnoreCase("info")) {
+                    printSessionInfo(currentModel.get(), availableModels, systemPrompt.get(), conversationHistory.size());
+                    continue;
                 }
 
                 // 记录用户输入
@@ -89,14 +107,17 @@ public class SFChainExampleApplication {
                     // 准备参数
                     Map<String, Object> params = new HashMap<>();
                     params.put("prompt", input);
+                    params.put("systemPrompt", systemPrompt.get());
+                    params.put("markdown", true);
 
-                    // 如果有会话历史，添加到参数中
-                    if (conversationHistory.size() > 1) {
-                        params.put("history", conversationHistory);
+                    // 添加会话历史
+                    if (!conversationHistory.isEmpty()) {
+                        params.put("history", new ArrayList<>(conversationHistory));
                     }
 
                     // 执行生成
                     long startTime = System.currentTimeMillis();
+                    System.out.println("\nThinking...");
                     String response = aiService.execute("text-generation", currentModel.get(), params);
                     long endTime = System.currentTimeMillis();
 
@@ -128,13 +149,25 @@ public class SFChainExampleApplication {
      * 打印欢迎信息
      */
     private void printWelcomeMessage() {
-        System.out.println("┌───────────────────────────────────────────────┐");
-        System.out.println("│             🤖 SFChain AI Assistant            │");
-        System.out.println("└───────────────────────────────────────────────┘");
-        System.out.println("Welcome! I'm your AI assistant powered by SFChain.");
-        System.out.println("Type 'help' to see available commands.");
+        String border = "┌" + "─".repeat(55) + "┐";
+        String emptyLine = "│" + " ".repeat(55) + "│";
+
+        System.out.println(border);
+        System.out.println("│" + centerText(" 🤖 " + appName + " v" + appVersion + " ", 55) + "│");
+        System.out.println(emptyLine);
+        System.out.println("│" + centerText("Welcome to your AI assistant powered by SFChain", 55) + "│");
+        System.out.println("│" + centerText("Type 'help' to see available commands", 55) + "│");
+        System.out.println("└" + "─".repeat(55) + "┘");
         System.out.println("Default model: " + defaultModel);
         System.out.println();
+    }
+
+    /**
+     * 居中文本
+     */
+    private String centerText(String text, int width) {
+        int padding = (width - text.length()) / 2;
+        return " ".repeat(padding) + text + " ".repeat(width - text.length() - padding);
     }
 
     /**
@@ -153,7 +186,9 @@ public class SFChainExampleApplication {
         System.out.println("  models  - List all available models");
         System.out.println("  use X   - Switch to model X (e.g., 'use gpt-4o')");
         System.out.println("  temp X  - Set temperature to X (e.g., 'temp 0.8')");
+        System.out.println("  system X- Set system prompt (e.g., 'system You are a helpful assistant')");
         System.out.println("  clear   - Clear conversation history");
+        System.out.println("  info    - Show current session information");
         System.out.println("  exit    - Exit the application");
         System.out.println();
     }
@@ -176,8 +211,13 @@ public class SFChainExampleApplication {
         // 按类型显示
         modelsByType.forEach((type, modelList) -> {
             System.out.println("\n  " + type + ":");
-            modelList.forEach(model ->
-                    System.out.printf("    %-20s - %s\n", model.getName(), model.description()));
+            modelList.forEach(model -> {
+                ModelParameters params = model.getParameters();
+                System.out.printf("    %-20s - %s (temp: %.1f)\n",
+                        model.getName(),
+                        model.description(),
+                        params.temperature());
+            });
         });
 
         System.out.println();
@@ -193,6 +233,8 @@ public class SFChainExampleApplication {
             return "DeepSeek Models";
         } else if (modelName.startsWith("qwen")) {
             return "Qwen Models";
+        } else if (modelName.startsWith("claude")) {
+            return "Anthropic Models";
         } else if (modelName.equals(AIConstant.TELE_AI)) {
             return "TeleAI Models";
         } else if (modelName.equals(AIConstant.THUDM)) {
@@ -237,6 +279,40 @@ public class SFChainExampleApplication {
     }
 
     /**
+     * 设置系统提示词
+     */
+    private void setSystemPrompt(String newPrompt, AtomicReference<String> systemPrompt) {
+        if (newPrompt == null || newPrompt.trim().isEmpty()) {
+            System.err.println("System prompt cannot be empty");
+            return;
+        }
+
+        systemPrompt.set(newPrompt);
+        System.out.println("System prompt updated.");
+    }
+
+    /**
+     * 打印会话信息
+     */
+    private void printSessionInfo(String modelName, Map<String, AIModel> models, String systemPrompt, int messageCount) {
+        AIModel model = models.get(modelName);
+        if (model == null) {
+            System.err.println("Model information not available");
+            return;
+        }
+
+        ModelParameters params = model.getParameters();
+
+        System.out.println("\n📊 Current Session Information:");
+        System.out.println("  Model: " + modelName);
+        System.out.println("  Description: " + model.description());
+        System.out.println("  Temperature: " + params.temperature());
+        System.out.println("  Messages in conversation: " + messageCount);
+        System.out.println("  System prompt: " + systemPrompt);
+        System.out.println();
+    }
+
+    /**
      * 清除会话历史
      */
     private void clearConversation(List<Map<String, String>> history) {
@@ -245,28 +321,60 @@ public class SFChainExampleApplication {
     }
 
     /**
-     * 格式化响应文本
+     * 格式化响应文本，支持Markdown格式
      */
     private String formatResponse(String response) {
         // 添加一些简单的格式化，例如代码块
         StringBuilder formatted = new StringBuilder();
         String[] lines = response.split("\n");
         boolean inCodeBlock = false;
+        String codeBlockType = "";
 
         for (String line : lines) {
             if (line.trim().startsWith("```")) {
+                // 提取代码块类型
+                if (!inCodeBlock && line.trim().length() > 3) {
+                    codeBlockType = line.trim().substring(3);
+                }
+
                 inCodeBlock = !inCodeBlock;
                 if (inCodeBlock) {
-                    formatted.append("\n┌─────────── Code ───────────┐\n");
+                    formatted.append("\n┌─────────── Code");
+                    if (!codeBlockType.isEmpty()) {
+                        formatted.append(" (").append(codeBlockType).append(")");
+                    }
+                    formatted.append(" ───────────┐\n");
                 } else {
                     formatted.append("\n└─────────────────────────────┘\n");
+                    codeBlockType = "";
                 }
+            } else if (line.trim().startsWith("#") && !inCodeBlock) {
+                // 处理Markdown标题
+                int level = 0;
+                while (level < line.length() && line.charAt(level) == '#') {
+                    level++;
+                }
+
+                String title = line.substring(level).trim();
+                String underline = level == 1 ? "=" : "-";
+
+                formatted.append("\n").append(title).append("\n");
+                formatted.append(underline.repeat(title.length())).append("\n");
+            } else if (line.trim().startsWith(">") && !inCodeBlock) {
+                // 处理Markdown引用
+                formatted.append("│ ").append(line.substring(1)).append("\n");
+            } else if (line.trim().startsWith("- ") && !inCodeBlock) {
+                // 处理Markdown列表
+                formatted.append("• ").append(line.substring(2)).append("\n");
+            } else if (line.trim().startsWith("* ") && !inCodeBlock) {
+                // 处理Markdown列表（星号）
+                formatted.append("• ").append(line.substring(2)).append("\n");
+            } else if (inCodeBlock) {
+                // 在代码块内
+                formatted.append("│ ").append(line).append("\n");
             } else {
-                if (inCodeBlock) {
-                    formatted.append("│ ").append(line).append("\n");
-                } else {
-                    formatted.append(line).append("\n");
-                }
+                // 普通文本
+                formatted.append(line).append("\n");
             }
         }
 
