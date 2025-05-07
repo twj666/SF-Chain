@@ -17,10 +17,8 @@ public interface AIConstant {
     String QWEN_PLUS = "qwen-plus";
     
     // SiliconFlow模型
-    String DEEP_SEEK_R1 = "deepseek-r1";
-    String DEEP_SEEK_V3 = "deepseek-v3";
-    String QW_72B_PREVIEW = "qwen-72b-preview";
-    String QW_72B_INSTRUCT = "qwen-72b-instruct";
-    String TELE_AI = "tele-ai";
-    String THUDM = "thudm";
+    String SILI_DEEP_SEEK_R1 = "Pro/deepseek-ai/DeepSeek-R1";
+    String SILI_DEEP_SEEK_V3 = "Pro/deepseek-ai/DeepSeek-V3";
+    String SILI_THUDM = "Pro/THUDM/glm-4-9b-chat";
+    String SILI_QWEN = "Qwen/Qwen2.5-32B-Instruct";
 }

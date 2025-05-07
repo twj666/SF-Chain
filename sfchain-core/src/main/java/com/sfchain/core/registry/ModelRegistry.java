@@ -34,6 +34,7 @@ public class ModelRegistry {
      */
     @Autowired
     public ModelRegistry(List<AIModel> modelList) {
+        System.out.println(modelList);
         modelList.forEach(model -> {
             String modelName = model.getName();
             models.put(modelName, model);

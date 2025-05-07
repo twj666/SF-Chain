@@ -15,10 +15,9 @@
     <description>Model implementations for SFChain framework</description>
 
     <modules>
-        <module>sfchain-models-openai</module>
+        <module>sfchain-models-flow</module>
         <module>sfchain-models-deepseek</module>
         <module>sfchain-models-qwen</module>
-        <module>sfchain-models-siliconflow</module>
     </modules>
 
     <dependencies>
