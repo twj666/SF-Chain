@@ -4,7 +4,7 @@ import com.sfchain.core.constant.AIConstant;
 import com.sfchain.core.model.AIModel;
 import com.sfchain.core.model.ModelParameters;
 import com.sfchain.core.registry.ModelRegistry;
-import com.sfchain.spring.service.AIService;
+import com.sfchain.core.AIService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

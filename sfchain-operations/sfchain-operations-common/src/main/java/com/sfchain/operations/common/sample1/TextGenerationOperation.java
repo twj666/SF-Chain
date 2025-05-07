@@ -1,4 +1,4 @@
-package com.sfchain.operations.common;
+package com.sfchain.operations.common.sample1;
 
 import com.sfchain.core.annotation.AIOp;
 import com.sfchain.core.exception.OperationException;
@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 描述: 增强版文本生成操作
- * 基于BaseAIOperation实现，利用AIPromptBuilder构建提示词
+ * 描述: 文本生成示例
  * @author suifeng
  * 日期: 2025/4/15
  */

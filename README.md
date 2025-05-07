@@ -72,7 +72,7 @@ sfchain:
 ### 3️⃣ 使用AIService
 
 ```java
-import com.sfchain.spring.service.AIService;
+import com.sfchain.core.AIService;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;

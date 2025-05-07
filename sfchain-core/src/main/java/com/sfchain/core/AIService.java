@@ -1,4 +1,4 @@
-package com.sfchain.spring.service;
+package com.sfchain.core;
 
 import com.sfchain.core.exception.OperationException;
 import com.sfchain.core.model.AIModel;
