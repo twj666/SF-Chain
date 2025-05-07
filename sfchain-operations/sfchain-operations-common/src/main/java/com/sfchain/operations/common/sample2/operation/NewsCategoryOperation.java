@@ -9,8 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
-import static com.sfchain.core.constant.AIConstant.QWEN_PLUS;
-import static com.sfchain.core.constant.AIConstant.GPT_4O;
+import static com.sfchain.core.constant.AIConstant.*;
 
 /**
  * 描述: 新闻分类操作
@@ -24,7 +23,7 @@ public class NewsCategoryOperation extends BaseAIOperation<Map<String, Object>, 
 
     @Override
     public List<String> supportedModels() {
-        return List.of(QWEN_PLUS, GPT_4O);
+        return List.of(SILI_QWEN, SILI_DEEP_SEEK_V3, SILI_THUDM);
     }
 
     @Override

@@ -10,8 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
-import static com.sfchain.core.constant.AIConstant.DEEP_SEEK_V3;
-import static com.sfchain.core.constant.AIConstant.GPT_4O;
+import static com.sfchain.core.constant.AIConstant.*;
 
 /**
  * 描述: 新闻摘要操作
@@ -25,7 +24,7 @@ public class NewsSummaryOperation extends BaseAIOperation<Map<String, Object>, N
 
     @Override
     public List<String> supportedModels() {
-        return List.of(DEEP_SEEK_V3, GPT_4O);
+        return List.of(SILI_QWEN, SILI_DEEP_SEEK_V3, SILI_THUDM);
     }
 
     @Override

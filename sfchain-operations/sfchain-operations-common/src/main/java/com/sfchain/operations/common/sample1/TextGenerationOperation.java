@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
+import static com.sfchain.core.constant.AIConstant.*;
+
 /**
  * 描述: 文本生成示例
  * @author suifeng
@@ -22,7 +24,7 @@ public class TextGenerationOperation extends BaseAIOperation<Map<String, Object>
 
     @Override
     public List<String> supportedModels() {
-        return List.of("deepseek-chat", "qwen-plus", "gpt-4o", "gpt-3.5-turbo", "claude-3-opus");
+        return List.of(SILI_QWEN, SILI_DEEP_SEEK_V3, SILI_THUDM);
     }
 
     @Override

@@ -5,12 +5,11 @@ import com.sfchain.core.annotation.AIOp;
 import com.sfchain.core.operation.BaseAIOperation;
 import com.sfchain.operations.common.sample2.domain.NewsSentimentVO;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Map;
 
-import static com.sfchain.core.constant.AIConstant.QWEN_PLUS;
-import static com.sfchain.core.constant.AIConstant.THUDM;
+import static com.sfchain.core.constant.AIConstant.*;
+
 
 /**
  * 描述: 新闻情感分析操作
@@ -24,7 +23,7 @@ public class NewsSentimentOperation extends BaseAIOperation<Map<String, Object>,
 
     @Override
     public List<String> supportedModels() {
-        return List.of(QWEN_PLUS, THUDM);
+        return List.of(SILI_QWEN, SILI_DEEP_SEEK_V3, SILI_THUDM);
     }
 
     @Override

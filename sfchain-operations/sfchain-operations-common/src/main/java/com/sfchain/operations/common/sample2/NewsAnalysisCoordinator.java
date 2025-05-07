@@ -66,7 +66,7 @@ public class NewsAnalysisCoordinator extends AIOperationCoordinator {
         // 摘要任务
         taskConfigs.put(SUMMARY_TASK, new TaskConfig<>(
                 SUMMARY_OPERATION,
-                DEEP_SEEK_V3,
+                SILI_DEEP_SEEK_V3,
                 p -> {
                     NewsSummaryVO fallback = new NewsSummaryVO();
                     fallback.setSummary("无法生成摘要");
@@ -80,7 +80,7 @@ public class NewsAnalysisCoordinator extends AIOperationCoordinator {
         // 情感分析任务
         taskConfigs.put(SENTIMENT_TASK, new TaskConfig<>(
                 SENTIMENT_OPERATION,
-                QWEN_PLUS,
+                SILI_DEEP_SEEK_V3,
                 p -> {
                     NewsSentimentVO fallback = new NewsSentimentVO();
                     fallback.setSentiment("中性");
@@ -93,7 +93,7 @@ public class NewsAnalysisCoordinator extends AIOperationCoordinator {
         // 关键词提取任务
         taskConfigs.put(KEYWORDS_TASK, new TaskConfig<>(
                 KEYWORDS_OPERATION,
-                THUDM,
+                SILI_THUDM,
                 p -> {
                     NewsKeywordsVO fallback = new NewsKeywordsVO();
                     fallback.setKeywords(new String[]{"无关键词"});
@@ -106,7 +106,7 @@ public class NewsAnalysisCoordinator extends AIOperationCoordinator {
         // 分类任务
         taskConfigs.put(CATEGORY_TASK, new TaskConfig<>(
                 CATEGORY_OPERATION,
-                GPT_4O,
+                SILI_QWEN,
                 p -> {
                     NewsCategoryVO fallback = new NewsCategoryVO();
                     fallback.setPrimaryCategory("未分类");

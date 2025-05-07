@@ -29,7 +29,7 @@
         </dependency>
         <dependency>
             <groupId>com.sfchain</groupId>
-            <artifactId>sfchain-models-openai</artifactId>
+            <artifactId>sfchain-models-flow</artifactId>
             <version>${project.version}</version>
             <optional>true</optional>
         </dependency>

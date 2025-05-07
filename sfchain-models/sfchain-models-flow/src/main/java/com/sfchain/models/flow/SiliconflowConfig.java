@@ -1,5 +1,4 @@
-package com.sfchain.models.siliconflow;
-
+package com.sfchain.models.flow;
 
 import com.sfchain.core.model.ModelConfig;
 import lombok.Data;

@@ -2,16 +2,13 @@ package com.sfchain.operations.common.sample2.operation;
 
 import com.alibaba.fastjson2.JSON;
 import com.sfchain.core.annotation.AIOp;
-
 import com.sfchain.core.operation.BaseAIOperation;
 import com.sfchain.operations.common.sample2.domain.NewsKeywordsVO;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Map;
 
-import static com.sfchain.core.constant.AIConstant.DEEP_SEEK_V3;
-import static com.sfchain.core.constant.AIConstant.THUDM;
+import static com.sfchain.core.constant.AIConstant.*;
 
 /**
  * 描述: 新闻关键词提取操作
@@ -25,7 +22,7 @@ public class NewsKeywordsOperation extends BaseAIOperation<Map<String, Object>, 
 
     @Override
     public List<String> supportedModels() {
-        return List.of(DEEP_SEEK_V3, THUDM);
+        return List.of(SILI_QWEN, SILI_DEEP_SEEK_V3, SILI_THUDM);
     }
 
     @Override
