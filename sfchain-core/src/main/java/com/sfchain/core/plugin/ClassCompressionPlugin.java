@@ -89,10 +89,6 @@ public class ClassCompressionPlugin {
         return name.startsWith("java.") || name.startsWith("javax.");
     }
 
-    public static void main(String[] args) {
-
-    }
-
     @Data
     @AllArgsConstructor
     class ClassParamsInfo implements Comparable<ClassParamsInfo> {
