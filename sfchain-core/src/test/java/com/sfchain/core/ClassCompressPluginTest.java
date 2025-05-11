@@ -17,7 +17,7 @@ public class ClassCompressPluginTest {
         ClassCompressionPlugin plugin = new ClassCompressionPlugin();
         Student student = new Student();
         System.out.println(JSON.toJSONString(student));
-        Object outputJsonObj = plugin.output(student);
+        Object outputJsonObj = plugin.compress(student);
         System.out.println(outputJsonObj);
         Student student1 = plugin.decompress(outputJsonObj.toString(), Student.class);
         System.out.println(student1);
