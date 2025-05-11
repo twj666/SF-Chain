@@ -2,6 +2,7 @@ package com.sfchain.core;
 
 
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.sfchain.core.plugin.ClassCompressionPlugin;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,7 +17,10 @@ public class ClassCompressPluginTest {
         ClassCompressionPlugin plugin = new ClassCompressionPlugin();
         Student student = new Student();
         System.out.println(JSON.toJSONString(student));
-        System.out.println(plugin.output(student));
+        Object outputJsonObj = plugin.output(student);
+        System.out.println(outputJsonObj);
+        Student student1 = plugin.decompress(outputJsonObj.toString(), Student.class);
+        System.out.println(student1);
     }
 
     @Test
