@@ -14,11 +14,23 @@ public class ClassCompressionPlugin {
 
     private final Map<Class<?>, List<ClassParamsInfo>> clazzParamsMapping = new HashMap<>();
 
-    public Object output(Object obj) {
+    /**
+     * 压缩类 为 压缩后的Json对象
+     * @param obj 对象类
+     * @return compress JsonObject
+     */
+    public Object compress(Object obj) {
         buildMapping(obj.getClass());
         return compressJsonObj(obj);
     }
 
+    /**
+     * 将Json对象解压为对应的类对象
+     * @param jsonStr json字符串
+     * @param clazz 被解压的类对象
+     * @return object
+     * @param <T>
+     */
     public <T> T decompress(String jsonStr, Class<T> clazz) {
         JSONObject jsonObject = JSONObject.parseObject(jsonStr);
         decompress0(jsonObject, clazz);
@@ -44,7 +56,6 @@ public class ClassCompressionPlugin {
                 ((JSONObject) jsonObj).remove(key);
             });
         }
-        return;
     }
 
     private void buildMapping(Class<?> clazz){
@@ -53,16 +64,22 @@ public class ClassCompressionPlugin {
         }
         List<ClassParamsInfo> paramsInfoList = new ArrayList<>();
         for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
-            String fieldName = field.getName();
             Class<? extends Field> fieldClass = field.getClass();
-            ClassParamsInfo classParamsInfo = new ClassParamsInfo(fieldName ,fieldClass, fieldName);
-            paramsInfoList.add(classParamsInfo);
+            paramsInfoList.add(buildClassParamsInfo(field));
             if(!isJdkClass(fieldClass)){
                 buildMapping(fieldClass);
             };
         }
         Collections.sort(paramsInfoList);
         clazzParamsMapping.put(clazz, paramsInfoList);
+    }
+
+    private ClassParamsInfo buildClassParamsInfo(Field field){
+        String fieldName = field.getName();
+        Class<? extends Field> fieldClass = field.getClass();
+        AICompress aiCompressAno = field.getAnnotation(AICompress.class);
+        String desc = aiCompressAno == null?"":aiCompressAno.description();
+        return new ClassParamsInfo(fieldName ,fieldClass, desc);
     }
 
     private Object compressJsonObj(Object obj) {
