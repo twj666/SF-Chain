@@ -44,6 +44,7 @@
         <module>sfchain-operations</module>
         <module>sfchain-examples</module>
         <module>sfchain-starter-all</module>
+        <module>sfchain-mosaic</module>
     </modules>
 
     <properties>
