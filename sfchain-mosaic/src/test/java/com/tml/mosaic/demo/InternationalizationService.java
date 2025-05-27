@@ -1,6 +1,8 @@
-package com.sfchain.mosaic.demo;
+package com.tml.mosaic.demo;
 
 import com.sfchain.mosaic.core.*;
+import com.tml.mosaic.core.CodeInjector;
+import com.tml.mosaic.core.MOutput;
 
 /**
  * 描述: 国际化业务服务 - 展示翻译插件的使用

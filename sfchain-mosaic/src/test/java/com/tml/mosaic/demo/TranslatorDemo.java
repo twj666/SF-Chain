@@ -1,10 +1,13 @@
-package com.sfchain.mosaic.demo;
+package com.tml.mosaic.demo;
 
 import com.sfchain.mosaic.core.*;
-import com.sfchain.mosaic.demo.cube.EnglishTranslatorCube;
-import com.sfchain.mosaic.demo.cube.FrenchTranslatorCube;
-import com.sfchain.mosaic.demo.cube.GermanTranslatorCube;
-import com.sfchain.mosaic.demo.cube.JapaneseTranslatorCube;
+import com.tml.mosaic.core.CodeInjector;
+import com.tml.mosaic.core.Cube;
+import com.tml.mosaic.core.CubeManager;
+import com.tml.mosaic.demo.cube.EnglishTranslatorCube;
+import com.tml.mosaic.demo.cube.FrenchTranslatorCube;
+import com.tml.mosaic.demo.cube.GermanTranslatorCube;
+import com.tml.mosaic.demo.cube.JapaneseTranslatorCube;
 
 /**
  * 描述: 翻译插件演示程序
