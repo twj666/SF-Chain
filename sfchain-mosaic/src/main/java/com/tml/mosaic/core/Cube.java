@@ -1,4 +1,4 @@
-package com.sfchain.mosaic.core;
+package com.tml.mosaic.core;
 
 /**
  * 描述: 插件的基础接口
