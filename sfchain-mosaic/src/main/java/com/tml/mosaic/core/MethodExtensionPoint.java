@@ -1,5 +1,7 @@
 package com.tml.mosaic.core;
 
+import com.tml.mosaic.core.guid.GUID;
+
 import java.lang.reflect.Method;
 
 /**
@@ -37,7 +39,7 @@ public class MethodExtensionPoint extends AbstractExtensionPoint {
         }
     }
 
-    public String getCubeId() {
+    public GUID getCubeId() {
         return cube.getCubeId();
     }
 

@@ -1,6 +1,6 @@
 package com.tml.mosaic.demo;
 
-import com.sfchain.mosaic.core.*;
+
 import com.tml.mosaic.core.CodeInjector;
 import com.tml.mosaic.core.Cube;
 import com.tml.mosaic.core.CubeManager;

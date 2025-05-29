@@ -1,5 +1,7 @@
 package com.tml.mosaic.core;
 
+import com.tml.mosaic.core.guid.GUID;
+
 /**
  * 描述: 插件的基础接口
  * @author suifeng
@@ -10,7 +12,7 @@ public interface Cube {
     /**
      * 获取Cube的唯一标识
      */
-    String getCubeId();
+    GUID getCubeId();
     
     /**
      * 获取Cube的版本
