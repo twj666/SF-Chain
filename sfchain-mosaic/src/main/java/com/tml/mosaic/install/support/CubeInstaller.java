@@ -22,17 +22,17 @@ public interface CubeInstaller {
     ResourceLoader getResourceLoader();
 
     /**
-     * 加载单个Cube资源
+     * 安装单个Cube资源
      */
-    void loadCube(Resource resource) throws CubeException;
+    void installCube(Resource resource) throws CubeException;
 
     /**
-     * 加载多个Cube资源
+     * 安装多个Cube资源
      */
-    void loadCube(Resource... resources) throws CubeException;
+    void installCube(Resource... resources) throws CubeException;
 
     /**
-     * 加载location位置的Cube资源
+     * 安装location位置下的Cube资源
      */
-    void loadBean(String location) throws CubeException;
+    void installCube(String location) throws CubeException;
 }
