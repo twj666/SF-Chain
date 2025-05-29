@@ -1,5 +1,8 @@
 package com.tml.mosaic.core;
 
+import com.tml.mosaic.core.guid.GUID;
+import com.tml.mosaic.install.support.CubeRegistry;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.List;
@@ -10,11 +13,11 @@ import java.util.Map;
  * @author suifeng
  * 日期: 2025/5/27
  */
-public class CubeManager {
+public class CubeManager implements CubeRegistry {
 
     private static final CubeManager INSTANCE = new CubeManager();
 
-    private final Map<String, Cube> cubes = new ConcurrentHashMap<>();
+    private final Map<GUID, Cube> cubes = new ConcurrentHashMap<>();
     private final Map<String, List<ExtensionPoint>> extensionPoints = new ConcurrentHashMap<>();
     private final Map<String, String> injectionPointMapping = new ConcurrentHashMap<>();
 
@@ -27,19 +30,24 @@ public class CubeManager {
     /**
      * 注册Cube
      */
+    @Override
     public void registerCube(Cube cube) {
+       registerCube(cube.getCubeId(), cube);
+    }
+
+    /**
+     * 注册方块 (指定id)
+     */
+    @Override
+    public void registerCube(GUID cubeId, Cube cube) {
         if (cube == null) {
             throw new IllegalArgumentException("方块不能为空");
         }
-
-        String cubeId = cube.getCubeId();
         if (cubes.containsKey(cubeId)) {
             throw new IllegalStateException("方块ID已存在: " + cubeId);
         }
-
         cubes.put(cubeId, cube);
         cube.initialize();
-
         scanAndRegisterExtensions(cube);
 
         System.out.println("方块注册成功: " + cubeId + " [" + cube.getDescription() + "]");
@@ -123,13 +131,6 @@ public class CubeManager {
                     ((MethodExtensionPoint) ep).getCubeId().equals(cubeId));
             return entry.getValue().isEmpty();
         });
-    }
-
-    /**
-     * 获取所有已注册的Cube
-     */
-    public Map<String, Cube> getAllCubes() {
-        return new ConcurrentHashMap<>(cubes);
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.tml.mosaic.core;
 
+import com.tml.mosaic.core.guid.GUID;
+import com.tml.mosaic.core.guid.GUUID;
 import lombok.Data;
 
 /**
@@ -10,12 +12,12 @@ import lombok.Data;
 @Data
 public abstract class AbstractCube implements Cube {
 
-    protected String cubeId;
+    protected GUID cubeId;
     protected String version;
     protected String description;
     protected boolean initialized = false;
 
-    public AbstractCube(String cubeId, String version, String description) {
+    public AbstractCube(GUID cubeId, String version, String description) {
         this.cubeId = cubeId;
         this.version = version;
         this.description = description;
