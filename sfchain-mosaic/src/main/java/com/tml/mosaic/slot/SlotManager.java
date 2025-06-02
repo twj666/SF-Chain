@@ -13,7 +13,7 @@ public interface SlotManager {
 
     void removeSlot(GUID slotId);
 
-    void setup(GUID slotId, SetupCubeInfo setupCubeInfo);
+    boolean setup(GUID slotId, SetupCubeInfo setupCubeInfo);
 
-    void unSetup(GUID slotId);
+    boolean unSetup(GUID slotId);
 }
