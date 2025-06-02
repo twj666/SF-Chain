@@ -1,7 +1,7 @@
 package com.tml.mosaic.demo.cube;
 
-import com.sfchain.mosaic.core.*;
 import com.tml.mosaic.core.*;
+import com.tml.mosaic.core.guid.GUUID;
 
 /**
  * 描述: 英语翻译方块
@@ -12,7 +12,7 @@ import com.tml.mosaic.core.*;
 public class EnglishTranslatorCube extends AbstractCube {
 
     public EnglishTranslatorCube() {
-        super("englishTranslatorCube", "1.0.0", "英语翻译工具");
+        super(new GUUID("englishTranslatorCube"), "1.0.0", "英语翻译工具");
     }
 
     @MExtension(value = "text.translate", name = "英语翻译", description = "将文本翻译为英语")
