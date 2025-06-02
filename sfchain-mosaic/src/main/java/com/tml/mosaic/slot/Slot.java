@@ -1,5 +1,6 @@
 package com.tml.mosaic.slot;
 
+import com.tml.mosaic.core.guid.DotNotationId;
 import com.tml.mosaic.core.guid.GUID;
 import com.tml.mosaic.core.infrastructure.CommonComponent;
 import lombok.Getter;
@@ -16,10 +17,19 @@ public abstract class Slot {
     protected final GUID slotId;
 
     protected Slot(String slotName) {
-        slotId = CommonComponent.GuidAllocator().nextGUID();
+        slotId = new DotNotationId(slotName);
     }
 
-    public abstract void Setup(SetupCubeInfo setupCubeInfo);
+    /**
+     * 安装方块信息
+     * @param setupCubeInfo
+     */
+    public abstract boolean Setup(SetupCubeInfo setupCubeInfo);
+
+    /**
+     * 取消方块安装
+     */
+    public abstract boolean UnSetup();
 
     @Override
     public boolean equals(Object o) {
@@ -34,5 +44,4 @@ public abstract class Slot {
     public int hashCode() {
         return slotId.hashCode();
     }
-
 }

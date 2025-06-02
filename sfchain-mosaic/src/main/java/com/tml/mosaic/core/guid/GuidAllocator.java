@@ -6,4 +6,5 @@ package com.tml.mosaic.core.guid;
 public interface GuidAllocator {
 
     GUID nextGUID();
+
 }

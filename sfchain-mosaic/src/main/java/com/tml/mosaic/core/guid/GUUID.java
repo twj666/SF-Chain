@@ -2,6 +2,9 @@ package com.tml.mosaic.core.guid;
 
 import java.util.Objects;
 
+/**
+ * 全局UUID
+ */
 public class GUUID implements GUID{
 
     private final String uuid;
@@ -27,4 +30,5 @@ public class GUUID implements GUID{
     public int hashCode() {
         return Objects.hashCode(uuid);
     }
+
 }
