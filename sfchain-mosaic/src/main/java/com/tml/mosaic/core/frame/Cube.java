@@ -1,6 +1,6 @@
-package com.tml.mosaic.core;
+package com.tml.mosaic.core.frame;
 
-import com.tml.mosaic.core.guid.GUID;
+import com.tml.mosaic.core.tools.guid.GUID;
 
 /**
  * 描述: 插件的基础接口

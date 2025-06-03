@@ -1,4 +1,4 @@
-package com.tml.mosaic.core;
+package com.tml.mosaic.core.frame;
 
 import java.util.List;
 
@@ -20,20 +20,20 @@ public class CodeInjector {
     /**
      * 核心执行方法 - 使用ExtensionInput
      */
-    private static MOutput executeInjectionPointInternal(String injectionPointId, MInput input) {
+    private static PointResult executeInjectionPointInternal(String injectionPointId, PointParam input) {
         CubeManager cubeManager = CubeManager.getInstance();
 
         try {
             String extensionId = cubeManager.getExtensionIdByInjectionPoint(injectionPointId);
             if (extensionId == null) {
                 System.out.println("注入点未绑定扩展点: " + injectionPointId);
-                return MOutput.failure("UNBOUND_INJECTION_POINT", "注入点未绑定扩展点");
+                return PointResult.failure("UNBOUND_INJECTION_POINT", "注入点未绑定扩展点");
             }
 
             List<ExtensionPoint> extensionPoints = cubeManager.getExtensionPoints(extensionId);
             if (extensionPoints.isEmpty()) {
                 System.out.println("扩展点不存在: " + extensionId);
-                return MOutput.failure("EXTENSION_NOT_FOUND", "扩展点不存在");
+                return PointResult.failure("EXTENSION_NOT_FOUND", "扩展点不存在");
             }
 
             ExtensionPoint extensionPoint = extensionPoints.get(0);
@@ -44,15 +44,15 @@ public class CodeInjector {
         } catch (Exception e) {
             String errorMsg = "注入点执行异常: " + injectionPointId + ", 错误: " + e.getMessage();
             System.err.println(errorMsg);
-            return MOutput.failure("INJECTION_EXECUTION_ERROR", errorMsg);
+            return PointResult.failure("INJECTION_EXECUTION_ERROR", errorMsg);
         }
     }
 
     /**
      * 主要调用方法 - 支持可变参数
      */
-    public static MOutput executeInjectionPoint(String injectionPointId, Object... params) {
-        MInput input = new MInput();
+    public static PointResult executeInjectionPoint(String injectionPointId, Object... params) {
+        PointParam input = new PointParam();
 
         // 自动封装参数
         if (params != null && params.length > 0) {

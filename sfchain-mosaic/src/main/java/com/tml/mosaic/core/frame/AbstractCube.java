@@ -1,7 +1,6 @@
-package com.tml.mosaic.core;
+package com.tml.mosaic.core.frame;
 
-import com.tml.mosaic.core.guid.GUID;
-import com.tml.mosaic.core.guid.GUUID;
+import com.tml.mosaic.core.tools.guid.GUID;
 import lombok.Data;
 
 /**
@@ -38,35 +37,35 @@ public abstract class AbstractCube implements Cube {
     /**
      * 创建输入参数
      */
-    protected MInput createInput() {
-        return new MInput();
+    protected PointParam createInput() {
+        return new PointParam();
     }
 
     /**
      * 创建成功输出
      */
-    protected MOutput createSuccessOutput() {
-        return MOutput.success();
+    protected PointResult createSuccessOutput() {
+        return PointResult.success();
     }
 
     /**
      * 创建成功输出，带值
      */
-    protected MOutput createSuccessOutput(Object value) {
-        return MOutput.success().setValue(value);
+    protected PointResult createSuccessOutput(Object value) {
+        return PointResult.success().setValue(value);
     }
 
     /**
      * 创建失败输出
      */
-    protected MOutput createFailureOutput(String message) {
-        return MOutput.failure(message);
+    protected PointResult createFailureOutput(String message) {
+        return PointResult.failure(message);
     }
 
     /**
      * 参数验证
      */
-    protected boolean validateRequired(MInput input, String... requiredKeys) {
+    protected boolean validateRequired(PointParam input, String... requiredKeys) {
         for (String key : requiredKeys) {
             if (!input.containsKey(key)) {
                 return false;
@@ -78,7 +77,7 @@ public abstract class AbstractCube implements Cube {
     /**
      * 安全获取整数参数
      */
-    protected Integer safeGetInteger(MInput input, String key, Integer defaultValue) {
+    protected Integer safeGetInteger(PointParam input, String key, Integer defaultValue) {
         Integer value = input.getInteger(key);
         return value != null ? value : defaultValue;
     }
@@ -86,7 +85,7 @@ public abstract class AbstractCube implements Cube {
     /**
      * 安全获取字符串参数
      */
-    protected String safeGetString(MInput input, String key, String defaultValue) {
+    protected String safeGetString(PointParam input, String key, String defaultValue) {
         String value = input.getString(key);
         return value != null ? value : defaultValue;
     }
@@ -94,7 +93,7 @@ public abstract class AbstractCube implements Cube {
     /**
      * 安全获取双精度参数
      */
-    protected Double safeGetDouble(MInput input, String key, Double defaultValue) {
+    protected Double safeGetDouble(PointParam input, String key, Double defaultValue) {
         Double value = input.getDouble(key);
         return value != null ? value : defaultValue;
     }

@@ -1,4 +1,4 @@
-package com.tml.mosaic.core;
+package com.tml.mosaic.core.frame;
 
 /**
  * 描述: 扩展点接口
@@ -27,5 +27,5 @@ public interface ExtensionPoint {
      * @param input 输入参数
      * @return 执行结果
      */
-    MOutput execute(MInput input);
+    PointResult execute(PointParam input);
 }

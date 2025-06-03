@@ -1,13 +1,11 @@
 package com.tml.mosaic.slot;
 
-import com.tml.mosaic.core.guid.GUID;
-import lombok.extern.slf4j.Slf4j;
+import com.tml.mosaic.core.tools.guid.GUID;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-@Slf4j
 public class GenericSlotManager implements SlotManager{
 
     private Map<GUID, Slot> slotMap = new HashMap<>();

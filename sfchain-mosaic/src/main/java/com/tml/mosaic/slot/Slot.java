@@ -1,8 +1,7 @@
 package com.tml.mosaic.slot;
 
-import com.tml.mosaic.core.guid.DotNotationId;
-import com.tml.mosaic.core.guid.GUID;
-import com.tml.mosaic.core.infrastructure.CommonComponent;
+import com.tml.mosaic.core.tools.guid.DotNotationId;
+import com.tml.mosaic.core.tools.guid.GUID;
 import lombok.Getter;
 
 import java.util.Objects;

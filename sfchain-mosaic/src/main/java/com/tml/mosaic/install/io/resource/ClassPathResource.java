@@ -37,4 +37,9 @@ public class ClassPathResource implements Resource {
         }
         return is;
     }
+
+    @Override
+    public String getPath() {
+        return path;
+    }
 }

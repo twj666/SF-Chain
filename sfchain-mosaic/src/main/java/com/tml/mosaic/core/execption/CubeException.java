@@ -1,4 +1,4 @@
-package com.tml.mosaic.core;
+package com.tml.mosaic.core.execption;
 
 /**
  * 描述: 方块异常

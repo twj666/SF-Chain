@@ -1,4 +1,4 @@
-package com.tml.mosaic.core.guid;
+package com.tml.mosaic.core.tools.guid;
 
 import lombok.Getter;
 
@@ -14,7 +14,7 @@ public class DotNotationId implements GUID{
     @Getter
     private final String dotNotationId;
 
-    private DotNotationId(String str) {
+    public DotNotationId(String str) {
         this.dotNotationId = str;
         this.notations = dotNotationId.split("\\.");
     }

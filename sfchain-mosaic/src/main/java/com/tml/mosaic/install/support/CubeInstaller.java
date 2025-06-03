@@ -1,6 +1,6 @@
 package com.tml.mosaic.install.support;
 
-import com.tml.mosaic.core.CubeException;
+import com.tml.mosaic.core.execption.CubeException;
 import com.tml.mosaic.install.io.resource.Resource;
 import com.tml.mosaic.install.io.loader.ResourceLoader;
 
@@ -20,6 +20,11 @@ public interface CubeInstaller {
      * 获取资源解析器
      */
     ResourceLoader getResourceLoader();
+
+    /**
+     * 获取安装器类型
+     */
+    String getInstallerType();
 
     /**
      * 安装单个Cube资源

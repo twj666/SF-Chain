@@ -1,4 +1,4 @@
-package com.tml.mosaic.core;
+package com.tml.mosaic.core.frame;
 
 import lombok.Data;
 

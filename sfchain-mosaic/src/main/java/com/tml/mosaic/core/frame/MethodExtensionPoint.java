@@ -1,6 +1,6 @@
-package com.tml.mosaic.core;
+package com.tml.mosaic.core.frame;
 
-import com.tml.mosaic.core.guid.GUID;
+import com.tml.mosaic.core.tools.guid.GUID;
 
 import java.lang.reflect.Method;
 
@@ -22,20 +22,20 @@ public class MethodExtensionPoint extends AbstractExtensionPoint {
     }
 
     @Override
-    public MOutput execute(MInput input) {
+    public PointResult execute(PointParam input) {
         try {
             Object result = method.invoke(cube, input);
 
-            if (result instanceof MOutput) {
-                return (MOutput) result;
+            if (result instanceof PointResult) {
+                return (PointResult) result;
             } else {
-                return MOutput.success().setValue(result);
+                return PointResult.success().setValue(result);
             }
         } catch (Exception e) {
             String errorMsg = String.format("扩展点执行失败: %s, 方法: %s, 错误: %s",
                     extensionId, method.getName(), e.getMessage());
             System.err.println(errorMsg);
-            return MOutput.failure("EXECUTION_ERROR", errorMsg);
+            return PointResult.failure("EXECUTION_ERROR", errorMsg);
         }
     }
 

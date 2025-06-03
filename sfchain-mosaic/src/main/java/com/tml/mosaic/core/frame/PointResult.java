@@ -1,4 +1,4 @@
-package com.tml.mosaic.core;
+package com.tml.mosaic.core.frame;
 
 import lombok.Data;
 
@@ -11,16 +11,16 @@ import java.util.Map;
  * 日期: 2025/5/27
  */
 @Data
-public class MOutput {
+public class PointResult {
     
     private final Map<String, Object> results = new HashMap<>();
     private boolean success = true;
     private String message = "执行成功";
     private String errorCode;
     
-    public MOutput() {}
+    public PointResult() {}
     
-    public MOutput(boolean success, String message) {
+    public PointResult(boolean success, String message) {
         this.success = success;
         this.message = message;
     }
@@ -28,29 +28,29 @@ public class MOutput {
     /**
      * 创建成功结果
      */
-    public static MOutput success() {
-        return new MOutput(true, "执行成功");
+    public static PointResult success() {
+        return new PointResult(true, "执行成功");
     }
     
     /**
      * 创建成功结果，带消息
      */
-    public static MOutput success(String message) {
-        return new MOutput(true, message);
+    public static PointResult success(String message) {
+        return new PointResult(true, message);
     }
     
     /**
      * 创建失败结果
      */
-    public static MOutput failure(String message) {
-        return new MOutput(false, message);
+    public static PointResult failure(String message) {
+        return new PointResult(false, message);
     }
     
     /**
      * 创建失败结果，带错误码
      */
-    public static MOutput failure(String errorCode, String message) {
-        MOutput output = new MOutput(false, message);
+    public static PointResult failure(String errorCode, String message) {
+        PointResult output = new PointResult(false, message);
         output.setErrorCode(errorCode);
         return output;
     }
@@ -58,7 +58,7 @@ public class MOutput {
     /**
      * 设置结果数据
      */
-    public MOutput setResult(String key, Object value) {
+    public PointResult setResult(String key, Object value) {
         results.put(key, value);
         return this;
     }
@@ -83,7 +83,7 @@ public class MOutput {
     /**
      * 设置主要返回值（便捷方法）
      */
-    public MOutput setValue(Object value) {
+    public PointResult setValue(Object value) {
         results.put("value", value);
         return this;
     }
@@ -106,17 +106,17 @@ public class MOutput {
     }
 
     
-    public MOutput setSuccess(boolean success) {
+    public PointResult setSuccess(boolean success) {
         this.success = success;
         return this;
     }
     
-    public MOutput setMessage(String message) {
+    public PointResult setMessage(String message) {
         this.message = message;
         return this;
     }
     
-    public MOutput setErrorCode(String errorCode) {
+    public PointResult setErrorCode(String errorCode) {
         this.errorCode = errorCode;
         return this;
     }
@@ -127,7 +127,7 @@ public class MOutput {
     
     @Override
     public String toString() {
-        return "MOutput{" +
+        return "PointResult{" +
                 "成功=" + success +
                 ", 消息='" + message + '\'' +
                 ", 错误码='" + errorCode + '\'' +
