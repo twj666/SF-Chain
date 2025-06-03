@@ -1,7 +1,7 @@
 package com.tml.mosaic.install.support;
 
-import com.tml.mosaic.core.Cube;
-import com.tml.mosaic.core.guid.GUID;
+import com.tml.mosaic.core.frame.Cube;
+import com.tml.mosaic.core.tools.guid.GUID;
 
 /**
  * 描述: 方块注册接口

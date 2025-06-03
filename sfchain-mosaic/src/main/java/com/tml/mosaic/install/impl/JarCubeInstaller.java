@@ -1,6 +1,7 @@
 package com.tml.mosaic.install.impl;
 
-import com.tml.mosaic.core.CubeException;
+import com.tml.mosaic.core.constant.InstallType;
+import com.tml.mosaic.core.execption.CubeException;
 import com.tml.mosaic.install.io.loader.ResourceLoader;
 import com.tml.mosaic.install.io.resource.Resource;
 import com.tml.mosaic.install.support.AbstractCubeInstaller;
@@ -22,6 +23,11 @@ public class JarCubeInstaller extends AbstractCubeInstaller {
 
     public JarCubeInstaller(CubeRegistry registry, ResourceLoader resourceLoader) {
         super(registry, resourceLoader);
+    }
+
+    @Override
+    public String getInstallerType() {
+        return InstallType.JAR_INSTALL;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.tml.mosaic.core;
+package com.tml.mosaic.core.frame;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,13 +8,13 @@ import java.util.Map;
  * @author suifeng
  * 日期: 2025/5/27
  */
-public class MInput {
+public class PointParam {
     
     private final Map<String, Object> parameters = new HashMap<>();
     
-    public MInput() {}
+    public PointParam() {}
     
-    public MInput(Map<String, Object> parameters) {
+    public PointParam(Map<String, Object> parameters) {
         if (parameters != null) {
             this.parameters.putAll(parameters);
         }
@@ -23,7 +23,7 @@ public class MInput {
     /**
      * 设置参数
      */
-    public MInput set(String key, Object value) {
+    public PointParam set(String key, Object value) {
         parameters.put(key, value);
         return this;
     }
@@ -123,6 +123,6 @@ public class MInput {
     
     @Override
     public String toString() {
-        return "MInput{参数=" + parameters + "}";
+        return "PointParam{参数=" + parameters + "}";
     }
 }

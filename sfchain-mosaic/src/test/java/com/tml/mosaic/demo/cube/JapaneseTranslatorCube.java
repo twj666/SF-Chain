@@ -1,7 +1,11 @@
 package com.tml.mosaic.demo.cube;
 
-import com.tml.mosaic.core.*;
-import com.tml.mosaic.core.guid.GUUID;
+import com.tml.mosaic.core.annotation.MCube;
+import com.tml.mosaic.core.annotation.MExtension;
+import com.tml.mosaic.core.frame.AbstractCube;
+import com.tml.mosaic.core.frame.PointParam;
+import com.tml.mosaic.core.frame.PointResult;
+import com.tml.mosaic.core.tools.guid.GUUID;
 
 /**
  * 描述: 日语翻译方块
@@ -16,7 +20,7 @@ public class JapaneseTranslatorCube extends AbstractCube {
     }
 
     @MExtension(value = "text.translate", name = "日语翻译", description = "将文本翻译为日语")
-    public MOutput translate(MInput input) {
+    public PointResult translate(PointParam input) {
         String originalText = safeGetString(input, "param0", "");
         
         // 模拟日语翻译逻辑

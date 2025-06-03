@@ -1,6 +1,6 @@
 package com.tml.mosaic.slot;
 
-import com.tml.mosaic.core.guid.GUID;
+import com.tml.mosaic.core.tools.guid.GUID;
 
 /**
  * 槽管理器，复杂对槽进行管理

@@ -1,7 +1,7 @@
 package com.tml.mosaic.demo;
 
-import com.tml.mosaic.core.CodeInjector;
-import com.tml.mosaic.core.MOutput;
+import com.tml.mosaic.core.frame.CodeInjector;
+import com.tml.mosaic.core.frame.PointResult;
 
 /**
  * 描述: 国际化业务服务 - 展示翻译插件的使用
@@ -17,7 +17,7 @@ public class InternationalizationService {
         System.out.println("原始消息: " + message);
 
         // 注入点: 文本翻译增强
-        MOutput translateResult = CodeInjector.executeInjectionPoint("business.message.translate", message);
+        PointResult translateResult = CodeInjector.executeInjectionPoint("business.message.translate", message);
         message = translateResult.getResult("translated_text");
 
         return message;

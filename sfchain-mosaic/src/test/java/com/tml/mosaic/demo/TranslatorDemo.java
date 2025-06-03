@@ -1,9 +1,9 @@
 package com.tml.mosaic.demo;
 
 
-import com.tml.mosaic.core.CodeInjector;
-import com.tml.mosaic.core.Cube;
-import com.tml.mosaic.core.CubeManager;
+import com.tml.mosaic.core.frame.CodeInjector;
+import com.tml.mosaic.core.frame.Cube;
+import com.tml.mosaic.core.frame.CubeManager;
 import com.tml.mosaic.demo.cube.EnglishTranslatorCube;
 import com.tml.mosaic.demo.cube.FrenchTranslatorCube;
 import com.tml.mosaic.demo.cube.GermanTranslatorCube;

@@ -1,4 +1,4 @@
-package com.tml.mosaic.core.guid;
+package com.tml.mosaic.core.tools.guid;
 
 /**
  * 唯一ID分配器

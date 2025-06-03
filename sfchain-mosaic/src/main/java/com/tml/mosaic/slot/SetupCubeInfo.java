@@ -1,7 +1,6 @@
 package com.tml.mosaic.slot;
 
-import com.tml.mosaic.core.Cube;
-import com.tml.mosaic.core.guid.GUID;
+import com.tml.mosaic.core.frame.Cube;
 import lombok.Getter;
 import lombok.Setter;
 
