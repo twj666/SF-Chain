@@ -4,10 +4,8 @@ package com.tml.mosaic.demo;
 import com.tml.mosaic.core.frame.CodeInjector;
 import com.tml.mosaic.core.frame.Cube;
 import com.tml.mosaic.core.frame.CubeManager;
-import com.tml.mosaic.demo.cube.EnglishTranslatorCube;
-import com.tml.mosaic.demo.cube.FrenchTranslatorCube;
-import com.tml.mosaic.demo.cube.GermanTranslatorCube;
-import com.tml.mosaic.demo.cube.JapaneseTranslatorCube;
+import com.tml.mosaic.core.tools.guid.GUID;
+import com.tml.mosaic.core.tools.guid.GUUID;
 
 /**
  * 描述: 翻译插件演示程序
@@ -32,10 +30,10 @@ public class TranslatorDemo {
         CubeManager cubeManager = CubeManager.getInstance();
 
         // 注册所有翻译插件
-        cubeManager.registerCube(new FrenchTranslatorCube());
-        cubeManager.registerCube(new JapaneseTranslatorCube());
-        cubeManager.registerCube(new EnglishTranslatorCube());
-        cubeManager.registerCube(new GermanTranslatorCube());
+//        cubeManager.registerCube(new FrenchTranslatorCube());
+//        cubeManager.registerCube(new JapaneseTranslatorCube());
+//        cubeManager.registerCube(new EnglishTranslatorCube());
+//        cubeManager.registerCube(new GermanTranslatorCube());
 
         // 显示所有扩展点
         cubeManager.printAllExtensions();
@@ -56,19 +54,19 @@ public class TranslatorDemo {
         // 快速切换不同的翻译器
         System.out.println("同一消息的不同翻译:");
 
-        switchToTranslator("frenchTranslatorCube");
+        switchToTranslator(new GUUID("frenchTranslatorCube"));
         String french = service.processUserMessage(testMessage);
         System.out.println("法语: " + french);
 
-        switchToTranslator("japaneseTranslatorCube");
+        switchToTranslator(new GUUID("japaneseTranslatorCube"));
         String japanese = service.processUserMessage(testMessage);
         System.out.println("日语: " + japanese);
 
-        switchToTranslator("germanTranslatorCube");
+        switchToTranslator(new GUUID("germanTranslatorCube"));
         String german = service.processUserMessage(testMessage);
         System.out.println("德语: " + german);
 
-        switchToTranslator("englishTranslatorCube");
+        switchToTranslator(new GUUID("englishTranslatorCube"));
         String english = service.processUserMessage(testMessage);
         System.out.println("英语: " + english);
     }
@@ -78,7 +76,7 @@ public class TranslatorDemo {
      * 辅助方法：切换到指定的翻译器
      * 这里通过重新注册来模拟切换，实际应用中应该有更优雅的机制
      */
-    private static void switchToTranslator(String translatorCubeId) {
+    public static void switchToTranslator(GUID translatorCubeId) {
         CubeManager cubeManager = CubeManager.getInstance();
 
         // 清除现有的扩展点映射

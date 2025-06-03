@@ -37,4 +37,8 @@ public class UrlResource implements Resource {
         }
     }
 
+    @Override
+    public String getPath() {
+        return url.getPath();
+    }
 }

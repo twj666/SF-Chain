@@ -69,7 +69,7 @@ public class CubeManager implements CubeRegistry {
     /**
      * 获取Cube
      */
-    public Cube getCube(String cubeId) {
+    public Cube getCube(GUID cubeId) {
         return cubes.get(cubeId);
     }
 
