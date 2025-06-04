@@ -31,4 +31,8 @@ public class GUUID implements GUID{
         return Objects.hashCode(uuid);
     }
 
+    @Override
+    public String toString() {
+       return uuid;
+    }
 }

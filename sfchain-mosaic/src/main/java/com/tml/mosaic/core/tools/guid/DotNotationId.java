@@ -33,5 +33,8 @@ public class DotNotationId implements GUID{
         return Objects.hashCode(dotNotationId);
     }
 
-
+    @Override
+    public String toString() {
+        return dotNotationId;
+    }
 }

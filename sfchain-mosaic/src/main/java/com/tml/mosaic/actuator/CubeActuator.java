@@ -1,5 +1,6 @@
 package com.tml.mosaic.actuator;
 
+import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.slot.Slot;
 
 /**

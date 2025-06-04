@@ -2,45 +2,65 @@ package com.tml.mosaic.slot;
 
 import com.tml.mosaic.core.tools.guid.DotNotationId;
 import com.tml.mosaic.core.tools.guid.GUID;
+import com.tml.mosaic.core.tools.guid.UniqueEntity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * 放置Cube的槽，用于引入Cube插件来进行部署和使用
  */
-public abstract class Slot {
+public class Slot extends UniqueEntity {
 
-    // 槽唯一 id
     @Getter
-    protected final GUID slotId;
+    private SetupCubeInfo setupCubeInfo;
 
-    protected Slot(String slotName) {
-        slotId = new DotNotationId(slotName);
+    public Slot(String slotName) {
+        super(new DotNotationId(slotName));
     }
 
-    /**
-     * 安装方块信息
-     * @param setupCubeInfo
-     */
-    public abstract boolean Setup(SetupCubeInfo setupCubeInfo);
+    public Slot(DotNotationId id) {
+        super(id);
+    }
 
-    /**
-     * 取消方块安装
-     */
-    public abstract boolean UnSetup();
-
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof Slot){
-            Slot slot = (Slot) o;
-            return Objects.equals(slot.getSlotId(), this.slotId);
+    public boolean Setup(SetupCubeInfo setupCubeInfo) {
+        if(SetupCubeInfo.reliabilityVerify(setupCubeInfo)){
+            this.setupCubeInfo = setupCubeInfo;
+            return true;
         }
         return false;
     }
 
-    @Override
-    public int hashCode() {
-        return slotId.hashCode();
+    public boolean UnSetup() {
+        this.setupCubeInfo = null;
+        return true;
     }
+
+    /**
+     * 安装的Cube信息
+     */
+    @NoArgsConstructor
+    public static class SetupCubeInfo {
+
+        @Getter
+        @Setter
+        // 方块唯一Id
+        private GUID cubeId;
+
+        // 调用的方法名称
+        @Getter
+        @Setter
+        private String methodName;
+
+        /**
+         * 可靠性校验，校验SetupCubeInfo是否可用
+         */
+        public static boolean reliabilityVerify(SetupCubeInfo setupCubeInfo){
+            return Objects.nonNull(setupCubeInfo) && Stream.of(setupCubeInfo.getCubeId()).allMatch(Objects::nonNull);
+        }
+    }
+
 }
