@@ -8,5 +8,5 @@ import com.tml.mosaic.slot.Slot;
  */
 public interface CubeActuator {
     // TODO execute方法改写
-    Object execute(Slot slot);
+    Object execute(Slot slot, Object...args);
 }

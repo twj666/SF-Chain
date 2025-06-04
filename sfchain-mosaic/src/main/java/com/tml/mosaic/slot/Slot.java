@@ -53,7 +53,7 @@ public class Slot extends UniqueEntity {
         // 调用的方法名称
         @Getter
         @Setter
-        private String methodName;
+        private GUID methodId;
 
         /**
          * 可靠性校验，校验SetupCubeInfo是否可用

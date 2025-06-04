@@ -3,8 +3,6 @@ package com.tml.mosaic.slot.support;
 import com.tml.mosaic.core.tools.guid.DotNotationId;
 import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.slot.Slot;
-import com.tml.mosaic.slot.infrastructure.GenericSlotManager;
-import com.tml.mosaic.slot.infrastructure.SlotComponent;
 import com.tml.mosaic.slot.infrastructure.SlotManager;
 
 import java.util.Objects;
@@ -42,8 +40,8 @@ public class SlotBuilder {
             return this;
         }
 
-        public BuilderContext methodName(String methodName) {
-            this.setupCubeInfo.setMethodName(methodName);
+        public BuilderContext methodName(String methodId) {
+            this.setupCubeInfo.setMethodId(new DotNotationId(methodId));
             return this;
         }
 
