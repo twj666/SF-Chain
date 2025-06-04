@@ -15,8 +15,6 @@ import java.util.Optional;
  */
 public class SlotBuilder {
 
-    public static SlotManager manager = new GenericSlotManager();
-
     public static BuilderContext builder(SlotManager manager) {
         return new BuilderContext(manager);
     }
