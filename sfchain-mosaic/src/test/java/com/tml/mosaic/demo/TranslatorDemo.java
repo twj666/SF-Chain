@@ -33,7 +33,7 @@ public class TranslatorDemo {
         // cubeManager.registerCube(new EnglishTranslatorCube());
         // cubeManager.registerCube(new GermanTranslatorCube());
 
-        cubeManager.printAllCubesAndExtensions();
+        cubeManager.printSystemOverview();
     }
 
     private static void demonstrateDynamicSwitching() {

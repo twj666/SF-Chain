@@ -6,6 +6,7 @@ import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.core.tools.guid.UniqueEntity;
 import lombok.Data;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * 方块抽象基类 - 所有插件必须继承此类
  */
+@Slf4j
 public abstract class Cube extends UniqueEntity {
 
     @Getter
@@ -32,12 +34,11 @@ public abstract class Cube extends UniqueEntity {
         this(CommonComponent.GuidAllocator().nextGUID());
     }
 
-    // 生命周期方法
     public void initialize() {
         if (!initialized) {
             doInitialize();
             initialized = true;
-            System.out.println("方块初始化完成: " + getId() + " [" + metaData.getDescription() + "]");
+            log.info("✓ 方块初始化 | ID: {} | 名称: {}", getId(), metaData.getName());
         }
     }
 
@@ -45,62 +46,48 @@ public abstract class Cube extends UniqueEntity {
         if (initialized) {
             doDestroy();
             initialized = false;
-            System.out.println("方块销毁完成: " + getId());
+            log.info("✓ 方块销毁 | ID: {} | 名称: {}", getId(), metaData.getName());
         }
     }
 
-    // 子类可覆盖的初始化和销毁方法
     protected void doInitialize() {}
     protected void doDestroy() {}
 
-    /**
-     * 初始化元数据，子类可覆盖
-     */
     protected void initializeMetaData() {
         metaData.setName(this.getClass().getSimpleName());
         metaData.setDescription("默认Cube描述");
         metaData.setVersion("1.0.0");
     }
 
-    /**
-     * 核心方法：执行扩展点
-     * 注入点通过此方法委托给具体的扩展点执行
-     */
     public PointResult executeExtensionPoint(String injectionPointId, PointParam input) {
         try {
-            // 查找最匹配的扩展点
             ExtensionPoint extensionPoint = findBestMatchExtensionPoint(injectionPointId);
 
             if (extensionPoint == null) {
-                String errorMsg = "Cube[" + getCubeId() + "]中未找到匹配的扩展点，注入点: " + injectionPointId;
-                System.out.println(errorMsg);
-                return PointResult.failure("EXTENSION_NOT_FOUND", errorMsg);
+                log.debug("✗ 扩展点未找到 | Cube[{}] | 注入点: {}", getCubeId(), injectionPointId);
+                return PointResult.failure("EXTENSION_NOT_FOUND", "未找到匹配的扩展点");
             }
 
-            System.out.println("  执行扩展点: " + extensionPoint.getExtensionId() + " [" + extensionPoint.getExtensionName() + "]");
+            log.debug("  → 执行扩展点 | {} [{}] | 优先级: {}",
+                    extensionPoint.getExtensionId(), extensionPoint.getExtensionName(), extensionPoint.getPriority());
+
             return extensionPoint.execute(input);
 
         } catch (Exception e) {
-            String errorMsg = "Cube[" + getCubeId() + "]执行扩展点异常，注入点: " + injectionPointId + ", 错误: " + e.getMessage();
-            System.err.println(errorMsg);
-            return PointResult.failure("CUBE_EXECUTION_ERROR", errorMsg);
+            log.error("✗ 扩展点执行异常 | Cube[{}] | 注入点: {} | 异常: {}",
+                    getCubeId(), injectionPointId, e.getMessage(), e);
+            return PointResult.failure("CUBE_EXECUTION_ERROR", "Cube执行异常: " + e.getMessage());
         }
     }
 
-    /**
-     * 查找最佳匹配的扩展点
-     */
     protected ExtensionPoint findBestMatchExtensionPoint(String injectionPointId) {
-        // 默认实现：直接通过扩展点ID查找
         ExtensionPoint directMatch = metaData.findExtensionPoint(new DotNotationId(injectionPointId));
         if (directMatch != null) {
             return directMatch;
         }
 
-        // 如果直接匹配失败，尝试模糊匹配或返回第一个可用的扩展点
         List<ExtensionPoint> availablePoints = metaData.getExtensionPoints();
         if (!availablePoints.isEmpty()) {
-            // 按优先级排序，返回优先级最高的
             return availablePoints.stream()
                     .min((ep1, ep2) -> Integer.compare(ep1.getPriority(), ep2.getPriority()))
                     .orElse(null);
@@ -109,14 +96,10 @@ public abstract class Cube extends UniqueEntity {
         return null;
     }
 
-    /**
-     * 检查是否包含指定的扩展点
-     */
     public boolean hasExtensionPoint(String extensionId) {
         return metaData.findExtensionPoint(new DotNotationId(extensionId)) != null;
     }
 
-    // 获取Cube ID的便捷方法
     public GUID getCubeId() {
         return getId();
     }

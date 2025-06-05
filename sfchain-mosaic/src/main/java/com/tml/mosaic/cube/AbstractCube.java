@@ -2,21 +2,33 @@ package com.tml.mosaic.cube;
 
 import com.tml.mosaic.core.tools.guid.GUID;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 描述: AbstractCube抽象类
  * @author suifeng
  * 日期: 2025/5/27
  */
+@Slf4j
 @Data
 public abstract class AbstractCube extends Cube {
 
     public AbstractCube(GUID cubeId, String version, String description) {
         super(cubeId);
-        // 初始化MetaData
         getMetaData().setName(this.getClass().getSimpleName());
         getMetaData().setVersion(version);
         getMetaData().setDescription(description);
+    }
+
+    @Override
+    protected void doInitialize() {
+        log.debug("→ 初始化AbstractCube | 名称: {} | 版本: {}",
+                getMetaData().getName(), getMetaData().getVersion());
+    }
+
+    @Override
+    protected void doDestroy() {
+        log.debug("→ 销毁AbstractCube | 名称: {}", getMetaData().getName());
     }
 
     // 参数工具方法
@@ -39,13 +51,13 @@ public abstract class AbstractCube extends Cube {
     protected boolean validateRequired(PointParam input, String... requiredKeys) {
         for (String key : requiredKeys) {
             if (!input.containsKey(key) || input.get(key) == null) {
+                log.warn("⚠ 参数验证失败 | 缺少必需参数: {}", key);
                 return false;
             }
         }
         return true;
     }
 
-    // 安全获取参数的方法保持不变
     protected Integer safeGetInteger(PointParam input, String key, Integer defaultValue) {
         Integer value = input.getInteger(key);
         return value != null ? value : defaultValue;

@@ -4,6 +4,7 @@ import com.tml.mosaic.core.annotation.MExtension;
 import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.install.support.CubeRegistry;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,15 +15,13 @@ import java.util.Map;
  * @author suifeng
  * 日期: 2025/5/27
  */
+@Slf4j
 @Getter
 public class CubeManager implements CubeRegistry {
 
     private static final CubeManager INSTANCE = new CubeManager();
 
-    // Cube容器
     private final Map<GUID, Cube> cubes = new ConcurrentHashMap<>();
-
-    // 注入点到Cube的映射关系
     private final Map<String, GUID> injectionPointToCubeMapping = new ConcurrentHashMap<>();
 
     private CubeManager() {}
@@ -42,55 +41,47 @@ public class CubeManager implements CubeRegistry {
 
         cubes.put(cubeId, cube);
         cube.initialize();
-        scanAndBuildCubeExtensions(cube);
+        int extensionCount = scanAndBuildCubeExtensions(cube);
 
-        System.out.println("方块注册成功: " + cubeId + " [" + cube.getMetaData().getDescription() + "]");
+        log.info("✓ 方块注册成功 | ID: {} | 名称: {} | 扩展点: {}个",
+                cubeId, cube.getMetaData().getName(), extensionCount);
     }
 
     public void unregisterCube(GUID cubeId) {
         Cube cube = cubes.remove(cubeId);
         if (cube != null) {
-            // 清理注入点映射
-            removeInjectionPointsByCube(cubeId);
-            // 销毁Cube
+            int removedMappings = removeInjectionPointsByCube(cubeId);
             cube.destroy();
-            System.out.println("方块卸载成功: " + cubeId);
+            log.info("✓ 方块卸载成功 | ID: {} | 清理注入点: {}个", cubeId, removedMappings);
+        } else {
+            log.warn("⚠ 方块卸载失败 | ID: {} | 原因: 方块不存在", cubeId);
         }
     }
 
-    /**
-     * 绑定注入点到指定Cube
-     */
     public void bindInjectionPointToCube(String injectionPointId, GUID cubeId) {
         if (cubeId != null && !cubes.containsKey(cubeId)) {
-            System.err.println("警告: Cube不存在 " + cubeId);
+            log.warn("⚠ 注入点绑定失败 | 注入点: {} | 原因: Cube[{}]不存在", injectionPointId, cubeId);
             return;
         }
 
         injectionPointToCubeMapping.put(injectionPointId, cubeId);
-        System.out.println("注入点绑定成功: " + injectionPointId + " -> Cube[" + cubeId + "]");
+        log.info("✓ 注入点绑定成功 | {} → Cube[{}]", injectionPointId, cubeId);
     }
 
-    /**
-     * 解绑注入点
-     */
     public void unbindInjectionPoint(String injectionPointId) {
         GUID removedCubeId = injectionPointToCubeMapping.remove(injectionPointId);
-        System.out.println("注入点解绑成功: " + injectionPointId +
-                (removedCubeId != null ? " (原绑定Cube: " + removedCubeId + ")" : ""));
+        if (removedCubeId != null) {
+            log.info("✓ 注入点解绑成功 | {} ← Cube[{}]", injectionPointId, removedCubeId);
+        } else {
+            log.warn("⚠ 注入点解绑失败 | {} | 原因: 未绑定", injectionPointId);
+        }
     }
 
-    /**
-     * 通过注入点获取绑定的Cube
-     */
     public Cube getCubeByInjectionPoint(String injectionPointId) {
         GUID cubeId = injectionPointToCubeMapping.get(injectionPointId);
         return cubeId != null ? cubes.get(cubeId) : null;
     }
 
-    /**
-     * 获取注入点绑定的CubeId
-     */
     public GUID getCubeIdByInjectionPoint(String injectionPointId) {
         return injectionPointToCubeMapping.get(injectionPointId);
     }
@@ -98,7 +89,7 @@ public class CubeManager implements CubeRegistry {
     /**
      * 扫描并构建Cube内部的扩展点
      */
-    private void scanAndBuildCubeExtensions(Cube cube) {
+    private int scanAndBuildCubeExtensions(Cube cube) {
         Class<?> cubeClass = cube.getClass();
         int extensionCount = 0;
 
@@ -113,30 +104,35 @@ public class CubeManager implements CubeRegistry {
                 );
 
                 extensionPoint.setPriority(mExtension.priority());
-
-                // 添加到Cube的MetaData中
                 cube.getMetaData().addExtensionPoint(extensionPoint);
                 extensionCount++;
 
-                System.out.println("  扫描到扩展点: " + mExtension.value() + " [" + extensionName + "]");
+                log.debug("  → 扫描扩展点 | ID: {} | 名称: {} | 优先级: {}",
+                        mExtension.value(), extensionName, mExtension.priority());
             }
         }
 
-        System.out.println("Cube[" + cube.getCubeId() + "]扫描完成，共发现 " + extensionCount + " 个扩展点");
+        log.debug("✓ Cube扫描完成 | ID: {} | 发现扩展点: {}个", cube.getCubeId(), extensionCount);
+        return extensionCount;
     }
 
     /**
      * 移除Cube相关的注入点映射
      */
-    private void removeInjectionPointsByCube(GUID cubeId) {
-        injectionPointToCubeMapping.entrySet().removeIf(entry ->
-                cubeId.equals(entry.getValue())
-        );
+    private int removeInjectionPointsByCube(GUID cubeId) {
+        int removedCount = 0;
+        var iterator = injectionPointToCubeMapping.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            if (cubeId.equals(entry.getValue())) {
+                iterator.remove();
+                removedCount++;
+                log.debug("  → 清理注入点映射 | {} ← Cube[{}]", entry.getKey(), cubeId);
+            }
+        }
+        return removedCount;
     }
 
-    /**
-     * 验证Cube注册参数
-     */
     private void validateCubeRegistration(GUID cubeId, Cube cube) {
         if (cube == null) {
             throw new IllegalArgumentException("方块不能为空");
@@ -147,32 +143,30 @@ public class CubeManager implements CubeRegistry {
     }
 
     /**
-     * 打印所有Cube和扩展点信息
+     * 打印系统状态概览
      */
-    public void printAllCubesAndExtensions() {
-        System.out.println("========== Cube和扩展点信息 ==========");
+    public void printSystemOverview() {
+        log.info("========== 系统状态概览 ==========");
+        log.info("已注册方块数量: {}", cubes.size());
+        log.info("注入点绑定数量: {}", injectionPointToCubeMapping.size());
+
         cubes.forEach((cubeId, cube) -> {
-            System.out.println("Cube ID: " + cubeId);
-            System.out.println("  名称: " + cube.getMetaData().getName());
-            System.out.println("  描述: " + cube.getMetaData().getDescription());
-            System.out.println("  版本: " + cube.getMetaData().getVersion());
-            System.out.println("  扩展点数量: " + cube.getMetaData().getExtensionPoints().size());
+            log.info("Cube | ID: {} | 名称: {} | 版本: {} | 扩展点: {}个",
+                    cubeId,
+                    cube.getMetaData().getName(),
+                    cube.getMetaData().getVersion(),
+                    cube.getMetaData().getExtensionPoints().size());
+        });
 
-            cube.getMetaData().getExtensionPoints().forEach(ep -> {
-                System.out.println("    - 扩展点ID: " + ep.getExtensionId());
-                System.out.println("      名称: " + ep.getExtensionName());
-                System.out.println("      描述: " + ep.getDescription());
-                System.out.println("      优先级: " + ep.getPriority());
+        if (!injectionPointToCubeMapping.isEmpty()) {
+            log.info("--- 注入点绑定关系 ---");
+            injectionPointToCubeMapping.forEach((injectionPoint, cubeId) -> {
+                Cube cube = cubes.get(cubeId);
+                log.info("绑定 | {} → Cube[{}] ({})",
+                        injectionPoint, cubeId,
+                        cube != null ? cube.getMetaData().getName() : "未知");
             });
-            System.out.println();
-        });
-
-        System.out.println("========== 注入点绑定信息 ==========");
-        injectionPointToCubeMapping.forEach((injectionPoint, cubeId) -> {
-            Cube cube = cubes.get(cubeId);
-            System.out.println("注入点: " + injectionPoint + " -> Cube[" + cubeId + "]" +
-                    (cube != null ? " (" + cube.getMetaData().getName() + ")" : " (Cube不存在)"));
-        });
-        System.out.println("=====================================");
+        }
+        log.info("================================");
     }
 }

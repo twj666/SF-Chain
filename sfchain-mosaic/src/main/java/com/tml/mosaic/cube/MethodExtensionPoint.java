@@ -1,6 +1,7 @@
 package com.tml.mosaic.cube;
 
 import com.tml.mosaic.core.tools.guid.GUID;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 
@@ -9,7 +10,8 @@ import java.lang.reflect.Method;
  * @author suifeng
  * 日期: 2025/5/27
  */
-public class MethodExtensionPoint extends com.tml.mosaic.cube.ExtensionPoint {
+@Slf4j
+public class MethodExtensionPoint extends ExtensionPoint {
 
     private final Cube cube;
     private final Method method;
@@ -20,7 +22,6 @@ public class MethodExtensionPoint extends com.tml.mosaic.cube.ExtensionPoint {
         this.method = method;
         this.method.setAccessible(true);
 
-        // 设置元数据
         setMethodName(method.getName());
         setReturnType(method.getReturnType());
         setParameterTypes(method.getParameterTypes());
@@ -39,10 +40,10 @@ public class MethodExtensionPoint extends com.tml.mosaic.cube.ExtensionPoint {
                 return PointResult.success().setValue(result);
             }
         } catch (Exception e) {
-            String errorMsg = String.format("扩展点执行失败: %s, 方法: %s, 错误: %s", getExtensionId(), method.getName(), e.getMessage());
-            System.err.println(errorMsg);
-            e.printStackTrace();
-            return PointResult.failure("EXECUTION_ERROR", errorMsg);
+            log.error("✗ 方法扩展点执行失败 | 扩展点: {} | 方法: {} | Cube: {} | 异常: {}",
+                    getExtensionId(), method.getName(), cube.getCubeId(), e.getMessage());
+            log.debug("方法执行异常详情", e);
+            return PointResult.failure("EXECUTION_ERROR", "扩展点执行失败: " + e.getMessage());
         }
     }
 

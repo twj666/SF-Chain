@@ -25,7 +25,7 @@ public class JarInstallerExample {
             System.out.println("已安装的JAR包数量: " + installer.getInstalledJars().size());
             
             // 打印所有扩展点信息
-            CubeManager.getInstance().printAllCubesAndExtensions();
+            CubeManager.getInstance().printSystemOverview();
 
             System.out.println("\n--- 动态切换演示 ---");
 
