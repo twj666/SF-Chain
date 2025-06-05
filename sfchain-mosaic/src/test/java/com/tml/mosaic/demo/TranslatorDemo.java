@@ -1,9 +1,9 @@
 package com.tml.mosaic.demo;
 
 
-import com.tml.mosaic.core.frame.CodeInjector;
-import com.tml.mosaic.core.frame.Cube;
-import com.tml.mosaic.core.frame.CubeManager;
+import com.tml.mosaic.cube.CodeInjector;
+import com.tml.mosaic.cube.Cube;
+import com.tml.mosaic.cube.CubeManager;
 import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.core.tools.guid.GUUID;
 

@@ -1,4 +1,4 @@
-package com.tml.mosaic.core.frame;
+package com.tml.mosaic.cube;
 
 import com.tml.mosaic.core.annotation.MExtension;
 import com.tml.mosaic.core.tools.guid.GUID;
@@ -28,17 +28,11 @@ public class CubeManager implements CubeRegistry {
         return INSTANCE;
     }
 
-    /**
-     * 注册Cube
-     */
     @Override
     public void registerCube(Cube cube) {
-       registerCube(cube.getCubeId(), cube);
+        registerCube(cube.getCubeId(), cube);
     }
 
-    /**
-     * 注册方块 (指定id)
-     */
     @Override
     public void registerCube(GUID cubeId, Cube cube) {
         if (cube == null) {
@@ -47,86 +41,73 @@ public class CubeManager implements CubeRegistry {
         if (cubes.containsKey(cubeId)) {
             throw new IllegalStateException("方块ID已存在: " + cubeId);
         }
+
         cubes.put(cubeId, cube);
         cube.initialize();
         scanAndRegisterExtensions(cube);
 
-        System.out.println("方块注册成功: " + cubeId + " [" + cube.getDescription() + "]");
+        System.out.println("方块注册成功: " + cubeId + " [" + cube.getMetaData().getDescription() + "]");
     }
 
-    /**
-     * 卸载Cube
-     */
-    public void unregisterCube(String cubeId) {
+    public void unregisterCube(GUID cubeId) {
         Cube cube = cubes.remove(cubeId);
         if (cube != null) {
-            cube.destroy();
+            // 先移除扩展点
             removeExtensionsByCube(cubeId);
+            // 再销毁Cube
+            cube.destroy();
             System.out.println("方块卸载成功: " + cubeId);
         }
     }
 
-    /**
-     * 获取Cube
-     */
     public Cube getCube(GUID cubeId) {
         return cubes.get(cubeId);
     }
 
-    /**
-     * 注册扩展点
-     */
     public void registerExtensionPoint(String extensionId, ExtensionPoint extensionPoint) {
         extensionPoints.computeIfAbsent(extensionId, k -> new CopyOnWriteArrayList<>())
                 .add(extensionPoint);
         System.out.println("扩展点注册成功: " + extensionId + " [" + extensionPoint.getExtensionName() + "]");
     }
 
-    /**
-     * 获取扩展点
-     */
     public List<ExtensionPoint> getExtensionPoints(String extensionId) {
         return extensionPoints.getOrDefault(extensionId, new CopyOnWriteArrayList<>());
     }
 
-    /**
-     * 绑定注入点到扩展点
-     */
     public void bindInjectionPoint(String injectionPointId, String extensionId) {
         injectionPointMapping.put(injectionPointId, extensionId);
     }
 
-    /**
-     * 获取注入点绑定的扩展点ID
-     */
     public String getExtensionIdByInjectionPoint(String injectionPointId) {
         return injectionPointMapping.get(injectionPointId);
     }
 
-    /**
-     * 扫描并注册Cube中的扩展点
-     */
     private void scanAndRegisterExtensions(Cube cube) {
         Class<?> cubeClass = cube.getClass();
 
         for (java.lang.reflect.Method method : cubeClass.getDeclaredMethods()) {
-            MExtension MExtension = method.getAnnotation(MExtension.class);
-            if (MExtension != null) {
-                String extensionName = MExtension.name().isEmpty() ? method.getName() : MExtension.name();
-                String description = MExtension.description().isEmpty() ? "无描述" : MExtension.description();
+            MExtension mExtension = method.getAnnotation(MExtension.class);
+            if (mExtension != null) {
+                String extensionName = mExtension.name().isEmpty() ? method.getName() : mExtension.name();
+                String description = mExtension.description().isEmpty() ? "无描述" : mExtension.description();
 
-                ExtensionPoint extensionPoint = new MethodExtensionPoint(
-                        cube, method, MExtension.value(), extensionName, description
+                MethodExtensionPoint extensionPoint = new MethodExtensionPoint(
+                        cube, method, mExtension.value(), extensionName, description
                 );
-                registerExtensionPoint(MExtension.value(), extensionPoint);
+
+                // 设置优先级
+                extensionPoint.setPriority(mExtension.priority());
+
+                // 注册到CubeManager
+                registerExtensionPoint(mExtension.value(), extensionPoint);
+
+                // 同时添加到Cube的MetaData中
+                cube.getMetaData().addExtensionPoint(extensionPoint);
             }
         }
     }
 
-    /**
-     * 移除Cube相关的扩展点
-     */
-    private void removeExtensionsByCube(String cubeId) {
+    private void removeExtensionsByCube(GUID cubeId) {
         extensionPoints.entrySet().removeIf(entry -> {
             entry.getValue().removeIf(ep -> ep instanceof MethodExtensionPoint &&
                     ((MethodExtensionPoint) ep).getCubeId().equals(cubeId));
@@ -134,9 +115,6 @@ public class CubeManager implements CubeRegistry {
         });
     }
 
-    /**
-     * 获取所有扩展点信息
-     */
     public void printAllExtensions() {
         System.out.println("========== 扩展点信息 ==========");
         extensionPoints.forEach((extensionId, points) -> {
@@ -144,6 +122,7 @@ public class CubeManager implements CubeRegistry {
             points.forEach(point -> {
                 System.out.println("  - 名称: " + point.getExtensionName());
                 System.out.println("  - 描述: " + point.getDescription());
+                System.out.println("  - 优先级: " + point.getPriority());
                 if (point instanceof MethodExtensionPoint) {
                     MethodExtensionPoint mep = (MethodExtensionPoint) point;
                     System.out.println("  - 所属方块: " + mep.getCubeId());

@@ -2,7 +2,7 @@ package com.tml.mosaic.install.impl;
 
 import com.tml.mosaic.core.constant.InstallType;
 import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.core.frame.Cube;
+import com.tml.mosaic.cube.Cube;
 import com.tml.mosaic.install.io.loader.ResourceLoader;
 import com.tml.mosaic.install.io.resource.Resource;
 import com.tml.mosaic.install.support.*;

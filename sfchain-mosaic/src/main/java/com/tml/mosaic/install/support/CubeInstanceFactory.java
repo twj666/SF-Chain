@@ -2,10 +2,9 @@ package com.tml.mosaic.install.support;
 
 import com.tml.mosaic.core.annotation.MCube;
 import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.core.frame.Cube;
 import com.tml.mosaic.core.tools.guid.GUID;
-import com.tml.mosaic.core.tools.guid.GuidAllocator;
 import com.tml.mosaic.core.infrastructure.CommonComponent;
+import com.tml.mosaic.cube.Cube;
 import lombok.Data;
 
 import java.lang.reflect.Constructor;

@@ -1,8 +1,8 @@
 package com.tml.mosaic.demo.install;
 
 import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.core.frame.CodeInjector;
-import com.tml.mosaic.core.frame.CubeManager;
+import com.tml.mosaic.cube.CodeInjector;
+import com.tml.mosaic.cube.CubeManager;
 import com.tml.mosaic.core.tools.guid.GUUID;
 import com.tml.mosaic.demo.InternationalizationService;
 import com.tml.mosaic.install.impl.JarCubeInstaller;

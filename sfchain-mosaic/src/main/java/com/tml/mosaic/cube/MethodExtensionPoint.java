@@ -1,4 +1,4 @@
-package com.tml.mosaic.core.frame;
+package com.tml.mosaic.cube;
 
 import com.tml.mosaic.core.tools.guid.GUID;
 
@@ -9,16 +9,24 @@ import java.lang.reflect.Method;
  * @author suifeng
  * 日期: 2025/5/27
  */
-public class MethodExtensionPoint extends AbstractExtensionPoint {
+public class MethodExtensionPoint extends com.tml.mosaic.cube.ExtensionPoint {
 
     private final Cube cube;
     private final Method method;
 
-    public MethodExtensionPoint(Cube cube, Method method, String extensionId, String extensionName, String description) {
-        super(extensionId, extensionName, description);
+    public MethodExtensionPoint(Cube cube, Method method, String extensionId,
+                                String extensionName, String description) {
+        super(extensionId);
         this.cube = cube;
         this.method = method;
         this.method.setAccessible(true);
+
+        // 设置元数据
+        setMethodName(method.getName());
+        setReturnType(method.getReturnType());
+        setParameterTypes(method.getParameterTypes());
+        setExtensionName(extensionName);
+        setDescription(description);
     }
 
     @Override
@@ -33,17 +41,14 @@ public class MethodExtensionPoint extends AbstractExtensionPoint {
             }
         } catch (Exception e) {
             String errorMsg = String.format("扩展点执行失败: %s, 方法: %s, 错误: %s",
-                    extensionId, method.getName(), e.getMessage());
+                    getExtensionId(), method.getName(), e.getMessage());
             System.err.println(errorMsg);
+            e.printStackTrace();
             return PointResult.failure("EXECUTION_ERROR", errorMsg);
         }
     }
 
     public GUID getCubeId() {
         return cube.getCubeId();
-    }
-
-    public String getMethodName() {
-        return method.getName();
     }
 }

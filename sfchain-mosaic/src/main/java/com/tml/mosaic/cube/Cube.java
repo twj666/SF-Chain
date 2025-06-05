@@ -3,57 +3,80 @@ package com.tml.mosaic.cube;
 import com.tml.mosaic.core.infrastructure.CommonComponent;
 import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.core.tools.guid.UniqueEntity;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * 方块抽象类
+ * 方块抽象基类 - 所有插件必须继承此类
  */
 public abstract class Cube extends UniqueEntity {
 
     @Getter
     private MetaData metaData;
 
-    public Cube() {
-        super(CommonComponent.GuidAllocator().nextGUID());
+    protected volatile boolean initialized = false;
+
+    public Cube(GUID id) {
+        super(id);
+        this.metaData = new MetaData();
     }
 
+    public Cube() {
+        this(CommonComponent.GuidAllocator().nextGUID());
+    }
+
+    // 生命周期方法
+    public void initialize() {
+        if (!initialized) {
+            doInitialize();
+            initialized = true;
+            System.out.println("方块初始化完成: " + getId() + " [" + metaData.getDescription() + "]");
+        }
+    }
+
+    public void destroy() {
+        if (initialized) {
+            doDestroy();
+            initialized = false;
+            System.out.println("方块销毁完成: " + getId());
+        }
+    }
+
+    // 子类可覆盖的初始化和销毁方法
+    protected void doInitialize() {}
+    protected void doDestroy() {}
+
+    // 获取Cube ID的便捷方法
+    public GUID getCubeId() {
+        return getId();
+    }
 
     @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public class MetaData{
+    public static class MetaData {
 
-        // cube名称
         private String name;
-
-        // cube版本
         private String version;
-
-        // cube说明
         private String description;
+        private List<ExtensionPoint> extensionPoints = new CopyOnWriteArrayList<>();
+        private Map<GUID, ExtensionPoint> extensionMap = new ConcurrentHashMap<>();
 
-        // 扩展点
-        private List<ExtensionPoint> extensionPoints;
+        public ExtensionPoint findExtensionPoint(GUID guid) {
+            return extensionMap.computeIfAbsent(guid, key ->
+                    extensionPoints.stream()
+                            .filter(ep -> ep.getId().equals(key))
+                            .findFirst()
+                            .orElse(null)
+            );
+        }
 
-        // 扩展点查询Map，不初始化
-        private Map<GUID, ExtensionPoint> extensionMap;
-
-        // 查询扩展点
-        // TODO 并发问题
-        public ExtensionPoint findExtensionPoint(GUID guid){
-            if (Objects.isNull(extensionMap)){
-                extensionMap = extensionPoints.stream().collect(Collectors.toMap(ExtensionPoint::getId, x -> x));
-            }
-            return extensionMap.get(guid);
-        };
+        public void addExtensionPoint(ExtensionPoint extensionPoint) {
+            extensionPoints.add(extensionPoint);
+            extensionMap.put(extensionPoint.getId(), extensionPoint);
+        }
     }
-
 }

@@ -1,7 +1,7 @@
 package com.tml.mosaic.demo;
 
-import com.tml.mosaic.core.frame.CodeInjector;
-import com.tml.mosaic.core.frame.PointResult;
+import com.tml.mosaic.cube.CodeInjector;
+import com.tml.mosaic.cube.PointResult;
 
 /**
  * 描述: 国际化业务服务 - 展示翻译插件的使用
