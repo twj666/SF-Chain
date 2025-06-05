@@ -28,7 +28,7 @@ public @interface MCube {
     String description() default "";
     
     /**
-     * 是否自动注册
+     * 方块的模式: 单例、多例
      */
-    boolean autoRegister() default true;
+    String model() default "singleton";
 }

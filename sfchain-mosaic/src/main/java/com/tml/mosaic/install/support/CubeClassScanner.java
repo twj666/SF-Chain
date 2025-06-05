@@ -1,7 +1,7 @@
 package com.tml.mosaic.install.support;
 
 import com.tml.mosaic.core.annotation.MCube;
-import com.tml.mosaic.core.frame.Cube;
+import com.tml.mosaic.cube.Cube;
 
 import java.io.IOException;
 import java.io.InputStream;
