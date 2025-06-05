@@ -14,8 +14,7 @@ public class MethodExtensionPoint extends com.tml.mosaic.cube.ExtensionPoint {
     private final Cube cube;
     private final Method method;
 
-    public MethodExtensionPoint(Cube cube, Method method, String extensionId,
-                                String extensionName, String description) {
+    public MethodExtensionPoint(Cube cube, Method method, String extensionId, String extensionName, String description) {
         super(extensionId);
         this.cube = cube;
         this.method = method;
@@ -40,8 +39,7 @@ public class MethodExtensionPoint extends com.tml.mosaic.cube.ExtensionPoint {
                 return PointResult.success().setValue(result);
             }
         } catch (Exception e) {
-            String errorMsg = String.format("扩展点执行失败: %s, 方法: %s, 错误: %s",
-                    getExtensionId(), method.getName(), e.getMessage());
+            String errorMsg = String.format("扩展点执行失败: %s, 方法: %s, 错误: %s", getExtensionId(), method.getName(), e.getMessage());
             System.err.println(errorMsg);
             e.printStackTrace();
             return PointResult.failure("EXECUTION_ERROR", errorMsg);

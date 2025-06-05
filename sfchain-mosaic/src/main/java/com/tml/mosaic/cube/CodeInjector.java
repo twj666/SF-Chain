@@ -1,6 +1,6 @@
 package com.tml.mosaic.cube;
 
-import java.util.List;
+import com.tml.mosaic.core.tools.guid.GUID;
 
 /**
  * 描述: 代码注入器
@@ -18,32 +18,29 @@ public class CodeInjector {
     }
 
     /**
-     * 核心执行方法 - 使用ExtensionInput
+     * 核心执行方法 - 通过注入点找到Cube，再执行扩展点
      */
     private static PointResult executeInjectionPointInternal(String injectionPointId, PointParam input) {
         CubeManager cubeManager = CubeManager.getInstance();
 
         try {
-            String extensionId = cubeManager.getExtensionIdByInjectionPoint(injectionPointId);
-            if (extensionId == null) {
-                System.out.println("注入点未绑定扩展点: " + injectionPointId);
-                return PointResult.failure("UNBOUND_INJECTION_POINT", "注入点未绑定扩展点");
+            // 第一步：通过注入点找到对应的Cube
+            Cube targetCube = cubeManager.getCubeByInjectionPoint(injectionPointId);
+            if (targetCube == null) {
+                String errorMsg = "注入点未绑定到任何Cube: " + injectionPointId;
+                System.out.println(errorMsg);
+                return PointResult.failure("UNBOUND_INJECTION_POINT", errorMsg);
             }
 
-            List<ExtensionPoint> extensionPoints = cubeManager.getExtensionPoints(extensionId);
-            if (extensionPoints.isEmpty()) {
-                System.out.println("扩展点不存在: " + extensionId);
-                return PointResult.failure("EXTENSION_NOT_FOUND", "扩展点不存在");
-            }
+            // 第二步：让Cube执行对应的扩展点
+            System.out.println("执行注入点: " + injectionPointId + " -> Cube[" + targetCube.getCubeId() + "]");
 
-            ExtensionPoint extensionPoint = extensionPoints.get(0);
+            return targetCube.executeExtensionPoint(injectionPointId, input);
 
-            System.out.println("执行注入点: " + injectionPointId + " -> 扩展点: " + extensionId);
-
-            return extensionPoint.execute(input);
         } catch (Exception e) {
             String errorMsg = "注入点执行异常: " + injectionPointId + ", 错误: " + e.getMessage();
             System.err.println(errorMsg);
+            e.printStackTrace();
             return PointResult.failure("INJECTION_EXECUTION_ERROR", errorMsg);
         }
     }
@@ -52,67 +49,91 @@ public class CodeInjector {
      * 主要调用方法 - 支持可变参数
      */
     public static PointResult executeInjectionPoint(String injectionPointId, Object... params) {
-        PointParam input = new PointParam();
-
-        // 自动封装参数
-        if (params != null && params.length > 0) {
-            for (int i = 0; i < params.length; i++) {
-                input.set("param" + i, params[i]);
-            }
-
-            // 同时提供一些常用的参数名映射，方便扩展点使用
-            if (params.length >= 1) input.set("value", params[0]);
-            if (params.length >= 2) input.set("second", params[1]);
-            if (params.length >= 3) input.set("third", params[2]);
-        }
-
+        PointParam input = createPointParam(params);
         return executeInjectionPointInternal(injectionPointId, input);
     }
 
     /**
-     * 绑定注入点到扩展点
+     * 绑定注入点到Cube
+     */
+    public void bindInjectionPointToCube(String injectionPointId, GUID cubeId) {
+        CubeManager.getInstance().bindInjectionPointToCube(injectionPointId, cubeId);
+    }
+
+    /**
+     * 便捷方法：绑定注入点到扩展点（通过Cube查找）
      */
     public void bindInjectionPoint(String injectionPointId, String extensionId) {
         CubeManager cubeManager = CubeManager.getInstance();
 
-        if (extensionId != null && cubeManager.getExtensionPoints(extensionId).isEmpty()) {
-            System.err.println("警告: 扩展点不存在 " + extensionId);
+        // 查找包含指定扩展点的Cube
+        Cube targetCube = findCubeByExtensionId(extensionId);
+        if (targetCube != null) {
+            cubeManager.bindInjectionPointToCube(injectionPointId, targetCube.getCubeId());
+            System.out.println("通过扩展点绑定成功: " + injectionPointId + " -> 扩展点[" + extensionId + "] -> Cube[" + targetCube.getCubeId() + "]");
+        } else {
+            System.err.println("警告: 未找到包含扩展点[" + extensionId + "]的Cube");
         }
-
-        cubeManager.bindInjectionPoint(injectionPointId, extensionId);
-        System.out.println("绑定成功: " + injectionPointId + " -> " + extensionId);
     }
 
     /**
      * 解绑注入点
      */
     public void unbindInjectionPoint(String injectionPointId) {
-        CubeManager.getInstance().bindInjectionPoint(injectionPointId, null);
-        System.out.println("解绑成功: " + injectionPointId);
+        CubeManager.getInstance().unbindInjectionPoint(injectionPointId);
     }
 
     /**
-     * 获取注入点信息
+     * 查找包含指定扩展点的Cube
+     */
+    private Cube findCubeByExtensionId(String extensionId) {
+        CubeManager cubeManager = CubeManager.getInstance();
+
+        return cubeManager.getCubes().values().stream()
+                .filter(cube -> cube.hasExtensionPoint(extensionId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * 创建参数对象
+     */
+    private static PointParam createPointParam(Object... params) {
+        PointParam input = new PointParam();
+
+        if (params != null && params.length > 0) {
+            for (int i = 0; i < params.length; i++) {
+                input.set("param" + i, params[i]);
+            }
+
+            // 提供常用参数名映射
+            if (params.length >= 1) input.set("value", params[0]);
+            if (params.length >= 2) input.set("second", params[1]);
+            if (params.length >= 3) input.set("third", params[2]);
+        }
+
+        return input;
+    }
+
+    /**
+     * 获取注入点详细信息
      */
     public void printInjectionPointInfo(String injectionPointId) {
         CubeManager cubeManager = CubeManager.getInstance();
-        String extensionId = cubeManager.getExtensionIdByInjectionPoint(injectionPointId);
+        Cube cube = cubeManager.getCubeByInjectionPoint(injectionPointId);
 
         System.out.println("========== 注入点信息 ==========");
         System.out.println("注入点ID: " + injectionPointId);
-        System.out.println("绑定扩展点: " + (extensionId != null ? extensionId : "未绑定"));
 
-        if (extensionId != null) {
-            List<ExtensionPoint> extensionPoints = cubeManager.getExtensionPoints(extensionId);
-            for (ExtensionPoint ep : extensionPoints) {
-                System.out.println("扩展点名称: " + ep.getExtensionName());
-                System.out.println("扩展点描述: " + ep.getDescription());
-                if (ep instanceof MethodExtensionPoint) {
-                    MethodExtensionPoint mep = (MethodExtensionPoint) ep;
-                    System.out.println("所属方块: " + mep.getCubeId());
-                    System.out.println("方法名: " + mep.getMethodName());
-                }
-            }
+        if (cube != null) {
+            System.out.println("绑定Cube: " + cube.getCubeId() + " [" + cube.getMetaData().getName() + "]");
+            System.out.println("Cube描述: " + cube.getMetaData().getDescription());
+            System.out.println("可用扩展点:");
+            cube.getMetaData().getExtensionPoints().forEach(ep -> {
+                System.out.println("  - " + ep.getExtensionId() + " [" + ep.getExtensionName() + "]");
+            });
+        } else {
+            System.out.println("绑定状态: 未绑定");
         }
         System.out.println("===============================");
     }
