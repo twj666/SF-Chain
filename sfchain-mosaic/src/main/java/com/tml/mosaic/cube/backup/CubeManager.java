@@ -1,8 +1,10 @@
-package com.tml.mosaic.cube;
+package com.tml.mosaic.cube.backup;
 
-import com.tml.mosaic.core.annotation.MExtension;
+import com.tml.mosaic.cube.MExtension;
 import com.tml.mosaic.core.tools.guid.GUID;
-import com.tml.mosaic.install.support.CubeRegistry;
+import com.tml.mosaic.cube.Cube;
+import com.tml.mosaic.cube.MethodExtensionPoint;
+import com.tml.mosaic.factory.config.CubeRegistry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

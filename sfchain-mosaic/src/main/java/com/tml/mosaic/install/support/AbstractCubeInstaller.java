@@ -1,6 +1,8 @@
 package com.tml.mosaic.install.support;
 
 import com.tml.mosaic.core.execption.CubeException;
+import com.tml.mosaic.factory.config.CubeDefinitionRegistry;
+import com.tml.mosaic.install.CubeInstaller;
 import com.tml.mosaic.install.io.loader.DefaultResourceLoader;
 import com.tml.mosaic.install.io.loader.ResourceLoader;
 import com.tml.mosaic.install.io.resource.Resource;
@@ -12,21 +14,21 @@ import com.tml.mosaic.install.io.resource.Resource;
  */
 public abstract class AbstractCubeInstaller implements CubeInstaller {
 
-    private final CubeRegistry registry;
+    private final CubeDefinitionRegistry registry;
 
-    private ResourceLoader resourceLoader;
+    private final ResourceLoader resourceLoader;
 
-    protected AbstractCubeInstaller(CubeRegistry registry) {
+    protected AbstractCubeInstaller(CubeDefinitionRegistry registry) {
         this(registry, new DefaultResourceLoader());
     }
 
-    public AbstractCubeInstaller(CubeRegistry registry, ResourceLoader resourceLoader) {
+    public AbstractCubeInstaller(CubeDefinitionRegistry registry, ResourceLoader resourceLoader) {
         this.registry = registry;
         this.resourceLoader = resourceLoader;
     }
 
     @Override
-    public CubeRegistry getRegistry() {
+    public CubeDefinitionRegistry getRegistry() {
         return registry;
     }
 

@@ -1,7 +1,6 @@
 package com.tml.mosaic.install.support;
 
 import com.tml.mosaic.core.tools.guid.GUID;
-import com.tml.mosaic.core.tools.guid.GuidAllocator;
 import com.tml.mosaic.core.infrastructure.CommonComponent;
 import lombok.Data;
 
@@ -31,54 +30,6 @@ public class JarPluginClassLoader extends URLClassLoader {
     }
     
     @Override
-    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if (closed) {
-            throw new ClassNotFoundException("类加载器已关闭: " + loaderId);
-        }
-        
-        synchronized (getClassLoadingLock(name)) {
-            // 检查缓存
-            Class<?> clazz = loadedClasses.get(name);
-            if (clazz != null) {
-                if (resolve) resolveClass(clazz);
-                return clazz;
-            }
-            
-            // 框架核心类必须由父类加载器加载，确保一致性
-            if (isFrameworkCoreClass(name)) {
-                clazz = getParent().loadClass(name);
-            } else {
-                // 插件类优先从当前JAR加载
-                try {
-                    clazz = findClass(name);
-                } catch (ClassNotFoundException e) {
-                    clazz = getParent().loadClass(name);
-                }
-            }
-            
-            if (clazz != null) {
-                loadedClasses.put(name, clazz);
-                if (resolve) resolveClass(clazz);
-            }
-            
-            return clazz;
-        }
-    }
-    
-    /**
-     * 判断是否是框架核心类
-     */
-    private boolean isFrameworkCoreClass(String className) {
-        return className.startsWith("com.tml.mosaic.core.") ||
-               className.startsWith("com.tml.mosaic.install.") ||
-               className.startsWith("com.tml.mosaic.slot.") ||
-               className.startsWith("com.tml.mosaic.actuator.") ||
-               className.startsWith("java.") ||
-               className.startsWith("javax.") ||
-               className.startsWith("lombok.");
-    }
-    
-    @Override
     public void close() {
         if (!closed) {
             closed = true;
@@ -91,6 +42,4 @@ public class JarPluginClassLoader extends URLClassLoader {
             }
         }
     }
-
-    public int getLoadedClassCount() { return loadedClasses.size(); }
 }

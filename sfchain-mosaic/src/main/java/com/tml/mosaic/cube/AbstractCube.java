@@ -13,6 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 public abstract class AbstractCube extends Cube {
 
+    public AbstractCube(GUID cubeId) {
+        super(cubeId);
+        getMetaData().setName(this.getClass().getSimpleName());
+    }
+
     public AbstractCube(GUID cubeId, String version, String description) {
         super(cubeId);
         getMetaData().setName(this.getClass().getSimpleName());

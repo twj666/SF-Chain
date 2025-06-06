@@ -1,7 +1,9 @@
 package com.tml.mosaic.install.support;
 
-import com.tml.mosaic.core.annotation.MCube;
+import com.tml.mosaic.cube.MCube;
+import com.tml.mosaic.core.tools.guid.GUUID;
 import com.tml.mosaic.cube.Cube;
+import com.tml.mosaic.factory.config.CubeDefinition;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,41 +13,58 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 /**
- * 描述: Cube类发现器
+ * 描述: Jar包下Cube类扫描器（扫描Cube类，返回CubeDefinition列表）
  * @author suifeng
  * 日期: 2025/6/3
  */
-public class CubeClassScanner {
+public class JarCubeClassScanner {
     
     private final ClassLoader classLoader;
     
-    public CubeClassScanner(ClassLoader classLoader) {
+    public JarCubeClassScanner(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
-    
+
     /**
-     * 从JAR输入流中扫描Cube类
+     * 从JAR输入流中扫描Cube类，并返回CubeDefinition列表
      */
-    public List<Class<? extends Cube>> scanCubeClasses(InputStream jarInputStream) throws IOException {
-        List<Class<? extends Cube>> cubeClasses = new ArrayList<>();
-        
+    public List<CubeDefinition> scanCubeDefinitions(InputStream jarInputStream) throws IOException {
+        List<CubeDefinition> cubeDefinitions = new ArrayList<>();
+
         try (JarInputStream jis = new JarInputStream(jarInputStream)) {
             JarEntry entry;
             while ((entry = jis.getNextJarEntry()) != null) {
                 if (isClassFile(entry)) {
                     String className = extractClassName(entry.getName());
-                    Class<? extends Cube> cubeClass = loadAndValidateCubeClass(className);
-                    if (cubeClass != null) {
-                        cubeClasses.add(cubeClass);
-                        System.out.println("发现Cube类: " + className);
+                    Class<?> clazz = loadAndValidateCubeClass(className);
+                    if (clazz != null) {
+                        // 创建CubeDefinition
+                        MCube mCube = clazz.getAnnotation(MCube.class);
+                        String id = mCube.value();
+                        String name = mCube.name().isEmpty() ? clazz.getSimpleName() : mCube.value();
+                        String version = mCube.version();
+                        String description = mCube.description();
+                        String model = mCube.model();
+
+                        CubeDefinition cubeDefinition = new CubeDefinition(
+                                new GUUID(id),
+                                name,
+                                version,
+                                description,
+                                model,
+                                className,
+                                this.classLoader   // 当前类加载器
+                        );
+
+                        cubeDefinitions.add(cubeDefinition);
+                        System.out.println("发现Cube: " + className);
                     }
                 }
             }
         }
-        
-        return cubeClasses;
+        return cubeDefinitions;
     }
-    
+
     /**
      * 判断是否是Class文件
      */

@@ -1,6 +1,9 @@
-package com.tml.mosaic.cube;
+package com.tml.mosaic.cube.backup;
 
 import com.tml.mosaic.core.tools.guid.GUID;
+import com.tml.mosaic.cube.Cube;
+import com.tml.mosaic.cube.PointParam;
+import com.tml.mosaic.cube.PointResult;
 import lombok.extern.slf4j.Slf4j;
 
 /**

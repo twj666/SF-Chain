@@ -1,4 +1,4 @@
-package com.tml.mosaic.core.annotation;
+package com.tml.mosaic.cube;
 
 import java.lang.annotation.*;
 
