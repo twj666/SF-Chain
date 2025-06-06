@@ -1,6 +1,6 @@
 package com.tml.mosaic.demo;
 
-import com.tml.mosaic.cube.CodeInjector;
+import com.tml.mosaic.cube.backup.CodeInjector;
 import com.tml.mosaic.cube.PointResult;
 
 /**

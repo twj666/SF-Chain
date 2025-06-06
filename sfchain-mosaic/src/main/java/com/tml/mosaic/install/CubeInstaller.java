@@ -1,7 +1,7 @@
-package com.tml.mosaic.install.support;
+package com.tml.mosaic.install;
 
 import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.factory.config.CubeRegistry;
+import com.tml.mosaic.factory.config.CubeDefinitionRegistry;
 import com.tml.mosaic.install.io.resource.Resource;
 import com.tml.mosaic.install.io.loader.ResourceLoader;
 
@@ -13,9 +13,9 @@ import com.tml.mosaic.install.io.loader.ResourceLoader;
 public interface CubeInstaller {
 
     /**
-     * 获取注册器
+     * 获取bean定义注册器
      */
-    CubeRegistry getRegistry();
+    CubeDefinitionRegistry getRegistry();
 
     /**
      * 获取资源解析器

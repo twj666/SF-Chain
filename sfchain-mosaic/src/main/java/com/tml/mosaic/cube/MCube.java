@@ -1,4 +1,4 @@
-package com.tml.mosaic.core.annotation;
+package com.tml.mosaic.cube;
 
 import java.lang.annotation.*;
 
@@ -16,6 +16,11 @@ public @interface MCube {
      * Cube的ID，如果不指定则使用类名
      */
     String value() default "";
+
+    /**
+     * Cube的name
+     */
+    String name() default "";
     
     /**
      * 版本号
