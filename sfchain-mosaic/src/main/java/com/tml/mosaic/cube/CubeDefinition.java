@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * 日期: 2025/6/6
  */
 @Slf4j
-public abstract class CubeDefinition {
+public class CubeDefinition {
 
     private GUID id;
     private String name;
@@ -20,4 +20,8 @@ public abstract class CubeDefinition {
     private String description;
     private String model;
     private final List<ExtensionPoint> extensionPoints = new CopyOnWriteArrayList<>();
+
+    public Cube getBean() {
+        return null;
+    }
 }

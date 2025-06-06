@@ -1,4 +1,4 @@
-package com.tml.mosaic.factory.support;
+package com.tml.mosaic.factory.config;
 
 import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.cube.Cube;

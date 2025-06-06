@@ -2,6 +2,7 @@ package com.tml.mosaic.factory.support;
 
 import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.cube.Cube;
+import com.tml.mosaic.factory.config.SingletonCubeRegistry;
 
 import java.util.HashMap;
 import java.util.Map;
