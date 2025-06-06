@@ -1,7 +1,6 @@
 package com.tml.mosaic.install.support;
 
 import com.tml.mosaic.core.tools.guid.GUID;
-import com.tml.mosaic.core.tools.guid.GuidAllocator;
 import com.tml.mosaic.core.infrastructure.CommonComponent;
 import lombok.Data;
 

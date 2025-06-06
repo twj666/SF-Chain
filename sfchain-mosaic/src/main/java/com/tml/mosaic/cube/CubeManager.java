@@ -2,7 +2,7 @@ package com.tml.mosaic.cube;
 
 import com.tml.mosaic.core.annotation.MExtension;
 import com.tml.mosaic.core.tools.guid.GUID;
-import com.tml.mosaic.install.support.CubeRegistry;
+import com.tml.mosaic.factory.support.CubeRegistry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
