@@ -1,0 +1,16 @@
+{
+  "installations": [
+    {
+      "type": "JAR_INSTALL",
+      "location": "D:\\mosic-data-test\\mosic-test-dever-1.0-SNAPSHOT.jar"
+    },
+    {
+      "type": "JAR_INSTALL",
+      "location": "D:\\mosic-data-test\\mosic-test-dever-1.0-SNAPSHOT.jar",
+      "properties": {
+        "param1": "value1",
+        "param2": 42
+      }
+    }
+  ]
+}

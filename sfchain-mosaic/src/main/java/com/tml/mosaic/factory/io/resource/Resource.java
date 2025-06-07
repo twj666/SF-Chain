@@ -1,4 +1,4 @@
-package com.tml.mosaic.install.io.resource;
+package com.tml.mosaic.factory.io.resource;
 
 import java.io.IOException;
 import java.io.InputStream;

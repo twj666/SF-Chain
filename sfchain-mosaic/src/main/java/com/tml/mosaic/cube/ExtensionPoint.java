@@ -1,6 +1,8 @@
 package com.tml.mosaic.cube;
 
 import com.tml.mosaic.core.tools.guid.DotNotationId;
+import com.tml.mosaic.core.tools.guid.GUID;
+import com.tml.mosaic.core.tools.guid.GUUID;
 import com.tml.mosaic.core.tools.guid.UniqueEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,15 +33,17 @@ public abstract class ExtensionPoint extends UniqueEntity {
     @Getter @Setter
     private int priority = 100;
 
-    public ExtensionPoint(String id) {
-        super(new DotNotationId(id));
+    public ExtensionPoint(String id, String name, String description) {
+        super(new GUUID(id));
+        this.methodName = name;
+        this.description = description;
     }
 
     // 核心执行方法
     public abstract PointResult execute(PointParam input);
 
     // 获取扩展点ID的便捷方法
-    public String getExtensionId() {
-        return getId().toString();
+    public GUID getExtensionId() {
+        return getId();
     }
 }

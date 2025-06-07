@@ -1,8 +1,6 @@
 package com.tml.mosaic.cube;
 
-import com.tml.mosaic.core.tools.guid.GUID;
-import lombok.extern.slf4j.Slf4j;
-
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -10,44 +8,37 @@ import java.lang.reflect.Method;
  * @author suifeng
  * 日期: 2025/5/27
  */
-@Slf4j
 public class MethodExtensionPoint extends ExtensionPoint {
 
-    private final Cube cube;
+    private final Object target;  // 执行目标（Cube或ExtensionPackage）
     private final Method method;
 
-    public MethodExtensionPoint(Cube cube, Method method, String extensionId, String extensionName, String description) {
-        super(extensionId);
-        this.cube = cube;
+    public MethodExtensionPoint(Object target, Method method, String id, String name, String description) {
+        super(id, name, description);
+        this.target = target;
         this.method = method;
         this.method.setAccessible(true);
-
-        setMethodName(method.getName());
-        setReturnType(method.getReturnType());
-        setParameterTypes(method.getParameterTypes());
-        setExtensionName(extensionName);
-        setDescription(description);
     }
 
     @Override
     public PointResult execute(PointParam input) {
         try {
-            Object result = method.invoke(cube, input);
-
+            Object result = method.invoke(target, input);
             if (result instanceof PointResult) {
                 return (PointResult) result;
-            } else {
-                return PointResult.success().setValue(result);
             }
-        } catch (Exception e) {
-            log.error("✗ 方法扩展点执行失败 | 扩展点: {} | 方法: {} | Cube: {} | 异常: {}",
-                    getExtensionId(), method.getName(), cube.getCubeId(), e.getMessage());
-            log.debug("方法执行异常详情", e);
-            return PointResult.failure("EXECUTION_ERROR", "扩展点执行失败: " + e.getMessage());
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            return PointResult.failure("EXECUTION_ERROR", cause.getMessage());
         }
+        return PointResult.failure("执行失败");
     }
 
-    public GUID getCubeId() {
-        return cube.getCubeId();
+    // 获取关联的Cube（如果目标是ExtensionPackage）
+    public Cube getCube() {
+        if (target instanceof ExtensionPackage) {
+            return ((ExtensionPackage) target).getCube();
+        }
+        return (Cube) target;
     }
 }

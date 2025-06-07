@@ -1,10 +1,11 @@
 package com.tml.mosaic.demo.install;
 
-import com.tml.mosaic.core.execption.CubeException;
+import com.tml.mosaic.core.constant.InstallType;
 import com.tml.mosaic.core.tools.guid.GUUID;
-import com.tml.mosaic.cube.Cube;
-import com.tml.mosaic.factory.support.DefaultListableCubeFactory;
+import com.tml.mosaic.cube.*;
+import com.tml.mosaic.factory.ClassPathJsonCubeContext;
 import com.tml.mosaic.install.impl.JarCubeInstaller;
+import com.tml.mosaic.install.support.registry.DefaultInstallerRegistry;
 
 /**
  * JAR安装器使用示例
@@ -12,24 +13,24 @@ import com.tml.mosaic.install.impl.JarCubeInstaller;
 public class JarInstallerExample {
     
     public static void main(String[] args) {
+        // 创建注册表
+        DefaultInstallerRegistry installerRegistry = new DefaultInstallerRegistry();
+        installerRegistry.registerInstaller(InstallType.JAR_INSTALL, new JarCubeInstaller());
 
-        DefaultListableCubeFactory factory = new DefaultListableCubeFactory();
+        ClassPathJsonCubeContext context = new ClassPathJsonCubeContext("classpath:start1.json", installerRegistry);
 
-        // 创建安装器
-        JarCubeInstaller installer = new JarCubeInstaller(factory);
-        
-        try {
-            // 安装JAR包
-            installer.installCube("F:\\soft-data\\mosic-test-dever-1.0-SNAPSHOT.jar");
+        // 获取翻译Cube
+        Cube translationCube = context.getCube(new GUUID("translationCube"));
 
-            // 查看安装结果
-            System.out.println("已安装的JAR包数量: " + installer.getInstalledJars().size());
+        // 调用英语翻译
+        PointParam input = new PointParam().set("text", "你好");
 
-            Cube germanTranslatorCube = factory.getCube(new GUUID("germanTranslatorCube"));
-            System.out.println(germanTranslatorCube);
+        ExtensionPackage englishTranslation = translationCube.getExtensionPackage(new GUUID("englishTranslation"));
 
-        } catch (CubeException e) {
-            System.err.println("安装失败: " + e.getMessage());
-        }
+        ExtensionPoint extensionPoint = englishTranslation.findExtensionPoint(new GUUID("text.translate"));
+
+        PointResult result = extensionPoint.execute(input);
+
+        System.out.println(result);
     }
 }

@@ -1,6 +1,5 @@
 package com.tml.mosaic.core.tools.guid;
 
-import com.tml.mosaic.slot.Slot;
 import lombok.Getter;
 
 import java.util.Objects;

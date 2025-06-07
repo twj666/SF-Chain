@@ -8,8 +8,8 @@ package com.tml.mosaic.core.constant;
 public class InstallType {
 
     // jar包安装
-    public static final String JAR_INSTALL = "jar-install";
+    public static final String JAR_INSTALL = "JAR_INSTALL";
 
     // 代码安装
-    public static final String CODE_INSTALL = "code-install";
+    public static final String CODE_INSTALL = "CODE_INSTALL";
 }
