@@ -1,4 +1,4 @@
-package com.tml.mosaic.factory.config;
+package com.tml.mosaic.factory;
 
 import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.cube.ExtensionPoint;

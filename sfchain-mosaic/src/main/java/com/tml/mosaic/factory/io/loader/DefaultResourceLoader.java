@@ -1,9 +1,9 @@
-package com.tml.mosaic.install.io.loader;
+package com.tml.mosaic.factory.io.loader;
 
-import com.tml.mosaic.install.io.resource.ClassPathResource;
-import com.tml.mosaic.install.io.resource.FileSystemResource;
-import com.tml.mosaic.install.io.resource.UrlResource;
-import com.tml.mosaic.install.io.resource.Resource;
+import com.tml.mosaic.factory.io.resource.Resource;
+import com.tml.mosaic.factory.io.resource.UrlResource;
+import com.tml.mosaic.factory.io.resource.ClassPathResource;
+import com.tml.mosaic.factory.io.resource.FileSystemResource;
 import com.tml.mosaic.util.Assert;
 
 import java.net.MalformedURLException;

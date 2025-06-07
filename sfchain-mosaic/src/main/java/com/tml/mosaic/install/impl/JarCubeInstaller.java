@@ -2,10 +2,10 @@ package com.tml.mosaic.install.impl;
 
 import com.tml.mosaic.core.constant.InstallType;
 import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.factory.config.CubeDefinition;
+import com.tml.mosaic.factory.CubeDefinition;
 import com.tml.mosaic.factory.config.CubeDefinitionRegistry;
-import com.tml.mosaic.install.io.loader.ResourceLoader;
-import com.tml.mosaic.install.io.resource.Resource;
+import com.tml.mosaic.factory.io.loader.ResourceLoader;
+import com.tml.mosaic.factory.io.resource.Resource;
 import com.tml.mosaic.install.support.*;
 
 import java.io.File;
@@ -25,13 +25,13 @@ public class JarCubeInstaller extends AbstractCubeInstaller {
 
     private final Map<String, JarPluginClassLoader> classLoaderRegistry;
 
-    public JarCubeInstaller(CubeDefinitionRegistry registry) {
-        super(registry);
+    public JarCubeInstaller() {
+        super();
         this.classLoaderRegistry = new ConcurrentHashMap<>();
     }
 
-    public JarCubeInstaller(CubeDefinitionRegistry registry, ResourceLoader resourceLoader) {
-        super(registry, resourceLoader);
+    public JarCubeInstaller(ResourceLoader resourceLoader) {
+        super(resourceLoader);
         this.classLoaderRegistry = new ConcurrentHashMap<>();
     }
 
@@ -41,17 +41,17 @@ public class JarCubeInstaller extends AbstractCubeInstaller {
     }
 
     @Override
-    public void installCube(Resource resource) throws CubeException {
+    public List<CubeDefinition> installCube(Resource resource) throws CubeException {
         try {
             try (InputStream inputStream = resource.getInputStream()) {
-                doInstallCubeByJar(resource, inputStream);
+                return doInstallCubeByJar(resource, inputStream);
             }
         } catch (IOException e) {
             throw new CubeException("IOException reading Jar Cube from " + resource, e);
         }
     }
 
-    protected void doInstallCubeByJar(Resource resource, InputStream inputStream) throws CubeException {
+    protected List<CubeDefinition> doInstallCubeByJar(Resource resource, InputStream inputStream) throws CubeException {
         String jarPath = resource.getPath();
         System.out.println("开始安装JAR包Cube: " + jarPath);
 
@@ -68,15 +68,12 @@ public class JarCubeInstaller extends AbstractCubeInstaller {
                 throw new CubeException("JAR包中未发现有效的Cube定义: " + jarPath);
             }
 
-            // 3. 注册Cube定义
-            for (CubeDefinition cubeDefinition : cubeDefinitions) {
-                getRegistry().registerCubeDefinition(cubeDefinition.getId(), cubeDefinition);
-            }
-
-            // 4. 注册类加载器
+            // 3. 注册类加载器
             classLoaderRegistry.put(jarPath, classLoader);
 
             System.out.println("JAR包安装完成: " + jarPath + ", 共安装 " + cubeDefinitions.size() + " 个Cube定义");
+
+            return cubeDefinitions;
 
         } catch (Exception e) {
             // 异常时清理资源

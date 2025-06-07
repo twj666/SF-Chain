@@ -1,9 +1,11 @@
 package com.tml.mosaic.install;
 
 import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.factory.config.CubeDefinitionRegistry;
-import com.tml.mosaic.install.io.resource.Resource;
-import com.tml.mosaic.install.io.loader.ResourceLoader;
+import com.tml.mosaic.factory.CubeDefinition;
+import com.tml.mosaic.factory.io.resource.Resource;
+import com.tml.mosaic.factory.io.loader.ResourceLoader;
+
+import java.util.List;
 
 /**
  * 描述: Cube安装器接口
@@ -11,11 +13,6 @@ import com.tml.mosaic.install.io.loader.ResourceLoader;
  * 日期: 2025/5/29
  */
 public interface CubeInstaller {
-
-    /**
-     * 获取bean定义注册器
-     */
-    CubeDefinitionRegistry getRegistry();
 
     /**
      * 获取资源解析器
@@ -30,15 +27,15 @@ public interface CubeInstaller {
     /**
      * 安装单个Cube资源
      */
-    void installCube(Resource resource) throws CubeException;
+    List<CubeDefinition> installCube(Resource resource) throws CubeException;
 
     /**
      * 安装多个Cube资源
      */
-    void installCube(Resource... resources) throws CubeException;
+    List<CubeDefinition> installCube(Resource... resources) throws CubeException;
 
     /**
      * 安装location位置下的Cube资源
      */
-    void installCube(String location) throws CubeException;
+    List<CubeDefinition> installCube(String location) throws CubeException;
 }

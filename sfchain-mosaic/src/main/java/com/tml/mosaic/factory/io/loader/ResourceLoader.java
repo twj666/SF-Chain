@@ -1,6 +1,6 @@
-package com.tml.mosaic.install.io.loader;
+package com.tml.mosaic.factory.io.loader;
 
-import com.tml.mosaic.install.io.resource.Resource;
+import com.tml.mosaic.factory.io.resource.Resource;
 
 /**
  * 描述: 资源加载器

@@ -3,7 +3,7 @@ package com.tml.mosaic.install.support;
 import com.tml.mosaic.cube.MCube;
 import com.tml.mosaic.core.tools.guid.GUUID;
 import com.tml.mosaic.cube.Cube;
-import com.tml.mosaic.factory.config.CubeDefinition;
+import com.tml.mosaic.factory.CubeDefinition;
 
 import java.io.IOException;
 import java.io.InputStream;

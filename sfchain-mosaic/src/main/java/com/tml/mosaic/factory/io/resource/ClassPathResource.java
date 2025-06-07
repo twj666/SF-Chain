@@ -1,4 +1,4 @@
-package com.tml.mosaic.install.io.resource;
+package com.tml.mosaic.factory.io.resource;
 
 import com.tml.mosaic.util.Assert;
 import com.tml.mosaic.util.ClassUtils;

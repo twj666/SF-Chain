@@ -1,11 +1,14 @@
 package com.tml.mosaic.install.support;
 
 import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.factory.config.CubeDefinitionRegistry;
+import com.tml.mosaic.factory.CubeDefinition;
 import com.tml.mosaic.install.CubeInstaller;
-import com.tml.mosaic.install.io.loader.DefaultResourceLoader;
-import com.tml.mosaic.install.io.loader.ResourceLoader;
-import com.tml.mosaic.install.io.resource.Resource;
+import com.tml.mosaic.factory.io.loader.DefaultResourceLoader;
+import com.tml.mosaic.factory.io.loader.ResourceLoader;
+import com.tml.mosaic.factory.io.resource.Resource;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 描述: 方块安装器抽象类实现
@@ -14,22 +17,14 @@ import com.tml.mosaic.install.io.resource.Resource;
  */
 public abstract class AbstractCubeInstaller implements CubeInstaller {
 
-    private final CubeDefinitionRegistry registry;
-
     private final ResourceLoader resourceLoader;
 
-    protected AbstractCubeInstaller(CubeDefinitionRegistry registry) {
-        this(registry, new DefaultResourceLoader());
+    protected AbstractCubeInstaller() {
+        this(new DefaultResourceLoader());
     }
 
-    public AbstractCubeInstaller(CubeDefinitionRegistry registry, ResourceLoader resourceLoader) {
-        this.registry = registry;
+    public AbstractCubeInstaller(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
-    }
-
-    @Override
-    public CubeDefinitionRegistry getRegistry() {
-        return registry;
     }
 
     @Override
@@ -38,16 +33,18 @@ public abstract class AbstractCubeInstaller implements CubeInstaller {
     }
 
     @Override
-    public void installCube(Resource... resources) throws CubeException {
+    public List<CubeDefinition> installCube(Resource... resources) throws CubeException {
+        List<CubeDefinition> allCubes = new ArrayList<>();
         for (Resource resource : resources) {
-            installCube(resource);
+            allCubes.addAll(installCube(resource));
         }
+        return allCubes;
     }
 
     @Override
-    public void installCube(String location) throws CubeException {
+    public List<CubeDefinition> installCube(String location) throws CubeException {
         ResourceLoader resourceLoader = getResourceLoader();
         Resource resource = resourceLoader.getResource(location);
-        installCube(resource);
+        return installCube(resource);
     }
 }
