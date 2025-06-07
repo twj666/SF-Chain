@@ -18,7 +18,6 @@ public class JarInstallerExample {
         installerRegistry.registerInstaller(InstallType.JAR_INSTALL, new JarCubeInstaller());
 
         ClassPathJsonCubeContext context = new ClassPathJsonCubeContext("classpath:start1.json", installerRegistry);
-
         // 获取翻译Cube
         Cube translationCube = context.getCube(new GUUID("translationCube"));
 

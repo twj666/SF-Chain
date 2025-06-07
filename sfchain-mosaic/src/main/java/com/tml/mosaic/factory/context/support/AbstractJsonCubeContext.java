@@ -1,7 +1,8 @@
 package com.tml.mosaic.factory.context.support;
 
 import com.tml.mosaic.factory.context.json.JsonCubeDefinitionReader;
-import com.tml.mosaic.factory.support.DefaultListableCubeFactory;
+import com.tml.mosaic.factory.support.DefaultDefinitionListableCubeFactory;
+import com.tml.mosaic.factory.support.ListableCubeFactory;
 import com.tml.mosaic.install.support.registry.InstallerRegistry;
 
 /**
@@ -12,7 +13,7 @@ import com.tml.mosaic.install.support.registry.InstallerRegistry;
 public abstract class AbstractJsonCubeContext extends AbstractRefreshableCubeContext {
 
     @Override
-    protected void loadCubeDefinitions(DefaultListableCubeFactory cubeFactory) {
+    protected void loadCubeDefinitions(ListableCubeFactory cubeFactory) {
         JsonCubeDefinitionReader cubeDefinitionReader = new JsonCubeDefinitionReader(cubeFactory, getInstallerRegistry());
         String[] configLocations = getConfigLocations();
         if (null != configLocations){

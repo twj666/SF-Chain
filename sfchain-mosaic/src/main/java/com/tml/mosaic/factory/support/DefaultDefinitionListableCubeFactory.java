@@ -5,6 +5,7 @@ import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.factory.definition.CubeDefinition;
 import com.tml.mosaic.factory.config.CubeDefinitionRegistry;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,7 +14,7 @@ import java.util.Map;
  * @author suifeng
  * 日期: 2025/6/6
  */
-public class DefaultListableCubeFactory extends AbstractAutowireCapableCubeFactory implements CubeDefinitionRegistry, ConfigurableListableCubeFactory {
+public class DefaultDefinitionListableCubeFactory extends ListableCubeFactory{
 
     private Map<GUID, CubeDefinition> cubeDefinitionMap = new HashMap<>();
 
