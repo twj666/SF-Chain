@@ -3,7 +3,7 @@ package com.tml.mosaic.factory.config;
 import com.tml.mosaic.core.execption.CubeException;
 import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.cube.Cube;
-import com.tml.mosaic.factory.CubeDefinition;
+import com.tml.mosaic.factory.definition.CubeDefinition;
 
 /**
  * 描述: Cube实例化策略

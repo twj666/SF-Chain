@@ -1,19 +1,18 @@
 package com.tml.mosaic.install.support.jar;
 
-import com.tml.mosaic.core.infrastructure.CommonComponent;
-import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.cube.MCube;
+import com.tml.mosaic.cube.MExtension;
+import com.tml.mosaic.cube.MExtensionPackage;
 import com.tml.mosaic.core.tools.guid.GUUID;
 import com.tml.mosaic.cube.Cube;
-import com.tml.mosaic.cube.MExtension;
-import com.tml.mosaic.factory.CubeDefinition;
-import com.tml.mosaic.factory.ExtensionPointDefinition;
+import com.tml.mosaic.factory.definition.CubeDefinition;
+import com.tml.mosaic.factory.definition.ExtensionPackageDefinition;
+import com.tml.mosaic.factory.definition.ExtensionPointDefinition;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
@@ -23,9 +22,10 @@ import java.util.jar.JarInputStream;
  * 日期: 2025/6/3
  */
 public class JarCubeClassScanner {
-    
+
     private final ClassLoader classLoader;
-    
+    private final Map<String, Class<?>> classMap = new HashMap<>();
+
     public JarCubeClassScanner(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
@@ -35,40 +35,89 @@ public class JarCubeClassScanner {
      */
     public List<CubeDefinition> scanCubeDefinitions(InputStream jarInputStream) throws IOException {
         List<CubeDefinition> cubeDefinitions = new ArrayList<>();
+        scanAllClasses(jarInputStream); // 第一步：扫描所有类
 
+        // 查找Cube类
+        for (Class<?> clazz : classMap.values()) {
+            if (isValidCubeClass(clazz)) {
+                cubeDefinitions.add(createCubeDefinition(clazz));
+            }
+        }
+
+        return cubeDefinitions;
+    }
+
+    /**
+     * 扫描JAR中所有类并缓存
+     */
+    private void scanAllClasses(InputStream jarInputStream) throws IOException {
         try (JarInputStream jis = new JarInputStream(jarInputStream)) {
             JarEntry entry;
             while ((entry = jis.getNextJarEntry()) != null) {
                 if (isClassFile(entry)) {
                     String className = extractClassName(entry.getName());
-                    Class<?> clazz = loadAndValidateCubeClass(className);
-                    if (clazz != null) {
-                        cubeDefinitions.add(createCubeDefinition(clazz, className));
+                    try {
+                        Class<?> clazz = classLoader.loadClass(className);
+                        classMap.put(className, clazz);
+                    } catch (ClassNotFoundException e) {
+                        System.out.println("类加载失败: " + className);
                     }
                 }
             }
         }
-        return cubeDefinitions;
     }
 
-    private CubeDefinition createCubeDefinition(Class<?> cubeClass, String className) {
+    private CubeDefinition createCubeDefinition(Class<?> cubeClass) {
         // 创建CubeDefinition
         MCube mCube = cubeClass.getAnnotation(MCube.class);
         String id = mCube.value();
-        String name = mCube.name().isEmpty() ? cubeClass.getSimpleName() : mCube.value();
+        String name = mCube.name().isEmpty() ? cubeClass.getSimpleName() : mCube.name();
 
         CubeDefinition definition = new CubeDefinition(
-                new GUUID(id), name, mCube.version(),
-                mCube.description(), mCube.model(),
-                cubeClass.getName(), classLoader
+                new GUUID(id),
+                name,
+                mCube.version(),
+                mCube.description(),
+                mCube.model(),
+                cubeClass.getName(),
+                classLoader
         );
 
-        scanExtensionPoints(cubeClass, definition);
+        // 扫描扩展包
+        scanExtensionPackages(cubeClass, definition);
         return definition;
     }
 
-    private void scanExtensionPoints(Class<?> cubeClass, CubeDefinition cubeDefinition) {
-        for (Method method : cubeClass.getDeclaredMethods()) {
+    private void scanExtensionPackages(Class<?> cubeClass, CubeDefinition cubeDef) {
+        // 获取Cube类所在包
+        String basePackage = cubeClass.getPackage().getName();
+
+        // 扫描同包下的类
+        for (Class<?> clazz : classMap.values()) {
+            // 检查是否在同一个包下
+            if (clazz.getPackage().getName().startsWith(basePackage)) {
+                MExtensionPackage pkgAnno = clazz.getAnnotation(MExtensionPackage.class);
+                if (pkgAnno != null && pkgAnno.cubeId().equals(cubeDef.getId().toString())) {
+                    // 创建扩展包定义
+                    ExtensionPackageDefinition pkgDef = new ExtensionPackageDefinition(
+                            pkgAnno.value(),
+                            pkgAnno.name(),
+                            pkgAnno.description(),
+                            pkgAnno.version(),
+                            clazz.getName(),
+                            pkgAnno.cubeId()
+                    );
+
+                    // 扫描扩展点
+                    scanExtensionPoints(clazz, pkgDef);
+                    cubeDef.addExtensionPackage(pkgDef);
+                }
+            }
+        }
+    }
+
+    private void scanExtensionPoints(Class<?> pkgClass, ExtensionPackageDefinition pkgDef) {
+        for (Method method : pkgClass.getDeclaredMethods()) {
             MExtension extension = method.getAnnotation(MExtension.class);
             if (extension != null) {
                 ExtensionPointDefinition epd = new ExtensionPointDefinition(
@@ -81,7 +130,7 @@ public class JarCubeClassScanner {
                         method.getReturnType(),
                         method.getParameterTypes()
                 );
-                cubeDefinition.addExtensionPoint(epd);
+                pkgDef.addExtensionPoint(epd);
             }
         }
     }
@@ -93,7 +142,7 @@ public class JarCubeClassScanner {
     private String extractClassName(String entryName) {
         return entryName.replace('/', '.').substring(0, entryName.length() - 6);
     }
-    
+
     /**
      * 加载并验证Cube类
      */
@@ -101,18 +150,15 @@ public class JarCubeClassScanner {
     private Class<? extends Cube> loadAndValidateCubeClass(String className) {
         try {
             Class<?> clazz = classLoader.loadClass(className);
-            
-            // 验证是否是有效的Cube类
             if (isValidCubeClass(clazz)) {
                 return (Class<? extends Cube>) clazz;
             }
         } catch (Exception e) {
-            // 忽略无法加载或验证失败的类
             System.out.println("跳过类: " + className + " (原因: " + e.getMessage() + ")");
         }
         return null;
     }
-    
+
     /**
      * 验证是否是有效的Cube类
      */
@@ -121,25 +167,17 @@ public class JarCubeClassScanner {
         if (!Cube.class.isAssignableFrom(clazz)) {
             return false;
         }
-        
+
         // 2. 必须有@MCube注解
         if (!clazz.isAnnotationPresent(MCube.class)) {
             return false;
         }
-        
+
         // 3. 不能是抽象类或接口
-        if (clazz.isInterface() || 
-            java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+        if (clazz.isInterface() ||
+                java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
             return false;
         }
-        
-        // 4. 必须有无参构造函数
-        try {
-            clazz.getDeclaredConstructor();
-            return true;
-        } catch (NoSuchMethodException e) {
-            System.out.println("Cube类缺少无参构造函数: " + clazz.getName());
-            return false;
-        }
+        return true;
     }
 }

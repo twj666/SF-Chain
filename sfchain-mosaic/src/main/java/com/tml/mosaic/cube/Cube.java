@@ -27,7 +27,6 @@ public abstract class Cube extends UniqueEntity {
     public Cube(GUID id) {
         super(id);
         this.metaData = new MetaData();
-        initializeMetaData();
     }
 
     public Cube() {
@@ -53,53 +52,6 @@ public abstract class Cube extends UniqueEntity {
     protected void doInitialize() {}
     protected void doDestroy() {}
 
-    protected void initializeMetaData() {
-        metaData.setName(this.getClass().getSimpleName());
-        metaData.setDescription("默认Cube描述");
-        metaData.setVersion("1.0.0");
-    }
-
-    public PointResult executeExtensionPoint(String injectionPointId, PointParam input) {
-        try {
-            ExtensionPoint extensionPoint = findBestMatchExtensionPoint(injectionPointId);
-
-            if (extensionPoint == null) {
-                log.debug("✗ 扩展点未找到 | Cube[{}] | 注入点: {}", getCubeId(), injectionPointId);
-                return PointResult.failure("EXTENSION_NOT_FOUND", "未找到匹配的扩展点");
-            }
-
-            log.debug("  → 执行扩展点 | {} [{}] | 优先级: {}",
-                    extensionPoint.getExtensionId(), extensionPoint.getExtensionName(), extensionPoint.getPriority());
-
-            return extensionPoint.execute(input);
-
-        } catch (Exception e) {
-            log.error("✗ 扩展点执行异常 | Cube[{}] | 注入点: {} | 异常: {}",
-                    getCubeId(), injectionPointId, e.getMessage(), e);
-            return PointResult.failure("CUBE_EXECUTION_ERROR", "Cube执行异常: " + e.getMessage());
-        }
-    }
-
-    protected ExtensionPoint findBestMatchExtensionPoint(String injectionPointId) {
-        ExtensionPoint directMatch = metaData.findExtensionPoint(new DotNotationId(injectionPointId));
-        if (directMatch != null) {
-            return directMatch;
-        }
-
-        List<ExtensionPoint> availablePoints = metaData.getExtensionPoints();
-        if (!availablePoints.isEmpty()) {
-            return availablePoints.stream()
-                    .min((ep1, ep2) -> Integer.compare(ep1.getPriority(), ep2.getPriority()))
-                    .orElse(null);
-        }
-
-        return null;
-    }
-
-    public boolean hasExtensionPoint(String extensionId) {
-        return metaData.findExtensionPoint(new DotNotationId(extensionId)) != null;
-    }
-
     public GUID getCubeId() {
         return getId();
     }
@@ -110,37 +62,18 @@ public abstract class Cube extends UniqueEntity {
         private String version;
         private String description;
         private String model;
-        private List<ExtensionPoint> extensionPoints = new CopyOnWriteArrayList<>();
-        private Map<GUID, ExtensionPoint> extensionMap = new ConcurrentHashMap<>();
 
-        public MetaData(String name, String version, String description, String model) {
-            this.name = name;
-            this.version = version;
-            this.description = description;
-            this.model = model;
-        }
+        // 扩展包元数据
+        private final List<ExtensionPackage> extensionPackages = new CopyOnWriteArrayList<>();
+        private final Map<GUID, ExtensionPackage> extensionPackageMap = new ConcurrentHashMap<>();
+    }
 
-        public MetaData() {}
+    public void addExtensionPackage(ExtensionPackage extensionPackage) {
+        getMetaData().extensionPackages.add(extensionPackage);
+        getMetaData().extensionPackageMap.put(extensionPackage.getId(), extensionPackage);
+    }
 
-        public ExtensionPoint findExtensionPoint(GUID guid) {
-            return extensionMap.computeIfAbsent(guid, key ->
-                    extensionPoints.stream()
-                            .filter(ep -> ep.getId().equals(key))
-                            .findFirst()
-                            .orElse(null)
-            );
-        }
-
-        public void addExtensionPoint(ExtensionPoint extensionPoint) {
-            extensionPoints.add(extensionPoint);
-            extensionMap.put(extensionPoint.getId(), extensionPoint);
-        }
-
-        public void removeExtensionPoint(GUID extensionPointId) {
-            ExtensionPoint removed = extensionMap.remove(extensionPointId);
-            if (removed != null) {
-                extensionPoints.remove(removed);
-            }
-        }
+    public ExtensionPackage getExtensionPackage(GUID packageId) {
+        return getMetaData().extensionPackageMap.get(packageId);
     }
 }

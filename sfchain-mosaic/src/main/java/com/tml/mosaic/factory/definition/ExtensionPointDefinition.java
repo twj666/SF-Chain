@@ -1,4 +1,4 @@
-package com.tml.mosaic.factory;
+package com.tml.mosaic.factory.definition;
 
 import lombok.Data;
 

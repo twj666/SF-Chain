@@ -2,7 +2,7 @@ package com.tml.mosaic.factory.context.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.factory.CubeDefinition;
+import com.tml.mosaic.factory.definition.CubeDefinition;
 import com.tml.mosaic.factory.config.CubeDefinitionRegistry;
 import com.tml.mosaic.factory.support.AbstractCubeDefinitionReader;
 import com.tml.mosaic.factory.io.loader.ResourceLoader;

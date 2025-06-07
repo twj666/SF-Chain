@@ -3,7 +3,7 @@ package com.tml.mosaic.factory.support;
 import com.tml.mosaic.core.execption.CubeException;
 import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.cube.Cube;
-import com.tml.mosaic.factory.CubeDefinition;
+import com.tml.mosaic.factory.definition.CubeDefinition;
 import com.tml.mosaic.factory.config.InstantiationStrategy;
 
 import java.lang.reflect.Constructor;

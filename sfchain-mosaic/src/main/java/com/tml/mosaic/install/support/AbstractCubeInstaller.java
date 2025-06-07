@@ -1,7 +1,7 @@
 package com.tml.mosaic.install.support;
 
 import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.factory.CubeDefinition;
+import com.tml.mosaic.factory.definition.CubeDefinition;
 import com.tml.mosaic.install.CubeInstaller;
 import com.tml.mosaic.factory.io.loader.DefaultResourceLoader;
 import com.tml.mosaic.factory.io.loader.ResourceLoader;

@@ -1,7 +1,7 @@
 package com.tml.mosaic.factory.config;
 
 import com.tml.mosaic.core.tools.guid.GUID;
-import com.tml.mosaic.factory.CubeDefinition;
+import com.tml.mosaic.factory.definition.CubeDefinition;
 
 /**
  * 描述: Cube定义注册接口

@@ -18,7 +18,7 @@ public class GenericCubeActuator implements CubeActuator{
             };
 
             Cube.MetaData metaData = cube.getMetaData();
-            ExtensionPoint extensionPoint = metaData.findExtensionPoint(setupCubeInfo.getMethodId());
+//            ExtensionPoint extensionPoint = metaData.findExtensionPoint(setupCubeInfo.getMethodId());
 
             // TODO 反射执行方法
         }

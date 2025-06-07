@@ -1,8 +1,7 @@
-package com.tml.mosaic.factory;
+package com.tml.mosaic.factory.definition;
 
 import com.tml.mosaic.core.tools.guid.GUID;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 /**
@@ -11,7 +10,6 @@ import java.util.List;
  * 日期: 2025/6/6
  */
 @Data
-@Slf4j
 public class CubeDefinition {
     private GUID id;
     private String name;
@@ -20,7 +18,7 @@ public class CubeDefinition {
     private String model;
     private String className;
     private transient ClassLoader classLoader;
-    private final List<ExtensionPointDefinition> extensionPoints = new ArrayList<>();
+    private final List<ExtensionPackageDefinition> extensionPackages = new ArrayList<>();
 
     public CubeDefinition(GUID id, String name, String version,
                           String description, String model,
@@ -34,8 +32,7 @@ public class CubeDefinition {
         this.classLoader = classLoader;
     }
 
-    // 添加扩展点定义
-    public void addExtensionPoint(ExtensionPointDefinition epd) {
-        extensionPoints.add(epd);
+    public void addExtensionPackage(ExtensionPackageDefinition epd) {
+        extensionPackages.add(epd);
     }
 }
