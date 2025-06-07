@@ -1,13 +1,10 @@
 package com.tml.mosaic.demo.install;
 
-import com.tml.mosaic.core.execption.CubeException;
-import com.tml.mosaic.core.tools.guid.GUUID;
-import com.tml.mosaic.cube.Cube;
-import com.tml.mosaic.factory.CubeDefinition;
+import com.tml.mosaic.core.constant.InstallType;
+import com.tml.mosaic.factory.json.JsonCubeDefinitionReader;
 import com.tml.mosaic.factory.support.DefaultListableCubeFactory;
 import com.tml.mosaic.install.impl.JarCubeInstaller;
-
-import java.util.List;
+import com.tml.mosaic.install.support.DefaultInstallerRegistry;
 
 /**
  * JAR安装器使用示例
@@ -16,26 +13,17 @@ public class JarInstallerExample {
     
     public static void main(String[] args) {
 
+        // 创建注册表
+        DefaultInstallerRegistry installerRegistry = new DefaultInstallerRegistry();
+        installerRegistry.registerInstaller(InstallType.JAR_INSTALL, new JarCubeInstaller());
+
+        // 创建工厂
         DefaultListableCubeFactory factory = new DefaultListableCubeFactory();
 
-        // 创建安装器
-        JarCubeInstaller installer = new JarCubeInstaller();
-        
-        try {
-            // 安装JAR包
-            List<CubeDefinition> cubeDefinitions = installer.installCube("F:\\soft-data\\mosic-test-dever-1.0-SNAPSHOT.jar");
-            for (CubeDefinition cubeDefinition : cubeDefinitions) {
-                System.out.println(cubeDefinition);
-            }
+        // 创建JSON读取器
+        JsonCubeDefinitionReader reader = new JsonCubeDefinitionReader(factory, installerRegistry);
 
-            // 查看安装结果
-            System.out.println("已安装的JAR包数量: " + installer.getInstalledJars().size());
-
-            Cube germanTranslatorCube = factory.getCube(new GUUID("germanTranslatorCube"));
-            System.out.println(germanTranslatorCube);
-
-        } catch (CubeException e) {
-            System.err.println("安装失败: " + e.getMessage());
-        }
+        // 加载配置
+        reader.loadCubeDefinitions("D:\\mosic-data-test\\start.json");
     }
 }
