@@ -1,12 +1,17 @@
 package com.tml.mosaic.install.support.jar;
 
+import com.tml.mosaic.core.infrastructure.CommonComponent;
+import com.tml.mosaic.core.tools.guid.GUID;
 import com.tml.mosaic.cube.MCube;
 import com.tml.mosaic.core.tools.guid.GUUID;
 import com.tml.mosaic.cube.Cube;
+import com.tml.mosaic.cube.MExtension;
 import com.tml.mosaic.factory.CubeDefinition;
+import com.tml.mosaic.factory.ExtensionPointDefinition;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -38,26 +43,7 @@ public class JarCubeClassScanner {
                     String className = extractClassName(entry.getName());
                     Class<?> clazz = loadAndValidateCubeClass(className);
                     if (clazz != null) {
-                        // 创建CubeDefinition
-                        MCube mCube = clazz.getAnnotation(MCube.class);
-                        String id = mCube.value();
-                        String name = mCube.name().isEmpty() ? clazz.getSimpleName() : mCube.value();
-                        String version = mCube.version();
-                        String description = mCube.description();
-                        String model = mCube.model();
-
-                        CubeDefinition cubeDefinition = new CubeDefinition(
-                                new GUUID(id),
-                                name,
-                                version,
-                                description,
-                                model,
-                                className,
-                                this.classLoader   // 当前类加载器
-                        );
-
-                        cubeDefinitions.add(cubeDefinition);
-                        System.out.println("发现Cube: " + className);
+                        cubeDefinitions.add(createCubeDefinition(clazz, className));
                     }
                 }
             }
@@ -65,22 +51,47 @@ public class JarCubeClassScanner {
         return cubeDefinitions;
     }
 
-    /**
-     * 判断是否是Class文件
-     */
-    private boolean isClassFile(JarEntry entry) {
-        String name = entry.getName();
-        return !entry.isDirectory() && 
-               name.endsWith(".class") && 
-               !name.contains("$"); // 排除内部类
+    private CubeDefinition createCubeDefinition(Class<?> cubeClass, String className) {
+        // 创建CubeDefinition
+        MCube mCube = cubeClass.getAnnotation(MCube.class);
+        String id = mCube.value();
+        String name = mCube.name().isEmpty() ? cubeClass.getSimpleName() : mCube.value();
+
+        CubeDefinition definition = new CubeDefinition(
+                new GUUID(id), name, mCube.version(),
+                mCube.description(), mCube.model(),
+                cubeClass.getName(), classLoader
+        );
+
+        scanExtensionPoints(cubeClass, definition);
+        return definition;
     }
-    
-    /**
-     * 提取类名
-     */
+
+    private void scanExtensionPoints(Class<?> cubeClass, CubeDefinition cubeDefinition) {
+        for (Method method : cubeClass.getDeclaredMethods()) {
+            MExtension extension = method.getAnnotation(MExtension.class);
+            if (extension != null) {
+                ExtensionPointDefinition epd = new ExtensionPointDefinition(
+                        extension.value(),
+                        method.getName(),
+                        extension.name(),
+                        extension.priority(),
+                        extension.description(),
+                        false,
+                        method.getReturnType(),
+                        method.getParameterTypes()
+                );
+                cubeDefinition.addExtensionPoint(epd);
+            }
+        }
+    }
+
+    private boolean isClassFile(JarEntry entry) {
+        return !entry.isDirectory() && entry.getName().endsWith(".class");
+    }
+
     private String extractClassName(String entryName) {
-        return entryName.replace('/', '.')
-                       .replace(".class", "");
+        return entryName.replace('/', '.').substring(0, entryName.length() - 6);
     }
     
     /**
