@@ -1,9 +1,6 @@
-package com.tml.mosaic.install.support;
+package com.tml.mosaic.install.support.registry;
 
 import com.tml.mosaic.install.CubeInstaller;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public interface InstallerRegistry {
     void registerInstaller(String installerType, CubeInstaller installer);

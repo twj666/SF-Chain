@@ -3,10 +3,11 @@ package com.tml.mosaic.install.impl;
 import com.tml.mosaic.core.constant.InstallType;
 import com.tml.mosaic.core.execption.CubeException;
 import com.tml.mosaic.factory.CubeDefinition;
-import com.tml.mosaic.factory.config.CubeDefinitionRegistry;
 import com.tml.mosaic.factory.io.loader.ResourceLoader;
 import com.tml.mosaic.factory.io.resource.Resource;
 import com.tml.mosaic.install.support.*;
+import com.tml.mosaic.install.support.jar.JarCubeClassScanner;
+import com.tml.mosaic.install.support.jar.JarPluginClassLoader;
 
 import java.io.File;
 import java.io.IOException;

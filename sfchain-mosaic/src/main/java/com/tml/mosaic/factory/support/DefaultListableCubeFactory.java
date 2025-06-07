@@ -13,7 +13,7 @@ import java.util.Map;
  * @author suifeng
  * 日期: 2025/6/6
  */
-public class DefaultListableCubeFactory extends AbstractAutowireCapableCubeFactory implements CubeDefinitionRegistry {
+public class DefaultListableCubeFactory extends AbstractAutowireCapableCubeFactory implements CubeDefinitionRegistry, ConfigurableListableCubeFactory {
 
     private Map<GUID, CubeDefinition> cubeDefinitionMap = new HashMap<>();
 
@@ -27,5 +27,10 @@ public class DefaultListableCubeFactory extends AbstractAutowireCapableCubeFacto
         CubeDefinition cubeDefinition = cubeDefinitionMap.get(cubeId);
         if (cubeDefinition == null) throw new CubeException("No cubeId '" + cubeId + "' is defined");
         return cubeDefinition;
+    }
+
+    @Override
+    public void preInstantiateSingletons() throws CubeException {
+        cubeDefinitionMap.keySet().forEach(this::getCube);
     }
 }

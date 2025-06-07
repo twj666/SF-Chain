@@ -1,4 +1,4 @@
-package com.tml.mosaic.install.support;
+package com.tml.mosaic.install.support.jar;
 
 import com.tml.mosaic.cube.MCube;
 import com.tml.mosaic.core.tools.guid.GUUID;

@@ -49,4 +49,11 @@ public abstract class AbstractCubeDefinitionReader implements CubeDefinitionRead
         Resource resource = resourceLoader.getResource(location);
         loadCubeDefinitions(resource);
     }
+
+    @Override
+    public void loadCubeDefinitions(String... locations) throws CubeException {
+        for (String location : locations) {
+            loadCubeDefinitions(location);
+        }
+    }
 }

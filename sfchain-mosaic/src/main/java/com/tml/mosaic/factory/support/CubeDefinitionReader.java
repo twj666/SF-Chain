@@ -17,8 +17,7 @@ public interface CubeDefinitionReader {
     ResourceLoader getResourceLoader();
 
     void loadCubeDefinitions(Resource resource) throws CubeException;
-
     void loadCubeDefinitions(Resource... resources) throws CubeException;
-
     void loadCubeDefinitions(String location) throws CubeException;
+    void loadCubeDefinitions(String... locations) throws CubeException;
 }

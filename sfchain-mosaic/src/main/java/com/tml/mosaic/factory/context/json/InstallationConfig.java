@@ -1,4 +1,4 @@
-package com.tml.mosaic.factory.json;
+package com.tml.mosaic.factory.context.json;
 
 import lombok.Data;
 
