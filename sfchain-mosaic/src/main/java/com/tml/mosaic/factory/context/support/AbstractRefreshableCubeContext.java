@@ -2,7 +2,6 @@ package com.tml.mosaic.factory.context.support;
 
 import com.tml.mosaic.core.execption.CubeException;
 import com.tml.mosaic.factory.context.ConfigurableCubeContext;
-import com.tml.mosaic.factory.support.ConfigurableListableCubeFactory;
 import com.tml.mosaic.factory.support.DefaultDefinitionListableCubeFactory;
 import com.tml.mosaic.factory.support.ListableCubeFactory;
 

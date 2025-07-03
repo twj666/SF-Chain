@@ -1,7 +1,6 @@
 package com.tml.mosaic.factory.context.support;
 
 import com.tml.mosaic.factory.context.json.JsonCubeDefinitionReader;
-import com.tml.mosaic.factory.support.DefaultDefinitionListableCubeFactory;
 import com.tml.mosaic.factory.support.ListableCubeFactory;
 import com.tml.mosaic.install.support.registry.InstallerRegistry;
 

@@ -18,7 +18,8 @@ public interface AIConstant {
     
     // SiliconFlow模型
     String SILI_DEEP_SEEK_R1 = "Pro/deepseek-ai/DeepSeek-R1";
-    String SILI_DEEP_SEEK_V3 = "Pro/deepseek-ai/DeepSeek-V3";
+    String SILI_DEEP_SEEK_V3 = "deepseek-ai/DeepSeek-V3";
+//    String SILI_DEEP_SEEK_V3_MF = "deepseek-ai/DeepSeek-V3";
     String SILI_THUDM = "Pro/THUDM/glm-4-9b-chat";
     String SILI_QWEN = "Qwen/Qwen2.5-32B-Instruct";
 }
