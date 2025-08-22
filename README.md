@@ -16,6 +16,8 @@
 - 🚨 **异常处理** - 统一的异常处理机制，提供清晰的错误信息
 - 🧬 **简单扩展** - 通过实现接口快速添加自定义操作
 
+---
+
 ## 🚀 快速开始
 ### 1️⃣ 添加依赖
 在您的 pom.xml 中添加SF-Chain依赖：
@@ -41,6 +43,17 @@ sf-chain:
   persistence:
     database-type: mysql # 支持: mysql, postgresql
 ```
+
+---
+## 🎥 开箱即用
+- 直接启动springboot项目，即可在前端进行访问
+<img width="3780" height="1870" alt="image" src="https://github.com/user-attachments/assets/b8b51d96-9e7a-4681-8ff7-5608c8fff836" />
+<img width="3728" height="1562" alt="image" src="https://github.com/user-attachments/assets/76a611dc-4b0b-4a07-bbc0-a7ebfae36710" />
+<img width="3710" height="1550" alt="image" src="https://github.com/user-attachments/assets/417e5d85-c2b6-42f7-af52-97f64b5cb8a9" />
+<img width="3034" height="1592" alt="image" src="https://github.com/user-attachments/assets/828e76c9-3218-44ce-82dd-6e44d9b6f6c9" />
+  
+
+---
 
 ## 🤝 贡献指南
 
