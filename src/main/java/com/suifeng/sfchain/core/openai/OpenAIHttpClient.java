@@ -52,22 +52,12 @@ public class OpenAIHttpClient {
      */
     public OpenAIResponse chatCompletion(OpenAIRequest request) {
         try {
-            // 智能构建endpoint，避免重复的/v1路径
-            String endpoint;
-            if (baseUrl.endsWith("/v1") || baseUrl.contains("/v1/")) {
-                // baseUrl已包含v1路径，直接添加chat/completions
-                endpoint = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "chat/completions";
-            } else {
-                // baseUrl不包含v1路径，添加完整路径
-                endpoint = baseUrl + "/v1/chat/completions";
-            }
             String requestBody = JSON.toJSONString(request);
-            
-            log.debug("发送请求到: {}", endpoint);
+            log.debug("发送请求到: {}", baseUrl);
             log.debug("请求体: {}", requestBody);
-            log.info("构建的API端点: {}", endpoint);
+            log.info("构建的API端点: {}", baseUrl);
             
-             HttpURLConnection connection = createConnection(endpoint);
+             HttpURLConnection connection = createConnection(baseUrl);
             
             // 发送请求体
             try (OutputStream os = connection.getOutputStream()) {
@@ -154,20 +144,11 @@ public class OpenAIHttpClient {
                 try {
                     // 设置流式请求
                     OpenAIRequest streamRequest = request.toBuilder().stream(true).build();
-                    
-                    // 智能构建endpoint
-                    String endpoint;
-                    if (baseUrl.endsWith("/v1") || baseUrl.contains("/v1/")) {
-                        endpoint = baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "chat/completions";
-                    } else {
-                        endpoint = baseUrl + "/v1/chat/completions";
-                    }
-                    
                     String requestBody = JSON.toJSONString(streamRequest);
-                    log.debug("发送流式请求到: {}", endpoint);
+                    log.debug("发送流式请求到: {}", baseUrl);
                     log.debug("请求体: {}", requestBody);
                     
-                    HttpURLConnection connection = createConnection(endpoint);
+                    HttpURLConnection connection = createConnection(baseUrl);
                     
                     // 发送请求体
                     try (OutputStream os = connection.getOutputStream()) {
