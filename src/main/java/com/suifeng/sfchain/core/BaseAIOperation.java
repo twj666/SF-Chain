@@ -89,11 +89,25 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
 
         // 获取泛型类型
         Type superClass = this.getClass().getGenericSuperclass();
-        if (superClass instanceof ParameterizedType parameterizedType) {
+        if (superClass instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) superClass;
             Type[] typeArguments = parameterizedType.getActualTypeArguments();
             if (typeArguments.length >= 2) {
-                this.inputType = (Class<INPUT>) typeArguments[0];
-                this.outputType = (Class<OUTPUT>) typeArguments[1];
+                // 安全地获取输入类型
+                Type inputTypeArg = typeArguments[0];
+                if (inputTypeArg instanceof Class) {
+                    this.inputType = (Class) inputTypeArg;
+                } else if (inputTypeArg instanceof ParameterizedType) {
+                    this.inputType = (Class) ((ParameterizedType) inputTypeArg).getRawType();
+                }
+
+                // 安全地获取输出类型
+                Type outputTypeArg = typeArguments[1];
+                if (outputTypeArg instanceof Class) {
+                    this.outputType = (Class) outputTypeArg;
+                } else if (outputTypeArg instanceof ParameterizedType) {
+                    this.outputType = (Class) ((ParameterizedType) outputTypeArg).getRawType();
+                }
             }
         }
 
