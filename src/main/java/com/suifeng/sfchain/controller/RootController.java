@@ -42,7 +42,7 @@ public class RootController {
                 "</body>\n" +
                 "</html>";
         
-        return ResponseEntity.status(HttpStatus.OK)
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .header("Content-Type", "text/html; charset=UTF-8")
                 .body(whitelistPage);
     }
