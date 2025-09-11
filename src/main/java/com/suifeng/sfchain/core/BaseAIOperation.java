@@ -20,6 +20,8 @@ import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.suifeng.sfchain.constants.AIOperationConstant.JSON_REPAIR_OP;
 
@@ -44,6 +46,9 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
 
     @Autowired
     protected ChatContextService chatContextService;
+
+    @Autowired
+    private AICallLogManager logManager;
 
     /**
      * 操作的注解信息
@@ -153,49 +158,139 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
     }
 
     /**
-     * 流式执行AI操作（带上下文支持）
+     * 流式执行AI操作（带上下文支持和详细日志记录）
      */
     @SuppressWarnings("unchecked")
     public Flux<String> executeStream(INPUT input, String modelName, String sessionId) {
+        String callId = UUID.randomUUID().toString();
+        LocalDateTime startTime = LocalDateTime.now();
+        AtomicLong startMillis = new AtomicLong(System.currentTimeMillis());
+        AtomicReference<StringBuilder> responseBuilder = new AtomicReference<>(new StringBuilder());
+
+        AICallLog.AICallLogBuilder logBuilder = AICallLog.builder()
+                .callId(callId)
+                .operationType(annotation.value())
+                .callTime(startTime)
+                .input(input)
+                .modelName(modelName)
+                .frequency(1)
+                .lastAccessTime(startTime);
+
         try {
             // 检查操作是否启用
             if (!isEnabled()) {
-                return Flux.error(new IllegalStateException("操作已禁用: " + annotation.value()));
+                RuntimeException error = new IllegalStateException("操作已禁用: " + annotation.value());
+                recordFailedStreamLog(logBuilder, startMillis.get(), error);
+                return Flux.error(error);
             }
 
             // 获取模型
             AIModel model = getModel(modelName);
-            
+            logBuilder.modelName(model.getName());
+
             // 构建带上下文的提示词
             String prompt = buildPromptWithContext(input, sessionId);
-            
+            logBuilder.prompt(prompt);
+
             // 获取操作配置
             AIOperationRegistry.OperationConfig config = operationRegistry.getOperationConfig(annotation.value());
-            
+
             // 合并配置
-            Integer finalMaxTokens = config.getMaxTokens() > 0 ? Integer.valueOf(config.getMaxTokens()) : 
-                                    (annotation.defaultMaxTokens() > 0 ? annotation.defaultMaxTokens() : null);
-            Double finalTemperature = config.getTemperature() >= 0 ? Double.valueOf(config.getTemperature()) : 
-                                     (annotation.defaultTemperature() >= 0 ? annotation.defaultTemperature() : null);
+            Integer finalMaxTokens = config.getMaxTokens() > 0 ? Integer.valueOf(config.getMaxTokens()) :
+                    (annotation.defaultMaxTokens() > 0 ? annotation.defaultMaxTokens() : null);
+            Double finalTemperature = config.getTemperature() >= 0 ? Double.valueOf(config.getTemperature()) :
+                    (annotation.defaultTemperature() >= 0 ? annotation.defaultTemperature() : null);
             Boolean finalJsonOutput = config.isRequireJsonOutput() || annotation.requireJsonOutput();
             boolean finalThinking = config.isSupportThinking() || annotation.supportThinking();
-            
+
+            // 记录请求参数
+            AICallLog.AIRequestParams requestParams = AICallLog.AIRequestParams.builder()
+                    .maxTokens(finalMaxTokens)
+                    .temperature(finalTemperature)
+                    .jsonOutput(finalJsonOutput)
+                    .thinking(finalThinking)
+                    .build();
+            logBuilder.requestParams(requestParams);
+
             // 调用模型的流式生成方法
             if (model instanceof OpenAICompatibleModel openAIModel) {
+                Flux<String> resultFlux;
                 if (finalThinking) {
-                    return openAIModel.generateStreamWithThinking(prompt, finalMaxTokens, finalTemperature);
+                    resultFlux = openAIModel.generateStreamWithThinking(prompt, finalMaxTokens, finalTemperature);
                 } else {
-                    return openAIModel.generateStream(prompt, finalMaxTokens, finalTemperature, finalJsonOutput);
+                    resultFlux = openAIModel.generateStream(prompt, finalMaxTokens, finalTemperature, finalJsonOutput);
                 }
+
+                // 包装Flux以添加日志记录
+                return resultFlux
+                        .doOnNext(chunk -> {
+                            // 累积响应内容
+                            responseBuilder.get().append(chunk);
+                        })
+                        .doOnComplete(() -> {
+                            // 流式完成时记录成功日志
+                            long duration = System.currentTimeMillis() - startMillis.get();
+                            String fullResponse = responseBuilder.get().toString();
+
+                            AICallLog successLog = logBuilder
+                                    .status(AICallLog.CallStatus.SUCCESS)
+                                    .duration(duration)
+                                    .rawResponse(fullResponse)
+                                    .output("STREAM_OUTPUT") // 流式输出的标识
+                                    .build();
+
+                            logManager.addLog(successLog);
+                            log.debug("流式AI操作完成: {} - 耗时: {}ms, 响应长度: {}",
+                                    annotation.value(), duration, fullResponse.length());
+                        })
+                        .doOnError(error -> {
+                            // 流式出错时记录失败日志
+                            recordFailedStreamLog(logBuilder, startMillis.get(), error);
+                        })
+                        .doOnCancel(() -> {
+                            // 流式被取消时记录日志
+                            long duration = System.currentTimeMillis() - startMillis.get();
+                            String partialResponse = responseBuilder.get().toString();
+
+                            AICallLog cancelLog = logBuilder
+                                    .status(AICallLog.CallStatus.FAILED)
+                                    .duration(duration)
+                                    .rawResponse(partialResponse)
+                                    .errorMessage("流式操作被取消")
+                                    .build();
+
+                            logManager.addLog(cancelLog);
+                            log.warn("流式AI操作被取消: {} - 耗时: {}ms, 部分响应长度: {}",
+                                    annotation.value(), duration, partialResponse.length());
+                        });
+
             } else {
                 // 对于不支持流式的模型，返回错误
-                return Flux.error(new UnsupportedOperationException("模型不支持流式输出: " + model.getName()));
+                RuntimeException error = new UnsupportedOperationException("模型不支持流式输出: " + model.getName());
+                recordFailedStreamLog(logBuilder, startMillis.get(), error);
+                return Flux.error(error);
             }
-            
+
         } catch (Exception e) {
+            // 初始化阶段出错时记录失败日志
+            recordFailedStreamLog(logBuilder, startMillis.get(), e);
             log.error("流式AI操作执行失败: {} - {}", annotation.value(), e.getMessage(), e);
             return Flux.error(new RuntimeException("流式AI操作执行失败: " + e.getMessage(), e));
         }
+    }
+
+    /**
+     * 记录失败的流式操作日志
+     */
+    private void recordFailedStreamLog(AICallLog.AICallLogBuilder logBuilder, long startMillis, Throwable error) {
+        long duration = System.currentTimeMillis() - startMillis;
+        AICallLog failedLog = logBuilder
+                .status(AICallLog.CallStatus.FAILED)
+                .duration(duration)
+                .errorMessage(error.getMessage())
+                .build();
+
+        logManager.addLog(failedLog);
     }
 
     /**
@@ -227,12 +322,6 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
      * @param sessionId 会话ID，用于上下文管理
      * @return 输出结果
      */
-    // 在BaseAIOperation类中添加以下字段和方法
-
-    @Autowired
-    private AICallLogManager logManager;
-
-    // 在execute方法中添加详细日志记录和上下文支持
     public OUTPUT execute(INPUT input, String modelName, String sessionId) {
         String callId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
@@ -631,5 +720,4 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
     public String[] getSupportedModels() {
         return annotation.supportedModels();
     }
-
 }
