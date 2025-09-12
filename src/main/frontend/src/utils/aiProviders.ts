@@ -152,6 +152,7 @@ export const getProviderIcon = (provider: string): string => {
  * 根据模型名称推断提供商
  */
 export const getProviderFromModel = (modelName: string): string => {
+  if (!modelName) return 'other'
   const model = modelName.toLowerCase()
   if (model.includes('gpt') || model.includes('openai')) return 'openai'
   if (model.includes('claude') || model.includes('anthropic')) return 'anthropic'

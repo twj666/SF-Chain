@@ -110,7 +110,7 @@
 
                 <!-- 状态列 -->
                 <div class="cell status-cell">
-                  <span class="status-indicator" :class="log.status.toLowerCase()">
+                  <span class="status-indicator" :class="log.status?.toLowerCase() || 'unknown'">
                     <span class="status-dot"></span>
                     {{ log.status === 'SUCCESS' ? '成功' : '失败' }}
                   </span>
@@ -220,9 +220,9 @@ const filteredLogs = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(log =>
-      log.callId.toLowerCase().includes(query) ||
-      log.operationType.toLowerCase().includes(query) ||
-      log.modelName.toLowerCase().includes(query) ||
+      log.callId?.toLowerCase().includes(query) ||
+      log.operationType?.toLowerCase().includes(query) ||
+      log.modelName?.toLowerCase().includes(query) ||
       log.errorMessage?.toLowerCase().includes(query)
     )
   }
