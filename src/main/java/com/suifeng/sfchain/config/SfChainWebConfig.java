@@ -20,15 +20,19 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class SfChainWebConfig implements WebMvcConfigurer {
     
     private final AuthorizationInterceptor authorizationInterceptor;
+    private final SfChainPathProperties pathProperties;
     
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        log.info("注册SF-Chain Authorization拦截器");
+        String apiPrefix = pathProperties.getFormattedApiPrefix();
+        String webPrefix = pathProperties.getFormattedWebPrefix();
+        
+        log.info("注册SF-Chain Authorization拦截器，API前缀: {}, Web前缀: {}", apiPrefix, webPrefix);
         
         registry.addInterceptor(authorizationInterceptor)
-                .addPathPatterns("/sf-chain/**")
+                .addPathPatterns(apiPrefix + "/**")
                 .excludePathPatterns(
-                    "/sf-chain/config/**",  // 排除配置接口
+                    apiPrefix + "/config/**",  // 排除配置接口
                     "/**/*.js",             // 排除JS文件
                     "/**/*.css",            // 排除CSS文件
                     "/**/*.html",           // 排除HTML文件
@@ -43,6 +47,7 @@ public class SfChainWebConfig implements WebMvcConfigurer {
                     "/**/*.ttf",            // 排除字体文件
                     "/assets/**",           // 排除静态资源
                     "/static/**",           // 排除静态资源
+                    webPrefix + "/**",      // 排除前端静态资源
                     "/",                    // 排除根路径
                     "/index.html"           // 排除首页
                 )

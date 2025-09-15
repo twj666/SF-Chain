@@ -24,7 +24,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/sf-chain/system")
+@RequestMapping("${sf-chain.path.api-prefix:/sf-chain}/system")
 @RequiredArgsConstructor
 public class AISystemController {
     

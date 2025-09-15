@@ -5,7 +5,7 @@ import type { OperationConfigData, OperationsResponse, OperationDetailResponse, 
 export const aiOperationApi = {
   // 获取所有操作配置
   async getAllOperations(): Promise<OperationsResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/operations`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_OPERATIONS}`, {
       method: 'GET',
       requireAuth: true
     })
@@ -13,7 +13,7 @@ export const aiOperationApi = {
 
   // 获取单个操作配置 - 改为POST请求
   async getOperation(operationType: string): Promise<OperationDetailResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/operations/get`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_OPERATIONS}/get`, {
       method: 'POST',
       body: JSON.stringify({ operationType }),
       requireAuth: true
@@ -28,16 +28,16 @@ export const aiOperationApi = {
       operationType: operationType
     }
 
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/operations/save`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_OPERATIONS}/save`, {
       method: 'POST',
       body: JSON.stringify(configWithType),
       requireAuth: true
     })
   },
 
-  // 设置单个操作模型映射 - 改为请求体参数
+  // 设置操作模型映射
   async setOperationMapping(operationType: string, modelName: string): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/operations/mapping`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_OPERATIONS}/mapping`, {
       method: 'POST',
       body: JSON.stringify({ operationType, modelName }),
       requireAuth: true
@@ -46,7 +46,7 @@ export const aiOperationApi = {
 
   // 批量设置操作模型映射
   async setOperationMappings(mappings: Record<string, string>): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/operations/mappings`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_OPERATIONS}/mappings`, {
       method: 'POST',
       body: JSON.stringify({ mappings }),
       requireAuth: true

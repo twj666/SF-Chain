@@ -5,7 +5,7 @@ import type { ModelConfigData, ApiResponse, ModelsResponse, TestConnectionRespon
 export const aiModelApi = {
   // 获取所有模型配置
   async getAllModels(): Promise<ModelsResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/models/list`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/list`, {
       method: 'GET',
       requireAuth: true
     })
@@ -13,7 +13,7 @@ export const aiModelApi = {
 
   // 获取单个模型配置 - 改为POST请求
   async getModel(modelName: string): Promise<ModelConfigData> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/models/get`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/get`, {
       method: 'POST',
       body: JSON.stringify({ modelName }),
       requireAuth: true
@@ -22,7 +22,7 @@ export const aiModelApi = {
 
   // 保存模型配置（创建或更新）
   async saveModel(modelName: string, config: ModelConfigData): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/models/save`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/save`, {
       method: 'POST',
       body: JSON.stringify({ ...config, modelName }),
       requireAuth: true
@@ -31,7 +31,7 @@ export const aiModelApi = {
 
   // 删除模型配置 - 改为POST请求
   async deleteModel(modelName: string): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/models/delete`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/delete`, {
       method: 'POST',
       body: JSON.stringify({ modelName }),
       requireAuth: true
@@ -40,7 +40,7 @@ export const aiModelApi = {
 
   // 测试模型连接 - 改为POST请求
   async testModel(modelName: string): Promise<TestConnectionResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/models/test`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/test`, {
       method: 'POST',
       body: JSON.stringify({ modelName }),
       requireAuth: true

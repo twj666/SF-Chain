@@ -1,5 +1,7 @@
 package com.suifeng.sfchain.config;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -8,58 +10,47 @@ import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 
+import javax.servlet.ServletContext;
 import java.io.IOException;
 
 @Configuration
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
+    
+    private final SfChainPathProperties pathProperties;
+    
+    @Autowired(required = false)
+    private ServletContext servletContext;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 配置静态资源处理 - 支持 /sf 前缀
-        registry.addResourceHandler("/sf/assets/**")
+        String webPrefix = pathProperties.getFormattedWebPrefix();
+        
+        // 如果webPrefix包含context-path，需要提取相对路径部分
+        // 例如：webPrefix=/jeecg-boot/sf，context-path=/jeecg-boot，则使用/sf
+        String relativePath = webPrefix;
+        if (servletContext != null) {
+            String contextPath = servletContext.getContextPath();
+            if (contextPath != null && !contextPath.isEmpty() && webPrefix.startsWith(contextPath + "/")) {
+                relativePath = webPrefix.substring(contextPath.length());
+            }
+        }
+        
+        // 配置静态资源处理 - 支持动态前缀
+        registry.addResourceHandler(relativePath + "/assets/**")
                 .addResourceLocations("classpath:/static/assets/")
                 .setCachePeriod(3600);
                 
-        registry.addResourceHandler("/sf/favicon.ico")
+        registry.addResourceHandler(relativePath + "/favicon.ico")
                 .addResourceLocations("classpath:/static/favicon.ico")
                 .setCachePeriod(3600);
                 
-        registry.addResourceHandler("/sf/icons/**")
+        registry.addResourceHandler(relativePath + "/icons/**")
                 .addResourceLocations("classpath:/static/icons/")
                 .setCachePeriod(3600);
         
-        // 配置SPA路由支持 - 支持 /sf 前缀
-        registry.addResourceHandler("/sf/**")
-                .addResourceLocations("classpath:/static/")
-                .resourceChain(true)
-                .addResolver(new PathResourceResolver() {
-                    @Override
-                    protected Resource getResource(String resourcePath, Resource location) throws IOException {
-                        Resource requestedResource = location.createRelative(resourcePath);
-                        
-                        // 如果请求的资源存在，直接返回
-                        if (requestedResource.exists() && requestedResource.isReadable()) {
-                            return requestedResource;
-                        }
-                        
-                        // 排除API请求，对于SPA路由返回index.html
-                        if (!resourcePath.startsWith("api/") && 
-                            !resourcePath.contains(".")) {  // 不包含文件扩展名的请求视为路由
-                            Resource indexHtml = new ClassPathResource("/static/index.html");
-                            if (indexHtml.exists()) {
-                                return indexHtml;
-                            }
-                        }
-                        
-                        return null;
-                    }
-                });
+        // SPA路由支持现在由IndexController处理，避免路径冲突
     }
     
-    @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
-        // 显式配置 /sf 路径映射
-        registry.addViewController("/sf").setViewName("redirect:/sf/");
-        registry.addViewController("/sf/").setViewName("forward:/index.html");
-    }
+    // 前端页面路由现在由IndexController处理，支持动态路径替换
 }

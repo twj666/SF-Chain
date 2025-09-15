@@ -6,7 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/sf/',
+  base: process.env.VITE_BASE_PATH || '/sf/',
   plugins: [
     vue(),
     vueDevTools(),

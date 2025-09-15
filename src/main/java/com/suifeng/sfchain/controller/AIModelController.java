@@ -29,7 +29,7 @@ import static com.suifeng.sfchain.constants.AIOperationConstant.MODEL_VALIDATION
  */
 @Slf4j
 @RestController
-@RequestMapping("/sf-chain/models")
+@RequestMapping("${sf-chain.path.api-prefix:/sf-chain}/models")
 @RequiredArgsConstructor
 public class AIModelController {
     

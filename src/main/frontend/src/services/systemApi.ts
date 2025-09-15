@@ -5,7 +5,7 @@ import type { SystemOverview, ApiResponse } from '@/types/system'
 export const systemApi = {
   // 获取系统概览信息
   async getSystemOverview(): Promise<SystemOverview> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/system/overview`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_SYSTEM}/overview`, {
       method: 'GET',
       requireAuth: true
     })
@@ -13,7 +13,7 @@ export const systemApi = {
 
   // 创建系统配置备份
   async createBackup(): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/system/backup`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_SYSTEM}/backup`, {
       method: 'POST',
       requireAuth: true
     })
@@ -21,7 +21,7 @@ export const systemApi = {
 
   // 刷新系统配置
   async refreshSystem(): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/system/refresh`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_SYSTEM}/refresh`, {
       method: 'POST',
       requireAuth: true
     })
@@ -29,7 +29,7 @@ export const systemApi = {
 
   // 重置系统配置
   async resetSystem(): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}/sf-chain/system/reset`, {
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_SYSTEM}/reset`, {
       method: 'POST',
       requireAuth: true
     })

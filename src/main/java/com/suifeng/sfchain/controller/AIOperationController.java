@@ -23,7 +23,7 @@ import java.util.Optional;
  */
 @Slf4j
 @RestController
-@RequestMapping("/sf-chain/operations")
+@RequestMapping("${sf-chain.path.api-prefix:/sf-chain}/operations")
 @RequiredArgsConstructor
 public class AIOperationController {
     

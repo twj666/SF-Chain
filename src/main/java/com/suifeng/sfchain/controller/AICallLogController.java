@@ -14,7 +14,7 @@ import java.util.Map;
  * AI调用日志查询控制器
  */
 @RestController
-@RequestMapping("/sf-chain/ai-logs")
+@RequestMapping("${sf-chain.path.api-prefix:/sf-chain}/ai-logs")
 public class AICallLogController {
     
     @Resource
