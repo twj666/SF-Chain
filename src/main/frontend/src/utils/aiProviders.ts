@@ -23,7 +23,7 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
   openai: {
     key: 'openai',
     name: 'OpenAI',
-    icon: '/icons/openai.svg',
+    icon: 'https://twj666.oss-cn-hangzhou.aliyuncs.com/openai.svg',
     displayOrder: 1,
     category: 'commercial',
     description: 'OpenAI GPT系列模型',
@@ -39,7 +39,7 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
   anthropic: {
     key: 'anthropic',
     name: 'Anthropic',
-    icon: '/icons/anthropic.svg',
+    icon: 'https://twj666.oss-cn-hangzhou.aliyuncs.com/anthropic.svg',
     displayOrder: 2,
     category: 'commercial',
     description: 'Anthropic Claude系列模型',
@@ -55,7 +55,7 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
   google: {
     key: 'google',
     name: 'Google',
-    icon: '/icons/google.svg',
+    icon: 'https://twj666.oss-cn-hangzhou.aliyuncs.com/google.svg',
     displayOrder: 3,
     category: 'commercial',
     description: 'Google Gemini系列模型',
@@ -71,7 +71,7 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
   deepseek: {
     key: 'deepseek',
     name: 'DeepSeek',
-    icon: '/icons/deepseek.svg',
+    icon: 'https://twj666.oss-cn-hangzhou.aliyuncs.com/deepseek.svg',
     displayOrder: 4,
     category: 'domestic',
     description: 'DeepSeek系列模型',
@@ -87,7 +87,7 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
   doubao: {
     key: 'doubao',
     name: '豆包',
-    icon: '/icons/doubao.svg',
+    icon: 'https://twj666.oss-cn-hangzhou.aliyuncs.com/doubao.svg',
     displayOrder: 5,
     category: 'domestic',
     description: '字节跳动豆包系列模型',
@@ -103,7 +103,7 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
   qianwen: {
     key: 'qianwen',
     name: '千问',
-    icon: '/icons/qianwen.svg',
+    icon: 'https://twj666.oss-cn-hangzhou.aliyuncs.com/qianwen.svg',
     displayOrder: 6,
     category: 'domestic',
     description: '阿里云千问系列模型',
@@ -119,7 +119,7 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
   other: {
     key: 'other',
     name: '其他',
-    icon: '/icons/default.svg',
+    icon: 'https://twj666.oss-cn-hangzhou.aliyuncs.com/default.svg',
     displayOrder: 999,
     category: 'custom',
     description: '自定义或其他提供商',
@@ -176,7 +176,7 @@ export const getAllProviders = (): AIProvider[] => {
 export const getProvidersByCategory = (): Record<string, AIProvider[]> => {
   const categories: Record<string, AIProvider[]> = {}
   const providers = getAllProviders()
-  
+
   providers.forEach(provider => {
     const category = provider.category || 'other'
     if (!categories[category]) {
@@ -184,7 +184,7 @@ export const getProvidersByCategory = (): Record<string, AIProvider[]> => {
     }
     categories[category].push(provider)
   })
-  
+
   return categories
 }
 

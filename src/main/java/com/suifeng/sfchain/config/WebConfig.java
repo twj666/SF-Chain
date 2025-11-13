@@ -48,6 +48,11 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler(relativePath + "/icons/**")
                 .addResourceLocations("classpath:/static/icons/")
                 .setCachePeriod(3600);
+                
+        // 添加根路径下的icons映射，支持直接访问/icons/**
+        registry.addResourceHandler("/icons/**")
+                .addResourceLocations("classpath:/static/icons/")
+                .setCachePeriod(3600);
         
         // SPA路由支持现在由IndexController处理，避免路径冲突
     }

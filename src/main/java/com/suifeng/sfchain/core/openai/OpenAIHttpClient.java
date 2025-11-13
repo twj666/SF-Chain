@@ -110,7 +110,7 @@ public class OpenAIHttpClient {
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.setConnectTimeout(30000); // 30秒连接超时
-        connection.setReadTimeout(120000);   // 120秒读取超时
+        connection.setReadTimeout(300000);   // 120秒读取超时
         
         // 设置请求头
         defaultHeaders.forEach(connection::setRequestProperty);
