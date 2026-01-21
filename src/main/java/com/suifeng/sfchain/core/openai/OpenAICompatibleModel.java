@@ -26,6 +26,10 @@ public class OpenAICompatibleModel implements AIModel {
     private final OpenAIHttpClient httpClient;
     
     public OpenAICompatibleModel(OpenAIModelConfig config) {
+        this(config, 30000, 300000);
+    }
+    
+    public OpenAICompatibleModel(OpenAIModelConfig config, int connectTimeoutMs, int readTimeoutMs) {
         if (!config.isValid()) {
             throw new IllegalArgumentException("模型配置无效: " + config);
         }
@@ -34,7 +38,9 @@ public class OpenAICompatibleModel implements AIModel {
         this.httpClient = new OpenAIHttpClient(
             config.getBaseUrl(), 
             config.getApiKey(), 
-            config.getAdditionalHeaders()
+            config.getAdditionalHeaders(),
+            connectTimeoutMs,
+            readTimeoutMs
         );
         
         log.info("初始化OpenAI兼容模型: {} ({})", config.getModelName(), config.getProvider());

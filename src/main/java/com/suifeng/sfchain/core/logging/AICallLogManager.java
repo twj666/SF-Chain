@@ -1,6 +1,8 @@
 package com.suifeng.sfchain.core.logging;
 
+import com.suifeng.sfchain.config.SfChainLoggingProperties;
 import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -16,9 +18,10 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class AICallLogManager {
-    
-    private static final int MAX_CAPACITY = 100;
+
+    private final SfChainLoggingProperties logProperties;
     
     /** 日志存储 */
     private final Map<String, AICallLog> logStorage = new ConcurrentHashMap<>();
@@ -44,7 +47,7 @@ public class AICallLogManager {
             String callId = callLog.getCallId();
             
             // 如果已达到容量上限，移除最少使用的日志
-            if (logStorage.size() >= MAX_CAPACITY && !logStorage.containsKey(callId)) {
+            if (logStorage.size() >= logProperties.getAiCallMaxCapacity() && !logStorage.containsKey(callId)) {
                 evictLFU();
             }
             

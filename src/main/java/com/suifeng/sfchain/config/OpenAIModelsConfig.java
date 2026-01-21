@@ -44,6 +44,7 @@ public class OpenAIModelsConfig {
          * API密钥
          */
         private String apiKey;
+
         
         /**
          * 默认最大token数

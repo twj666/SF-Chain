@@ -14,8 +14,19 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class OpenAIModelFactory {
     
+    private final int connectTimeoutMs;
+    private final int readTimeoutMs;
     private final Map<String, OpenAIModelConfig> modelConfigs = new ConcurrentHashMap<>();
     private final Map<String, AIModel> modelInstances = new ConcurrentHashMap<>();
+
+    public OpenAIModelFactory() {
+        this(30000, 300000);
+    }
+
+    public OpenAIModelFactory(int connectTimeoutMs, int readTimeoutMs) {
+        this.connectTimeoutMs = connectTimeoutMs;
+        this.readTimeoutMs = readTimeoutMs;
+    }
     
     /**
      * 注册模型配置
@@ -43,7 +54,7 @@ public class OpenAIModelFactory {
                 throw new IllegalStateException("模型已禁用: " + name);
             }
             
-            return new OpenAICompatibleModel(config);
+            return new OpenAICompatibleModel(config, connectTimeoutMs, readTimeoutMs);
         });
     }
     

@@ -22,12 +22,16 @@ import java.util.Map;
  */
 @Slf4j
 @Configuration
-@EnableConfigurationProperties(OpenAIModelsConfig.class)
+@EnableConfigurationProperties({
+    OpenAIModelsConfig.class,
+    SfChainOpenAIProperties.class
+})
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "ai.openai-models", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class OpenAIAutoConfiguration {
     
     private final OpenAIModelsConfig openAIModelsConfig;
+    private final SfChainOpenAIProperties openAIProperties;
     
     /**
      * 创建OpenAI模型工厂
@@ -35,7 +39,10 @@ public class OpenAIAutoConfiguration {
     @Bean
     @Primary
     public OpenAIModelFactory openAIModelFactory() {
-        OpenAIModelFactory factory = new OpenAIModelFactory();
+        OpenAIModelFactory factory = new OpenAIModelFactory(
+            openAIProperties.getConnectTimeoutMs(),
+            openAIProperties.getReadTimeoutMs()
+        );
         
         // 注册配置文件中的模型
         Map<String, OpenAIModelConfig> modelConfigs = openAIModelsConfig.getValidModelConfigs();

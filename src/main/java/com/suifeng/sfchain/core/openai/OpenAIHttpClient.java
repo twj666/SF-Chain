@@ -26,19 +26,23 @@ public class OpenAIHttpClient {
     private final String baseUrl;
     private final String apiKey;
     private final Map<String, String> defaultHeaders;
+    private final int connectTimeoutMs;
+    private final int readTimeoutMs;
     
     public OpenAIHttpClient(String baseUrl, String apiKey) {
-        this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-        this.apiKey = apiKey;
-        this.defaultHeaders = Map.of(
-            "Content-Type", "application/json",
-            "Authorization", "Bearer " + apiKey
-        );
+        this(baseUrl, apiKey, null, null, null);
     }
     
     public OpenAIHttpClient(String baseUrl, String apiKey, Map<String, String> additionalHeaders) {
+        this(baseUrl, apiKey, additionalHeaders, null, null);
+    }
+    
+    public OpenAIHttpClient(String baseUrl, String apiKey, Map<String, String> additionalHeaders,
+                            Integer connectTimeoutMs, Integer readTimeoutMs) {
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         this.apiKey = apiKey;
+        this.connectTimeoutMs = connectTimeoutMs != null ? connectTimeoutMs : 30000;
+        this.readTimeoutMs = readTimeoutMs != null ? readTimeoutMs : 300000;
         this.defaultHeaders = new HashMap<>();
         this.defaultHeaders.put("Content-Type", "application/json");
         this.defaultHeaders.put("Authorization", "Bearer " + apiKey);
@@ -109,8 +113,8 @@ public class OpenAIHttpClient {
         
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
-        connection.setConnectTimeout(30000); // 30秒连接超时
-        connection.setReadTimeout(300000);   // 120秒读取超时
+        connection.setConnectTimeout(connectTimeoutMs);
+        connection.setReadTimeout(readTimeoutMs);
 
 
         // 设置请求头
