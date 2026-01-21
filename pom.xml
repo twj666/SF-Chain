@@ -13,7 +13,7 @@
 
     <groupId>io.github.twj666</groupId>
     <artifactId>sf-chain</artifactId>
-    <version>1.0.8</version>
+    <version>1.0.9</version>
 
     <url>https://github.com/twj666/SF-Chain</url>
 
@@ -38,9 +38,10 @@
     </developers>
 
     <scm>
-        <connection>https://github.com/twj666/SF-Chain.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:twj666/SF-Chain.git</developerConnection>
-        <url>https://github.com/twj666/SF-Chain#</url>
+        <connection>scm:git:https://github.com/twj666/SF-Chain.git</connection>
+        <developerConnection>scm:git:git@github.com:twj666/SF-Chain.git</developerConnection>
+        <url>https://github.com/twj666/SF-Chain</url>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
