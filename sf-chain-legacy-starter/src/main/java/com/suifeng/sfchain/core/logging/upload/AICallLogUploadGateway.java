@@ -9,6 +9,10 @@ public interface AICallLogUploadGateway {
 
     void publish(AICallLog callLog);
 
+    default AICallLogUploadStats stats() {
+        return AICallLogUploadStats.empty();
+    }
+
     AICallLogUploadGateway NO_OP = callLog -> {
     };
 }

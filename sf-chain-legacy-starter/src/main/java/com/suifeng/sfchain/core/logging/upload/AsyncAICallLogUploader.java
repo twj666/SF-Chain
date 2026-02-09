@@ -12,6 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * AI调用日志异步批量上报器
@@ -23,6 +24,10 @@ public class AsyncAICallLogUploader implements AICallLogUploadGateway {
     private final AICallLogUploadClient uploadClient;
     private final LinkedBlockingQueue<AICallLogUploadItem> queue;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final AtomicLong sampledOutCount = new AtomicLong();
+    private final AtomicLong droppedCount = new AtomicLong();
+    private final AtomicLong successCount = new AtomicLong();
+    private final AtomicLong failedCount = new AtomicLong();
 
     public AsyncAICallLogUploader(
             SfChainLoggingProperties loggingProperties,
@@ -48,14 +53,27 @@ public class AsyncAICallLogUploader implements AICallLogUploadGateway {
     @Override
     public void publish(AICallLog callLog) {
         if (Math.random() > clampSampleRate(loggingProperties.getSampleRate())) {
+            sampledOutCount.incrementAndGet();
             return;
         }
 
         AICallLogUploadItem item = AICallLogUploadItem.from(callLog, loggingProperties.isUploadContent());
         boolean offered = queue.offer(item);
         if (!offered) {
+            droppedCount.incrementAndGet();
             log.debug("AI调用日志队列已满，丢弃 callId={}", callLog.getCallId());
         }
+    }
+
+    @Override
+    public AICallLogUploadStats stats() {
+        return AICallLogUploadStats.builder()
+                .queueSize(queue.size())
+                .sampledOutCount(sampledOutCount.get())
+                .droppedCount(droppedCount.get())
+                .successCount(successCount.get())
+                .failedCount(failedCount.get())
+                .build();
     }
 
     private void flushSafely() {
@@ -77,6 +95,7 @@ public class AsyncAICallLogUploader implements AICallLogUploadGateway {
         int maxRetry = Math.max(loggingProperties.getMaxRetry(), 0);
         for (int attempt = 0; attempt <= maxRetry; attempt++) {
             if (uploadClient.upload(batch)) {
+                successCount.incrementAndGet();
                 return;
             }
             if (attempt < maxRetry) {
@@ -85,6 +104,7 @@ public class AsyncAICallLogUploader implements AICallLogUploadGateway {
             }
         }
 
+        failedCount.incrementAndGet();
         log.warn("AI调用日志上报失败且超过重试次数，丢弃 {} 条", batch.size());
     }
 

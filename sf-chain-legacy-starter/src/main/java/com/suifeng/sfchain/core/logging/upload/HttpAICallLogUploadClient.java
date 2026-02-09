@@ -28,7 +28,7 @@ public class HttpAICallLogUploadClient implements AICallLogUploadClient {
             ObjectMapper objectMapper,
             SfChainServerProperties serverProperties,
             SfChainLoggingProperties loggingProperties) {
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper.copy().findAndRegisterModules();
         this.serverProperties = serverProperties;
         this.loggingProperties = loggingProperties;
         this.httpClient = HttpClient.newBuilder()

@@ -3,6 +3,9 @@ package com.suifeng.sfchain.controller;
 import com.suifeng.sfchain.core.logging.AICallLog;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
 import com.suifeng.sfchain.core.logging.AICallLogSummary;
+import com.suifeng.sfchain.core.logging.upload.AICallLogUploadGateway;
+import com.suifeng.sfchain.core.logging.upload.AICallLogUploadStats;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +22,9 @@ public class AICallLogController {
     
     @Resource
     private AICallLogManager logManager;
+
+    @Autowired(required = false)
+    private AICallLogUploadGateway uploadGateway;
     
     /**
      * 获取所有日志摘要（轻量级）
@@ -59,6 +65,15 @@ public class AICallLogController {
     @GetMapping("/statistics")
     public ResponseEntity<AICallLogManager.LogStatistics> getStatistics() {
         return ResponseEntity.ok(logManager.getStatistics());
+    }
+
+    /**
+     * 获取异步上报统计
+     */
+    @GetMapping("/upload-statistics")
+    public ResponseEntity<AICallLogUploadStats> getUploadStatistics() {
+        AICallLogUploadGateway gateway = uploadGateway == null ? AICallLogUploadGateway.NO_OP : uploadGateway;
+        return ResponseEntity.ok(gateway.stats());
     }
     
     /**
