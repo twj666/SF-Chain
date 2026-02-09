@@ -80,6 +80,9 @@ public class RemoteConfigClient {
         payload.put("snapshotVersion", snapshotVersion);
         payload.put("releaseId", result.getReleaseId());
         payload.put("stage", result.getStage());
+        payload.put("status", result.getStatus() == null ? null : result.getStatus().name());
+        payload.put("reasonCode", result.getReasonCode());
+        payload.put("nextRetryAtEpochMs", result.getNextRetryAtEpochMs());
         payload.put("valid", result.isValid());
         payload.put("applied", result.isApplied());
         payload.put("targeted", result.isTargeted());

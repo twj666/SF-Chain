@@ -29,6 +29,12 @@ public class GovernanceSyncApplyResult {
 
     private String stage;
 
+    private GovernanceReleaseStatus status;
+
+    private String reasonCode;
+
+    private long nextRetryAtEpochMs;
+
     private String message;
 
     private List<String> requestedVersions = new ArrayList<>();

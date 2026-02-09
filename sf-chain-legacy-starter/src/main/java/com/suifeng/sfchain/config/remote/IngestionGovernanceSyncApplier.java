@@ -25,14 +25,19 @@ public class IngestionGovernanceSyncApplier {
     private final IngestionIndexMaintenanceService indexMaintenanceService;
     private final IngestionContractHealthTracker contractHealthTracker;
     private final String localAppId;
+    private volatile String failedReleaseId;
+    private volatile long retryBlockedUntilEpochMs;
+    private volatile long rollbackCooldownUntilEpochMs;
 
-    public GovernanceSyncApplyResult apply(RemoteIngestionGovernanceSnapshot snapshot) {
+    public synchronized GovernanceSyncApplyResult apply(RemoteIngestionGovernanceSnapshot snapshot) {
         GovernanceSyncApplyResult result = new GovernanceSyncApplyResult();
         if (snapshot == null) {
             result.setValid(true);
             result.setApplied(false);
             result.setTargeted(false);
             result.setMessage("no governance payload");
+            result.setStatus(GovernanceReleaseStatus.NOOP);
+            result.setReasonCode("NO_PAYLOAD");
             result.setActiveVersions(resolveActiveVersions());
             return result;
         }
@@ -43,6 +48,30 @@ public class IngestionGovernanceSyncApplier {
             result.setStage(normalizeStage(rollout.getStage()));
         }
 
+        long now = System.currentTimeMillis();
+        if (isRollbackCoolingDown(now)) {
+            result.setValid(true);
+            result.setApplied(false);
+            result.setTargeted(false);
+            result.setStatus(GovernanceReleaseStatus.COOLDOWN);
+            result.setReasonCode("ROLLBACK_COOLDOWN");
+            result.setNextRetryAtEpochMs(rollbackCooldownUntilEpochMs);
+            result.setMessage("rollback cooldown active");
+            result.setActiveVersions(resolveActiveVersions());
+            return result;
+        }
+        if (isRetryBlocked(now, rollout == null ? null : rollout.getReleaseId())) {
+            result.setValid(true);
+            result.setApplied(false);
+            result.setTargeted(false);
+            result.setStatus(GovernanceReleaseStatus.RETRY_WAIT);
+            result.setReasonCode("RETRY_BACKOFF");
+            result.setNextRetryAtEpochMs(retryBlockedUntilEpochMs);
+            result.setMessage("retry backoff active");
+            result.setActiveVersions(resolveActiveVersions());
+            return result;
+        }
+
         List<String> requestedVersions = normalize(snapshot.getContractAllowlist());
         result.setRequestedVersions(requestedVersions);
 
@@ -50,6 +79,8 @@ public class IngestionGovernanceSyncApplier {
             result.setValid(true);
             result.setApplied(false);
             result.setTargeted(false);
+            result.setStatus(GovernanceReleaseStatus.SKIPPED);
+            result.setReasonCode("CANARY_SKIP");
             result.setMessage("not in canary cohort");
             result.setActiveVersions(resolveActiveVersions());
             return result;
@@ -62,15 +93,23 @@ public class IngestionGovernanceSyncApplier {
             result.setMessage(joinErrors(validation.getErrors()));
             if (!validation.isValid()) {
                 result.setApplied(false);
+                result.setStatus(GovernanceReleaseStatus.FAILED);
+                result.setReasonCode("VALIDATION_FAILED");
+                markReleaseFailed(rollout, now);
                 result.setActiveVersions(resolveActiveVersions());
                 return result;
             }
 
             applyAllowlist(requestedVersions);
             result.setApplied(true);
+            result.setStatus(isCanaryStage(rollout) ? GovernanceReleaseStatus.RUNNING : GovernanceReleaseStatus.SUCCEEDED);
+            result.setReasonCode(isCanaryStage(rollout) ? "CANARY_APPLIED" : "FULL_APPLIED");
+            clearReleaseFailure();
         } else {
             result.setValid(true);
             result.setApplied(false);
+            result.setStatus(GovernanceReleaseStatus.NOOP);
+            result.setReasonCode("EMPTY_ALLOWLIST");
             result.setMessage("no allowlist update");
         }
 
@@ -80,7 +119,16 @@ public class IngestionGovernanceSyncApplier {
                 applyAllowlist(rollbackVersions);
                 result.setRolledBack(true);
                 result.setApplied(false);
+                result.setStatus(GovernanceReleaseStatus.ROLLED_BACK);
+                result.setReasonCode("THRESHOLD_VIOLATION");
                 result.setMessage("canary rollback triggered");
+                markRollbackCooldown(rollout, now);
+                markReleaseFailed(rollout, now);
+            } else {
+                result.setStatus(GovernanceReleaseStatus.FAILED);
+                result.setReasonCode("ROLLBACK_TARGET_MISSING");
+                result.setMessage("rollback target missing");
+                markReleaseFailed(rollout, now);
             }
         }
 
@@ -140,7 +188,7 @@ public class IngestionGovernanceSyncApplier {
     }
 
     private boolean isTargetedForApply(RemoteGovernanceRolloutPlan rollout) {
-        if (rollout == null || !"CANARY".equalsIgnoreCase(normalizeStage(rollout.getStage()))) {
+        if (!isCanaryStage(rollout)) {
             return true;
         }
         int percent = Math.max(0, Math.min(rollout.getTrafficPercent(), 100));
@@ -159,7 +207,7 @@ public class IngestionGovernanceSyncApplier {
         if (rollout == null || !rollout.isRollbackOnViolation()) {
             return false;
         }
-        if (!"CANARY".equalsIgnoreCase(normalizeStage(rollout.getStage()))) {
+        if (!isCanaryStage(rollout)) {
             return false;
         }
         if (contractHealthTracker == null) {
@@ -174,5 +222,41 @@ public class IngestionGovernanceSyncApplier {
 
     private static String normalizeStage(String stage) {
         return StringUtils.hasText(stage) ? stage.trim().toUpperCase() : "FULL";
+    }
+
+    private static boolean isCanaryStage(RemoteGovernanceRolloutPlan rollout) {
+        return rollout != null && "CANARY".equalsIgnoreCase(normalizeStage(rollout.getStage()));
+    }
+
+    private boolean isRetryBlocked(long now, String releaseId) {
+        return releaseId != null
+                && releaseId.equals(failedReleaseId)
+                && now < retryBlockedUntilEpochMs;
+    }
+
+    private boolean isRollbackCoolingDown(long now) {
+        return now < rollbackCooldownUntilEpochMs;
+    }
+
+    private void clearReleaseFailure() {
+        failedReleaseId = null;
+        retryBlockedUntilEpochMs = 0L;
+    }
+
+    private void markReleaseFailed(RemoteGovernanceRolloutPlan rollout, long now) {
+        if (rollout == null || !StringUtils.hasText(rollout.getReleaseId())) {
+            return;
+        }
+        failedReleaseId = rollout.getReleaseId().trim();
+        int backoffSeconds = Math.max(rollout.getRetryBackoffSeconds(), 0);
+        retryBlockedUntilEpochMs = now + backoffSeconds * 1000L;
+    }
+
+    private void markRollbackCooldown(RemoteGovernanceRolloutPlan rollout, long now) {
+        if (rollout == null) {
+            return;
+        }
+        int cooldownSeconds = Math.max(rollout.getRollbackCooldownSeconds(), 0);
+        rollbackCooldownUntilEpochMs = now + cooldownSeconds * 1000L;
     }
 }

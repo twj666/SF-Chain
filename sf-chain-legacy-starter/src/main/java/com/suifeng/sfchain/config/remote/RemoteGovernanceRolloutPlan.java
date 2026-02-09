@@ -44,4 +44,14 @@ public class RemoteGovernanceRolloutPlan {
      * 回滚目标白名单
      */
     private List<String> rollbackAllowlist = new ArrayList<>();
+
+    /**
+     * 失败后重试退避时长（秒）
+     */
+    private int retryBackoffSeconds = 60;
+
+    /**
+     * 回滚后冷却时长（秒）
+     */
+    private int rollbackCooldownSeconds = 120;
 }

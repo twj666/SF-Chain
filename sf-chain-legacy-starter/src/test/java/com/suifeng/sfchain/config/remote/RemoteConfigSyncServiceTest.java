@@ -117,6 +117,7 @@ class RemoteConfigSyncServiceTest {
         assertThat(client.lastFeedbackVersion).isEqualTo("v2");
         assertThat(client.lastFeedbackResult).isNotNull();
         assertThat(client.lastFeedbackResult.isApplied()).isTrue();
+        assertThat(client.lastFeedbackResult.getStatus()).isEqualTo(GovernanceReleaseStatus.SUCCEEDED);
     }
 
     private static class StubRemoteConfigClient extends RemoteConfigClient {
