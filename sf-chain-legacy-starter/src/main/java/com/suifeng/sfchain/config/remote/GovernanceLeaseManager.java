@@ -15,6 +15,13 @@ import java.nio.file.StandardOpenOption;
 @Slf4j
 public class GovernanceLeaseManager {
 
+    public enum AcquireMode {
+        DISABLED,
+        REMOTE,
+        LOCAL,
+        NONE
+    }
+
     private final boolean enabled;
     private final boolean remoteLeaseEnabled;
     private final int remoteLeaseTtlSeconds;
@@ -24,6 +31,7 @@ public class GovernanceLeaseManager {
     private FileChannel channel;
     private FileLock lock;
     private String remoteLeaseToken;
+    private volatile AcquireMode lastAcquireMode = AcquireMode.NONE;
 
     public GovernanceLeaseManager(
             boolean enabled,
@@ -42,8 +50,10 @@ public class GovernanceLeaseManager {
 
     public synchronized boolean tryAcquire() {
         if (!enabled) {
+            lastAcquireMode = AcquireMode.DISABLED;
             return true;
         }
+        lastAcquireMode = AcquireMode.NONE;
         if (remoteLeaseEnabled && remoteConfigClient != null) {
             try {
                 java.util.Optional<String> leaseToken = remoteConfigClient.tryAcquireGovernanceLease(
@@ -52,6 +62,7 @@ public class GovernanceLeaseManager {
                 );
                 if (leaseToken.isPresent()) {
                     remoteLeaseToken = leaseToken.get();
+                    lastAcquireMode = AcquireMode.REMOTE;
                     return true;
                 }
             } catch (Exception ex) {
@@ -59,6 +70,7 @@ public class GovernanceLeaseManager {
             }
         }
         if (lock != null && lock.isValid()) {
+            lastAcquireMode = AcquireMode.LOCAL;
             return true;
         }
         try {
@@ -73,11 +85,19 @@ public class GovernanceLeaseManager {
                     StandardOpenOption.WRITE
             );
             lock = channel.tryLock();
-            return lock != null && lock.isValid();
+            boolean acquired = lock != null && lock.isValid();
+            if (acquired) {
+                lastAcquireMode = AcquireMode.LOCAL;
+            }
+            return acquired;
         } catch (Exception ex) {
             log.debug("治理租约获取失败: {}", ex.getMessage());
             return false;
         }
+    }
+
+    public AcquireMode getLastAcquireMode() {
+        return lastAcquireMode;
     }
 
     public synchronized void release() {

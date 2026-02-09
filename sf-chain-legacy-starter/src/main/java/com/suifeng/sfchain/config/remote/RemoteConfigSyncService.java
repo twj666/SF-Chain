@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 远程配置同步服务
@@ -39,6 +40,18 @@ public class RemoteConfigSyncService {
     private final ConcurrentMap<String, GovernanceFinalizeRecord> finalizedReleaseStates = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, GovernanceFinalizeTask> pendingFinalizations = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final AtomicLong syncRunCount = new AtomicLong();
+    private final AtomicLong syncFailureCount = new AtomicLong();
+    private final AtomicLong leaseAcquireAttempts = new AtomicLong();
+    private final AtomicLong leaseAcquireSuccess = new AtomicLong();
+    private final AtomicLong leaseAcquireRemoteSuccess = new AtomicLong();
+    private final AtomicLong leaseAcquireLocalSuccess = new AtomicLong();
+    private final AtomicLong finalizeReconcileAttempts = new AtomicLong();
+    private final AtomicLong finalizeReconcileSuccess = new AtomicLong();
+    private final AtomicLong finalizeReconcileFailure = new AtomicLong();
+    private final AtomicLong finalizeRetryAttempts = new AtomicLong();
+    private final AtomicLong finalizeRetrySuccess = new AtomicLong();
+    private final AtomicLong finalizeRetryFailure = new AtomicLong();
     private volatile String currentVersion;
 
     public RemoteConfigSyncService(
@@ -88,7 +101,18 @@ public class RemoteConfigSyncService {
     }
 
     void syncOnce(boolean startup) {
+        syncRunCount.incrementAndGet();
+        leaseAcquireAttempts.incrementAndGet();
         boolean leaseAcquired = leaseManager.tryAcquire();
+        if (leaseAcquired) {
+            leaseAcquireSuccess.incrementAndGet();
+            GovernanceLeaseManager.AcquireMode mode = leaseManager.getLastAcquireMode();
+            if (mode == GovernanceLeaseManager.AcquireMode.REMOTE) {
+                leaseAcquireRemoteSuccess.incrementAndGet();
+            } else if (mode == GovernanceLeaseManager.AcquireMode.LOCAL) {
+                leaseAcquireLocalSuccess.incrementAndGet();
+            }
+        }
         try {
             if (leaseAcquired) {
                 reconcileFinalizeState();
@@ -115,6 +139,7 @@ public class RemoteConfigSyncService {
             persistRuntimeState();
             log.info("远程配置同步成功, version={}", currentVersion);
         } catch (Exception e) {
+            syncFailureCount.incrementAndGet();
             if (!syncProperties.isFailOpen()) {
                 throw new IllegalStateException("远程配置同步失败且 fail-open=false", e);
             }
@@ -265,10 +290,17 @@ public class RemoteConfigSyncService {
             }
             String normalizedReleaseId = releaseId.trim();
             try {
+                finalizeRetryAttempts.incrementAndGet();
                 GovernanceFinalizeAck ack = remoteConfigClient.pushGovernanceFinalize(task.getSnapshotVersion(), task.getResult());
+                if (ack != null && ack.isAcknowledged()) {
+                    finalizeRetrySuccess.incrementAndGet();
+                } else {
+                    finalizeRetryFailure.incrementAndGet();
+                }
                 onFinalizeAck(normalizedReleaseId, status, key, task, ack);
             } catch (Exception ex) {
                 log.warn("重试治理终态回调失败: {}", ex.getMessage());
+                finalizeRetryFailure.incrementAndGet();
                 scheduleFinalizeRetry(task);
             }
         }
@@ -278,6 +310,7 @@ public class RemoteConfigSyncService {
         if (!syncProperties.isGovernanceFinalizeReconcileEnabled()) {
             return;
         }
+        finalizeReconcileAttempts.incrementAndGet();
         try {
             remoteConfigClient.fetchFinalizeReconciliation().ifPresent(snapshot -> {
                 if (snapshot.getAckedTaskKeys() == null) {
@@ -289,7 +322,9 @@ public class RemoteConfigSyncService {
                     }
                 }
             });
+            finalizeReconcileSuccess.incrementAndGet();
         } catch (Exception ex) {
+            finalizeReconcileFailure.incrementAndGet();
             log.warn("治理finalize对账拉取失败: {}", ex.getMessage());
         }
     }
@@ -376,5 +411,22 @@ public class RemoteConfigSyncService {
             return ((GovernanceFinalizeTask) value).getUpdatedAtEpochMs();
         }
         return 0L;
+    }
+
+    public GovernanceSyncMetricsSnapshot metrics() {
+        return GovernanceSyncMetricsSnapshot.builder()
+                .syncRunCount(syncRunCount.get())
+                .syncFailureCount(syncFailureCount.get())
+                .leaseAcquireAttempts(leaseAcquireAttempts.get())
+                .leaseAcquireSuccess(leaseAcquireSuccess.get())
+                .leaseAcquireRemoteSuccess(leaseAcquireRemoteSuccess.get())
+                .leaseAcquireLocalSuccess(leaseAcquireLocalSuccess.get())
+                .finalizeReconcileAttempts(finalizeReconcileAttempts.get())
+                .finalizeReconcileSuccess(finalizeReconcileSuccess.get())
+                .finalizeReconcileFailure(finalizeReconcileFailure.get())
+                .finalizeRetryAttempts(finalizeRetryAttempts.get())
+                .finalizeRetrySuccess(finalizeRetrySuccess.get())
+                .finalizeRetryFailure(finalizeRetryFailure.get())
+                .build();
     }
 }

@@ -34,6 +34,8 @@ class GovernanceLeaseManagerTest {
 
         assertThat(firstAcquired).isTrue();
         assertThat(secondAcquired).isFalse();
+        assertThat(first.getLastAcquireMode()).isEqualTo(GovernanceLeaseManager.AcquireMode.LOCAL);
+        assertThat(second.getLastAcquireMode()).isEqualTo(GovernanceLeaseManager.AcquireMode.NONE);
 
         first.release();
         second.release();

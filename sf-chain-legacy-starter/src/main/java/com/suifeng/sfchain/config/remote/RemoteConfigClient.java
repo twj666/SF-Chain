@@ -2,7 +2,6 @@ package com.suifeng.sfchain.config.remote;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.suifeng.sfchain.config.SfChainServerProperties;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
@@ -18,6 +17,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.LongSupplier;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -25,11 +27,25 @@ import javax.crypto.spec.SecretKeySpec;
  * 远程配置中心HTTP客户端
  */
 @Slf4j
-@RequiredArgsConstructor
 public class RemoteConfigClient {
 
     private final ObjectMapper objectMapper;
     private final SfChainServerProperties serverProperties;
+    private final LongSupplier currentTimeSupplier;
+    private final ConcurrentMap<String, Long> seenResponseSignatures = new ConcurrentHashMap<>();
+
+    public RemoteConfigClient(ObjectMapper objectMapper, SfChainServerProperties serverProperties) {
+        this(objectMapper, serverProperties, System::currentTimeMillis);
+    }
+
+    RemoteConfigClient(
+            ObjectMapper objectMapper,
+            SfChainServerProperties serverProperties,
+            LongSupplier currentTimeSupplier) {
+        this.objectMapper = objectMapper;
+        this.serverProperties = serverProperties;
+        this.currentTimeSupplier = currentTimeSupplier;
+    }
 
     public Optional<RemoteConfigSnapshot> fetchSnapshot(String currentVersion) throws IOException, InterruptedException {
         if (!StringUtils.hasText(serverProperties.getBaseUrl())) {
@@ -60,6 +76,7 @@ public class RemoteConfigClient {
         if (statusCode < 200 || statusCode >= 300) {
             throw new IllegalStateException("配置中心请求失败, status=" + statusCode);
         }
+        verifyResponseSignature(response, response.body());
 
         RemoteConfigSnapshot snapshot = objectMapper.readValue(response.body(), RemoteConfigSnapshot.class);
         if (snapshot == null) {
@@ -150,6 +167,7 @@ public class RemoteConfigClient {
         if (statusCode < 200 || statusCode >= 300) {
             throw new IllegalStateException("finalize对账拉取失败, status=" + statusCode);
         }
+        verifyResponseSignature(response, response.body());
         if (response.body() == null || response.body().isBlank()) {
             return Optional.empty();
         }
@@ -223,6 +241,7 @@ public class RemoteConfigClient {
         if (statusCode < 200 || statusCode >= 300) {
             throw new IllegalStateException(failurePrefix + ", status=" + statusCode);
         }
+        verifyResponseSignature(response, response.body());
         return response;
     }
 
@@ -300,6 +319,74 @@ public class RemoteConfigClient {
             sb.append(hex);
         }
         return sb.toString();
+    }
+
+    private void verifyResponseSignature(HttpResponse<String> response, String body) {
+        if (!serverProperties.isResponseSignatureEnabled()) {
+            return;
+        }
+        String secret = resolveResponseSignatureSecret();
+        if (!StringUtils.hasText(secret)) {
+            throw new IllegalStateException("响应签名校验已启用，但未配置签名密钥");
+        }
+        String timestampHeader = response.headers().firstValue("X-SF-SIGNATURE-TS").orElse(null);
+        String signatureHeader = response.headers().firstValue("X-SF-SIGNATURE").orElse(null);
+        if (!StringUtils.hasText(timestampHeader) || !StringUtils.hasText(signatureHeader)) {
+            throw new IllegalStateException("响应签名缺失");
+        }
+        long timestamp = parseTimestamp(timestampHeader);
+        long now = currentTimeSupplier.getAsLong();
+        long maxSkewMs = Math.max(serverProperties.getResponseSignatureMaxSkewSeconds(), 1) * 1000L;
+        if (Math.abs(now - timestamp) > maxSkewMs) {
+            throw new IllegalStateException("响应签名时间戳超出允许窗口");
+        }
+        long replayWindowMs = Math.max(serverProperties.getResponseSignatureReplayWindowSeconds(), 1) * 1000L;
+        purgeExpiredSignatureKeys(now - replayWindowMs);
+        String replayKey = timestamp + ":" + signatureHeader.trim();
+        if (seenResponseSignatures.putIfAbsent(replayKey, now) != null) {
+            throw new IllegalStateException("检测到响应重放");
+        }
+        String payload = timestamp + "\n" + (body == null ? "" : body);
+        String expected = hmacSha256Hex(secret, payload);
+        if (!constantTimeEquals(expected, signatureHeader.trim())) {
+            seenResponseSignatures.remove(replayKey);
+            throw new IllegalStateException("响应签名校验失败");
+        }
+    }
+
+    private String resolveResponseSignatureSecret() {
+        if (StringUtils.hasText(serverProperties.getResponseSigningSecret())) {
+            return serverProperties.getResponseSigningSecret().trim();
+        }
+        return serverProperties.getCallbackSigningSecret();
+    }
+
+    private static long parseTimestamp(String value) {
+        try {
+            return Long.parseLong(value.trim());
+        } catch (Exception ex) {
+            throw new IllegalStateException("响应签名时间戳格式非法");
+        }
+    }
+
+    private void purgeExpiredSignatureKeys(long expireBefore) {
+        seenResponseSignatures.entrySet().removeIf(entry -> entry.getValue() < expireBefore);
+    }
+
+    private static boolean constantTimeEquals(String expected, String actual) {
+        if (expected == null || actual == null) {
+            return false;
+        }
+        byte[] a = expected.getBytes(StandardCharsets.UTF_8);
+        byte[] b = actual.getBytes(StandardCharsets.UTF_8);
+        if (a.length != b.length) {
+            return false;
+        }
+        int diff = 0;
+        for (int i = 0; i < a.length; i++) {
+            diff |= a[i] ^ b[i];
+        }
+        return diff == 0;
     }
 
     private static RemoteConfigSnapshot notModifiedSnapshot(String version) {

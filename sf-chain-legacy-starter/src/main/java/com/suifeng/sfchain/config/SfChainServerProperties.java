@@ -49,4 +49,24 @@ public class SfChainServerProperties {
      * 治理回调签名密钥
      */
     private String callbackSigningSecret;
+
+    /**
+     * 是否启用配置中心响应签名校验
+     */
+    private boolean responseSignatureEnabled = false;
+
+    /**
+     * 配置中心响应签名密钥
+     */
+    private String responseSigningSecret;
+
+    /**
+     * 响应签名时间戳允许偏差（秒）
+     */
+    private int responseSignatureMaxSkewSeconds = 300;
+
+    /**
+     * 响应签名重放保护窗口（秒）
+     */
+    private int responseSignatureReplayWindowSeconds = 600;
 }

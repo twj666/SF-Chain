@@ -298,6 +298,52 @@ class RemoteConfigSyncServiceTest {
         assertThat(client.finalizePushCount).isEqualTo(1);
     }
 
+    @Test
+    void shouldRecordRemoteLeaseAndReconcileMetrics() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://localhost");
+        serverProperties.setApiKey("token");
+
+        StubRemoteConfigClient client = new StubRemoteConfigClient(objectMapper, serverProperties);
+        client.leaseAcquireToken = "lease-token-1";
+        client.reconcileSnapshot = new GovernanceFinalizeReconcileSnapshot();
+
+        SfChainConfigSyncProperties syncProperties = new SfChainConfigSyncProperties();
+        syncProperties.setGovernanceRemoteLeaseEnabled(true);
+        syncProperties.setGovernanceFinalizeReconcileEnabled(true);
+        syncProperties.setIngestionGovernanceEnabled(false);
+        syncProperties.setGovernanceFeedbackEnabled(false);
+        syncProperties.setGovernanceEventEnabled(false);
+        syncProperties.setGovernanceFinalizeEnabled(false);
+
+        RemoteConfigSnapshot notModified = new RemoteConfigSnapshot();
+        notModified.setVersion("v-metrics-1");
+        notModified.setNotModified(true);
+        client.snapshot = notModified;
+
+        RemoteConfigSyncService syncService = new RemoteConfigSyncService(
+                client,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                null
+        );
+        syncService.syncOnce(false);
+
+        GovernanceSyncMetricsSnapshot metrics = syncService.metrics();
+        assertThat(metrics.getSyncRunCount()).isEqualTo(1);
+        assertThat(metrics.getSyncFailureCount()).isEqualTo(0);
+        assertThat(metrics.getLeaseAcquireAttempts()).isEqualTo(1);
+        assertThat(metrics.getLeaseAcquireSuccess()).isEqualTo(1);
+        assertThat(metrics.getLeaseAcquireRemoteSuccess()).isEqualTo(1);
+        assertThat(metrics.getLeaseAcquireLocalSuccess()).isEqualTo(0);
+        assertThat(metrics.getFinalizeReconcileAttempts()).isEqualTo(1);
+        assertThat(metrics.getFinalizeReconcileSuccess()).isEqualTo(1);
+        assertThat(metrics.getFinalizeReconcileFailure()).isEqualTo(0);
+    }
+
     private static class StubRemoteConfigClient extends RemoteConfigClient {
 
         private RemoteConfigSnapshot snapshot;
@@ -307,6 +353,7 @@ class RemoteConfigSyncServiceTest {
         private int finalizePushCount;
         private boolean finalizeAck = true;
         private GovernanceFinalizeReconcileSnapshot reconcileSnapshot;
+        private String leaseAcquireToken;
 
         StubRemoteConfigClient(ObjectMapper objectMapper, SfChainServerProperties serverProperties) {
             super(objectMapper, serverProperties);
@@ -341,6 +388,11 @@ class RemoteConfigSyncServiceTest {
         @Override
         public Optional<GovernanceFinalizeReconcileSnapshot> fetchFinalizeReconciliation() {
             return Optional.ofNullable(reconcileSnapshot);
+        }
+
+        @Override
+        public Optional<String> tryAcquireGovernanceLease(String owner, int ttlSeconds) {
+            return Optional.ofNullable(leaseAcquireToken);
         }
     }
 }
