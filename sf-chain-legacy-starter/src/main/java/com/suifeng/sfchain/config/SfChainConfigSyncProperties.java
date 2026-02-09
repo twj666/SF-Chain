@@ -54,4 +54,29 @@ public class SfChainConfigSyncProperties {
      * 治理同步运行时状态文件
      */
     private String governanceStateFile = ".sf-chain/governance-sync-state.json";
+
+    /**
+     * 是否启用治理租约锁（多实例仲裁）
+     */
+    private boolean governanceLeaseEnabled = true;
+
+    /**
+     * 治理租约锁文件路径
+     */
+    private String governanceLeaseFile = ".sf-chain/governance-sync.lock";
+
+    /**
+     * finalize ACK 重试间隔（秒）
+     */
+    private int governanceFinalizeRetrySeconds = 30;
+
+    /**
+     * finalized 状态保留上限
+     */
+    private int governanceStateMaxFinalized = 2000;
+
+    /**
+     * pending finalize 保留上限
+     */
+    private int governanceStateMaxPending = 1000;
 }

@@ -81,25 +81,12 @@ public class RemoteConfigClient {
         postJson(requestUrl, toGovernancePayload(snapshotVersion, result), "治理事件上报失败");
     }
 
-    public boolean pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult result)
+    public GovernanceFinalizeAck pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult result)
             throws IOException, InterruptedException {
         String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/finalize";
         HttpResponse<String> response =
                 postJson(requestUrl, toGovernancePayload(snapshotVersion, result), "治理终态回调失败");
-        String body = response.body();
-        if (body == null || body.isBlank()) {
-            return true;
-        }
-        try {
-            Map<?, ?> parsed = objectMapper.readValue(body, Map.class);
-            Object acknowledged = parsed.get("acknowledged");
-            if (acknowledged instanceof Boolean) {
-                return (Boolean) acknowledged;
-            }
-        } catch (Exception ignore) {
-            return true;
-        }
-        return true;
+        return parseFinalizeAck(response.body());
     }
 
     private String buildSnapshotUrl(String currentVersion) {
@@ -176,6 +163,36 @@ public class RemoteConfigClient {
         joiner.add(result.getReleaseId() == null ? "" : result.getReleaseId());
         joiner.add(result.getStatus() == null ? "" : result.getStatus().name());
         return joiner.toString();
+    }
+
+    private GovernanceFinalizeAck parseFinalizeAck(String body) {
+        GovernanceFinalizeAck ack = new GovernanceFinalizeAck();
+        if (body == null || body.isBlank()) {
+            ack.setAcknowledged(true);
+            return ack;
+        }
+        try {
+            Map<?, ?> parsed = objectMapper.readValue(body, Map.class);
+            Object acknowledged = parsed.get("acknowledged");
+            if (acknowledged instanceof Boolean) {
+                ack.setAcknowledged((Boolean) acknowledged);
+            }
+            Object ackId = parsed.get("ackId");
+            if (ackId instanceof String) {
+                ack.setAckId((String) ackId);
+            }
+            Object ackVersion = parsed.get("ackVersion");
+            if (ackVersion instanceof Number) {
+                ack.setAckVersion(((Number) ackVersion).longValue());
+            }
+            Object serverTime = parsed.get("serverTimeEpochMs");
+            if (serverTime instanceof Number) {
+                ack.setServerTimeEpochMs(((Number) serverTime).longValue());
+            }
+        } catch (Exception ignore) {
+            ack.setAcknowledged(true);
+        }
+        return ack;
     }
 
     private static RemoteConfigSnapshot notModifiedSnapshot(String version) {

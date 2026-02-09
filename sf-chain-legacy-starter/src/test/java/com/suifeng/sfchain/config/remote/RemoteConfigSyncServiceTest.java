@@ -62,7 +62,7 @@ class RemoteConfigSyncServiceTest {
         snapshot.setOperationModelMapping(Map.of("op-a", "remote-model"));
         snapshot.setOperationConfigs(Map.of("op-a", operationConfig));
 
-        syncService.applySnapshot(snapshot);
+        syncService.applySnapshot(snapshot, true);
 
         assertThat(modelFactory.getModelConfig("remote-model")).isNotNull();
         assertThat(operationRegistry.getModelMapping()).containsEntry("op-a", "remote-model");
@@ -267,9 +267,13 @@ class RemoteConfigSyncServiceTest {
         }
 
         @Override
-        public boolean pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult result) {
+        public GovernanceFinalizeAck pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult result) {
             this.finalizePushCount++;
-            return finalizeAck;
+            GovernanceFinalizeAck ack = new GovernanceFinalizeAck();
+            ack.setAcknowledged(finalizeAck);
+            ack.setAckId("ack-" + finalizePushCount);
+            ack.setAckVersion((long) finalizePushCount);
+            return ack;
         }
     }
 }

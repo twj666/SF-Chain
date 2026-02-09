@@ -35,7 +35,8 @@ public class RemoteConfigSyncService {
     private final ObjectMapper objectMapper;
     private final IngestionGovernanceSyncApplier governanceSyncApplier;
     private final GovernanceSyncStateStore stateStore;
-    private final ConcurrentMap<String, GovernanceReleaseStatus> finalizedReleaseStates = new ConcurrentHashMap<>();
+    private final GovernanceLeaseManager leaseManager;
+    private final ConcurrentMap<String, GovernanceFinalizeRecord> finalizedReleaseStates = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, GovernanceFinalizeTask> pendingFinalizations = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private volatile String currentVersion;
@@ -54,6 +55,10 @@ public class RemoteConfigSyncService {
         this.objectMapper = objectMapper;
         this.governanceSyncApplier = governanceSyncApplier;
         this.stateStore = new GovernanceSyncStateStore(objectMapper, syncProperties.getGovernanceStateFile());
+        this.leaseManager = new GovernanceLeaseManager(
+                syncProperties.isGovernanceLeaseEnabled(),
+                syncProperties.getGovernanceLeaseFile()
+        );
     }
 
     @PostConstruct
@@ -75,11 +80,15 @@ public class RemoteConfigSyncService {
     @PreDestroy
     public void stop() {
         scheduler.shutdownNow();
+        leaseManager.release();
     }
 
     void syncOnce(boolean startup) {
+        boolean leaseAcquired = leaseManager.tryAcquire();
         try {
-            flushPendingFinalizations();
+            if (leaseAcquired) {
+                flushPendingFinalizations();
+            }
             Optional<RemoteConfigSnapshot> snapshotOpt = remoteConfigClient.fetchSnapshot(currentVersion);
             if (snapshotOpt.isEmpty()) {
                 return;
@@ -88,13 +97,16 @@ public class RemoteConfigSyncService {
             if (snapshot.isNotModified()) {
                 return;
             }
-            GovernanceSyncApplyResult governanceResult = applySnapshot(snapshot);
+            GovernanceSyncApplyResult governanceResult = applySnapshot(snapshot, leaseAcquired);
             persistSnapshot(snapshot);
             currentVersion = snapshot.getVersion();
-            pushGovernanceFeedback(snapshot.getVersion(), governanceResult);
-            pushGovernanceEvent(snapshot.getVersion(), governanceResult);
-            pushGovernanceFinalize(snapshot.getVersion(), governanceResult);
-            flushPendingFinalizations();
+            if (leaseAcquired) {
+                pushGovernanceFeedback(snapshot.getVersion(), governanceResult);
+                pushGovernanceEvent(snapshot.getVersion(), governanceResult);
+                pushGovernanceFinalize(snapshot.getVersion(), governanceResult);
+                flushPendingFinalizations();
+            }
+            compactRuntimeState();
             persistRuntimeState();
             log.info("远程配置同步成功, version={}", currentVersion);
         } catch (Exception e) {
@@ -107,10 +119,12 @@ public class RemoteConfigSyncService {
                 log.warn("定时远程配置同步失败: {}", e.getMessage());
             }
             persistRuntimeState();
+        } finally {
+            leaseManager.release();
         }
     }
 
-    GovernanceSyncApplyResult applySnapshot(RemoteConfigSnapshot snapshot) {
+    GovernanceSyncApplyResult applySnapshot(RemoteConfigSnapshot snapshot, boolean leaseAcquired) {
         if (snapshot.getModels() != null) {
             snapshot.getModels().forEach(this::registerOrUpdateModel);
         }
@@ -120,7 +134,7 @@ public class RemoteConfigSyncService {
         if (snapshot.getOperationModelMapping() != null) {
             operationRegistry.setModelMapping(new ConcurrentHashMap<>(snapshot.getOperationModelMapping()));
         }
-        if (!syncProperties.isIngestionGovernanceEnabled() || governanceSyncApplier == null) {
+        if (!syncProperties.isIngestionGovernanceEnabled() || governanceSyncApplier == null || !leaseAcquired) {
             return null;
         }
         return governanceSyncApplier.apply(snapshot.getIngestionGovernance());
@@ -146,7 +160,7 @@ public class RemoteConfigSyncService {
         try {
             RemoteConfigSnapshot snapshot = objectMapper.readValue(Files.readString(cachePath), RemoteConfigSnapshot.class);
             if (snapshot != null) {
-                applySnapshot(snapshot);
+                applySnapshot(snapshot, false);
                 currentVersion = snapshot.getVersion();
                 log.info("已加载本地配置快照, version={}", currentVersion);
             }
@@ -199,20 +213,22 @@ public class RemoteConfigSyncService {
         }
         GovernanceReleaseStatus status = governanceResult.getStatus();
         String normalizedReleaseId = releaseId.trim();
-        GovernanceReleaseStatus existing = finalizedReleaseStates.get(normalizedReleaseId);
-        if (existing == status) {
+        GovernanceFinalizeRecord existing = finalizedReleaseStates.get(normalizedReleaseId);
+        if (existing != null && existing.getStatus() == status && existing.getAckId() != null) {
             return;
         }
-        finalizedReleaseStates.put(normalizedReleaseId, status);
+        GovernanceFinalizeRecord record = existing == null ? new GovernanceFinalizeRecord() : existing;
+        record.setStatus(status);
+        record.setUpdatedAtEpochMs(System.currentTimeMillis());
+        finalizedReleaseStates.put(normalizedReleaseId, record);
         GovernanceFinalizeTask task = new GovernanceFinalizeTask();
         task.setSnapshotVersion(snapshotVersion);
         task.setResult(governanceResult);
+        task.setUpdatedAtEpochMs(System.currentTimeMillis());
         pendingFinalizations.put(buildFinalizeTaskKey(normalizedReleaseId, status), task);
         try {
-            boolean acknowledged = remoteConfigClient.pushGovernanceFinalize(snapshotVersion, governanceResult);
-            if (acknowledged) {
-                pendingFinalizations.remove(buildFinalizeTaskKey(normalizedReleaseId, status));
-            }
+            GovernanceFinalizeAck ack = remoteConfigClient.pushGovernanceFinalize(snapshotVersion, governanceResult);
+            onFinalizeAck(normalizedReleaseId, status, buildFinalizeTaskKey(normalizedReleaseId, status), task, ack);
         } catch (Exception ex) {
             log.warn("治理终态回调失败: {}", ex.getMessage());
         }
@@ -228,18 +244,27 @@ public class RemoteConfigSyncService {
         if (!syncProperties.isGovernanceFinalizeEnabled() || pendingFinalizations.isEmpty()) {
             return;
         }
+        long now = System.currentTimeMillis();
         for (String key : pendingFinalizations.keySet()) {
             GovernanceFinalizeTask task = pendingFinalizations.get(key);
             if (task == null || task.getResult() == null) {
                 continue;
             }
+            if (task.getNextAttemptAtEpochMs() > now) {
+                continue;
+            }
+            GovernanceReleaseStatus status = task.getResult().getStatus();
+            String releaseId = task.getResult().getReleaseId();
+            if (!StringUtils.hasText(releaseId) || status == null) {
+                continue;
+            }
+            String normalizedReleaseId = releaseId.trim();
             try {
-                boolean acknowledged = remoteConfigClient.pushGovernanceFinalize(task.getSnapshotVersion(), task.getResult());
-                if (acknowledged) {
-                    pendingFinalizations.remove(key);
-                }
+                GovernanceFinalizeAck ack = remoteConfigClient.pushGovernanceFinalize(task.getSnapshotVersion(), task.getResult());
+                onFinalizeAck(normalizedReleaseId, status, key, task, ack);
             } catch (Exception ex) {
                 log.warn("重试治理终态回调失败: {}", ex.getMessage());
+                scheduleFinalizeRetry(task);
             }
         }
     }
@@ -270,5 +295,61 @@ public class RemoteConfigSyncService {
 
     private static String buildFinalizeTaskKey(String releaseId, GovernanceReleaseStatus status) {
         return releaseId + "|" + status.name();
+    }
+
+    private void onFinalizeAck(
+            String releaseId,
+            GovernanceReleaseStatus status,
+            String taskKey,
+            GovernanceFinalizeTask task,
+            GovernanceFinalizeAck ack) {
+        if (ack != null && ack.isAcknowledged()) {
+            pendingFinalizations.remove(taskKey);
+            GovernanceFinalizeRecord record = finalizedReleaseStates.get(releaseId);
+            if (record == null) {
+                record = new GovernanceFinalizeRecord();
+                record.setStatus(status);
+            }
+            record.setUpdatedAtEpochMs(System.currentTimeMillis());
+            record.setAckId(ack.getAckId());
+            record.setAckVersion(ack.getAckVersion());
+            finalizedReleaseStates.put(releaseId, record);
+        } else {
+            scheduleFinalizeRetry(task);
+        }
+    }
+
+    private void scheduleFinalizeRetry(GovernanceFinalizeTask task) {
+        int interval = Math.max(syncProperties.getGovernanceFinalizeRetrySeconds(), 1);
+        task.setRetryCount(task.getRetryCount() + 1);
+        task.setUpdatedAtEpochMs(System.currentTimeMillis());
+        task.setNextAttemptAtEpochMs(System.currentTimeMillis() + interval * 1000L);
+    }
+
+    private void compactRuntimeState() {
+        compactMapByUpdatedAt(finalizedReleaseStates, Math.max(syncProperties.getGovernanceStateMaxFinalized(), 1));
+        compactMapByUpdatedAt(pendingFinalizations, Math.max(syncProperties.getGovernanceStateMaxPending(), 1));
+    }
+
+    private static <T> void compactMapByUpdatedAt(ConcurrentMap<String, T> map, int maxSize) {
+        if (map.size() <= maxSize) {
+            return;
+        }
+        java.util.List<java.util.Map.Entry<String, T>> entries = new java.util.ArrayList<>(map.entrySet());
+        entries.sort((a, b) -> Long.compare(resolveUpdatedAt(a.getValue()), resolveUpdatedAt(b.getValue())));
+        int removeCount = map.size() - maxSize;
+        for (int i = 0; i < removeCount && i < entries.size(); i++) {
+            map.remove(entries.get(i).getKey());
+        }
+    }
+
+    private static long resolveUpdatedAt(Object value) {
+        if (value instanceof GovernanceFinalizeRecord) {
+            return ((GovernanceFinalizeRecord) value).getUpdatedAtEpochMs();
+        }
+        if (value instanceof GovernanceFinalizeTask) {
+            return ((GovernanceFinalizeTask) value).getUpdatedAtEpochMs();
+        }
+        return 0L;
     }
 }

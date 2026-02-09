@@ -11,4 +11,10 @@ public class GovernanceFinalizeTask {
     private String snapshotVersion;
 
     private GovernanceSyncApplyResult result;
+
+    private int retryCount;
+
+    private long nextAttemptAtEpochMs;
+
+    private long updatedAtEpochMs;
 }

@@ -13,7 +13,7 @@ public class GovernanceSyncRuntimeState {
 
     private IngestionGovernanceSyncApplier.ApplierState applierState;
 
-    private Map<String, GovernanceReleaseStatus> finalizedStates = new LinkedHashMap<>();
+    private Map<String, GovernanceFinalizeRecord> finalizedStates = new LinkedHashMap<>();
 
     private Map<String, GovernanceFinalizeTask> pendingFinalizations = new LinkedHashMap<>();
 }
