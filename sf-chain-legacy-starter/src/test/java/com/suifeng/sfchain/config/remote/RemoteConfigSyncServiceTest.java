@@ -552,6 +552,67 @@ class RemoteConfigSyncServiceTest {
         GovernanceSyncMetricsSnapshot metrics = syncService.metrics();
         assertThat(metrics.getFinalizeReconcileInvalidCursorCount()).isEqualTo(1);
         assertThat(metrics.getFinalizeReconcileCursorResetCount()).isEqualTo(1);
+        assertThat(metrics.getFinalizeReconcileInvalidCursorFailFastCount()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldFailFastWhenInvalidCursorStrategyIsFailFast() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://localhost");
+        serverProperties.setApiKey("token");
+
+        StubRemoteConfigClient client = new StubRemoteConfigClient(objectMapper, serverProperties);
+        SfChainConfigSyncProperties syncProperties = new SfChainConfigSyncProperties();
+        syncProperties.setGovernanceLeaseEnabled(false);
+        syncProperties.setGovernanceFinalizeReconcileEnabled(true);
+        syncProperties.setGovernanceFinalizeReconcileMaxPages(3);
+        syncProperties.setGovernanceFinalizeReconcileInvalidCursorStrategy(
+                GovernanceInvalidCursorStrategy.FAIL_FAST);
+        syncProperties.setIngestionGovernanceEnabled(false);
+        syncProperties.setGovernanceFeedbackEnabled(false);
+        syncProperties.setGovernanceEventEnabled(false);
+        syncProperties.setGovernanceFinalizeEnabled(false);
+
+        RemoteConfigSnapshot notModified = new RemoteConfigSnapshot();
+        notModified.setVersion("v-invalid-fast-1");
+        notModified.setNotModified(true);
+        client.snapshot = notModified;
+
+        GovernanceFinalizeReconcileSnapshot init = new GovernanceFinalizeReconcileSnapshot();
+        init.setNextCursor("bad-fast-cursor");
+        init.setHasMore(false);
+        client.reconcileSnapshotByCursor.put("", init);
+        RemoteConfigSyncService firstService = new RemoteConfigSyncService(
+                client,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                null
+        );
+        firstService.start();
+        firstService.stop();
+
+        client.invalidReconcileCursors.add("bad-fast-cursor");
+        RemoteConfigSyncService syncService = new RemoteConfigSyncService(
+                client,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                null
+        );
+        syncService.start();
+        syncService.stop();
+
+        assertThat(client.reconcileCursorRequests).contains("bad-fast-cursor");
+        assertThat(client.reconcileCursorRequests.stream().filter("bad-fast-cursor"::equals).count()).isEqualTo(1);
+        assertThat(client.reconcileCursorRequests.stream().filter(""::equals).count()).isEqualTo(1);
+        GovernanceSyncMetricsSnapshot metrics = syncService.metrics();
+        assertThat(metrics.getFinalizeReconcileInvalidCursorCount()).isEqualTo(1);
+        assertThat(metrics.getFinalizeReconcileCursorResetCount()).isEqualTo(0);
+        assertThat(metrics.getFinalizeReconcileInvalidCursorFailFastCount()).isEqualTo(1);
     }
 
     private static class StubRemoteConfigClient extends RemoteConfigClient {

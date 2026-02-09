@@ -37,6 +37,8 @@ public class GovernanceSyncMetricsBinder implements MeterBinder {
                 metrics -> metrics.getFinalizeReconcileInvalidCursorCount());
         registerGauge(registry, "sfchain.governance.finalize.reconcile.cursor_reset.count",
                 metrics -> metrics.getFinalizeReconcileCursorResetCount());
+        registerGauge(registry, "sfchain.governance.finalize.reconcile.invalid_cursor.fail_fast.count",
+                metrics -> metrics.getFinalizeReconcileInvalidCursorFailFastCount());
         registerGauge(registry, "sfchain.governance.finalize.retry.attempt.count",
                 metrics -> metrics.getFinalizeRetryAttempts());
         registerGauge(registry, "sfchain.governance.finalize.retry.success.count",

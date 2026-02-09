@@ -1,5 +1,6 @@
 package com.suifeng.sfchain.config;
 
+import com.suifeng.sfchain.config.remote.GovernanceInvalidCursorStrategy;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -99,4 +100,15 @@ public class SfChainConfigSyncProperties {
      * finalize对账单次最大分页拉取次数
      */
     private int governanceFinalizeReconcileMaxPages = 5;
+
+    /**
+     * finalize对账无效游标处理策略
+     */
+    private GovernanceInvalidCursorStrategy governanceFinalizeReconcileInvalidCursorStrategy =
+            GovernanceInvalidCursorStrategy.RESET_AND_RETRY;
+
+    /**
+     * 无效游标告警阈值（达到阈值及其倍数时告警）
+     */
+    private int governanceFinalizeReconcileInvalidCursorWarnThreshold = 10;
 }

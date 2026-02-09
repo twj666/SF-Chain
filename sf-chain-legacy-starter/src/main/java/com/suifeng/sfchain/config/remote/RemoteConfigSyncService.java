@@ -51,6 +51,7 @@ public class RemoteConfigSyncService {
     private final AtomicLong finalizeReconcileFailure = new AtomicLong();
     private final AtomicLong finalizeReconcileInvalidCursorCount = new AtomicLong();
     private final AtomicLong finalizeReconcileCursorResetCount = new AtomicLong();
+    private final AtomicLong finalizeReconcileInvalidCursorFailFastCount = new AtomicLong();
     private final AtomicLong finalizeRetryAttempts = new AtomicLong();
     private final AtomicLong finalizeRetrySuccess = new AtomicLong();
     private final AtomicLong finalizeRetryFailure = new AtomicLong();
@@ -355,7 +356,15 @@ public class RemoteConfigSyncService {
                 cursorResetAttempted = false;
             } catch (InvalidReconcileCursorException ex) {
                 finalizeReconcileFailure.incrementAndGet();
-                finalizeReconcileInvalidCursorCount.incrementAndGet();
+                long invalidCount = finalizeReconcileInvalidCursorCount.incrementAndGet();
+                warnIfInvalidCursorThresholdReached(invalidCount);
+                GovernanceInvalidCursorStrategy strategy =
+                        syncProperties.getGovernanceFinalizeReconcileInvalidCursorStrategy();
+                if (strategy == GovernanceInvalidCursorStrategy.FAIL_FAST) {
+                    finalizeReconcileInvalidCursorFailFastCount.incrementAndGet();
+                    log.warn("治理finalize对账游标无效，按FAIL_FAST策略中断本轮对账: {}", ex.getMessage());
+                    break;
+                }
                 if (cursorResetAttempted) {
                     log.warn("治理finalize对账游标重置后仍无效: {}", ex.getMessage());
                     break;
@@ -473,9 +482,17 @@ public class RemoteConfigSyncService {
                 .finalizeReconcileFailure(finalizeReconcileFailure.get())
                 .finalizeReconcileInvalidCursorCount(finalizeReconcileInvalidCursorCount.get())
                 .finalizeReconcileCursorResetCount(finalizeReconcileCursorResetCount.get())
+                .finalizeReconcileInvalidCursorFailFastCount(finalizeReconcileInvalidCursorFailFastCount.get())
                 .finalizeRetryAttempts(finalizeRetryAttempts.get())
                 .finalizeRetrySuccess(finalizeRetrySuccess.get())
                 .finalizeRetryFailure(finalizeRetryFailure.get())
                 .build();
+    }
+
+    private void warnIfInvalidCursorThresholdReached(long invalidCount) {
+        int threshold = Math.max(syncProperties.getGovernanceFinalizeReconcileInvalidCursorWarnThreshold(), 1);
+        if (invalidCount % threshold == 0) {
+            log.warn("治理finalize对账无效游标累计达到阈值: count={}, threshold={}", invalidCount, threshold);
+        }
     }
 }

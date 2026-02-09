@@ -35,5 +35,6 @@ class GovernanceSyncMetricsBinderTest {
         assertThat(registry.find("sfchain.governance.sync.run.count").gauge()).isNotNull();
         assertThat(registry.find("sfchain.governance.finalize.reconcile.invalid_cursor.count").gauge()).isNotNull();
         assertThat(registry.find("sfchain.governance.finalize.reconcile.cursor_reset.count").gauge()).isNotNull();
+        assertThat(registry.find("sfchain.governance.finalize.reconcile.invalid_cursor.fail_fast.count").gauge()).isNotNull();
     }
 }
