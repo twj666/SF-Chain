@@ -3,6 +3,8 @@ package com.suifeng.sfchain.controller;
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
 import com.suifeng.sfchain.config.SfChainLoggingProperties;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
+import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
+import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadItem;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -30,7 +32,12 @@ class AICallLogIngestionControllerTest {
         AICallLogManager manager = new AICallLogManager(logProps);
         SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
         ingestionProps.setApiKey("center-key");
-        AICallLogIngestionController controller = new AICallLogIngestionController(manager, ingestionProps);
+        AICallLogIngestionController controller = new AICallLogIngestionController(
+                manager,
+                ingestionProps,
+                new MinuteWindowQuotaService(ingestionProps),
+                AICallLogIngestionStore.NO_OP
+        );
 
         ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", buildRequest());
 
@@ -43,7 +50,12 @@ class AICallLogIngestionControllerTest {
         SfChainLoggingProperties logProps = new SfChainLoggingProperties();
         SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
         ingestionProps.setApiKey(apiKey);
-        return new AICallLogIngestionController(new AICallLogManager(logProps), ingestionProps);
+        return new AICallLogIngestionController(
+                new AICallLogManager(logProps),
+                ingestionProps,
+                new MinuteWindowQuotaService(ingestionProps),
+                AICallLogIngestionStore.NO_OP
+        );
     }
 
     private static AICallLogIngestionController.AICallLogUploadBatchRequest buildRequest() {
@@ -61,5 +73,46 @@ class AICallLogIngestionControllerTest {
         request.setAppId("a-1");
         request.setItems(List.of(item));
         return request;
+    }
+
+    @Test
+    void shouldRejectWhenTenantAppRequiredButMissing() {
+        SfChainLoggingProperties logProps = new SfChainLoggingProperties();
+        SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
+        ingestionProps.setApiKey("center-key");
+        ingestionProps.setRequireTenantApp(true);
+
+        AICallLogIngestionController controller = new AICallLogIngestionController(
+                new AICallLogManager(logProps),
+                ingestionProps,
+                new MinuteWindowQuotaService(ingestionProps),
+                AICallLogIngestionStore.NO_OP
+        );
+        AICallLogIngestionController.AICallLogUploadBatchRequest request = buildRequest();
+        request.setTenantId(null);
+
+        ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", request);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void shouldRejectWhenQuotaExceeded() {
+        SfChainLoggingProperties logProps = new SfChainLoggingProperties();
+        SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
+        ingestionProps.setApiKey("center-key");
+        ingestionProps.setPerTenantAppPerMinuteLimit(1);
+
+        AICallLogIngestionController controller = new AICallLogIngestionController(
+                new AICallLogManager(logProps),
+                ingestionProps,
+                new MinuteWindowQuotaService(ingestionProps),
+                AICallLogIngestionStore.NO_OP
+        );
+        AICallLogIngestionController.AICallLogUploadBatchRequest request = buildRequest();
+
+        ResponseEntity<Map<String, Object>> first = controller.ingestBatch("center-key", request);
+        ResponseEntity<Map<String, Object>> second = controller.ingestBatch("center-key", request);
+        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
     }
 }

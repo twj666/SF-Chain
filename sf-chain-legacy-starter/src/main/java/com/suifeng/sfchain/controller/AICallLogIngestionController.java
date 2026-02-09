@@ -3,6 +3,8 @@ package com.suifeng.sfchain.controller;
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
 import com.suifeng.sfchain.core.logging.AICallLog;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
+import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
+import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadItem;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,8 @@ public class AICallLogIngestionController {
 
     private final AICallLogManager logManager;
     private final SfChainIngestionProperties ingestionProperties;
+    private final MinuteWindowQuotaService quotaService;
+    private final AICallLogIngestionStore ingestionStore;
 
     @PostMapping("/batch")
     public ResponseEntity<Map<String, Object>> ingestBatch(
@@ -39,9 +43,18 @@ public class AICallLogIngestionController {
         if (items == null || items.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "items must not be empty"));
         }
+        if (ingestionProperties.isRequireTenantApp()
+                && (isBlank(request.getTenantId()) || isBlank(request.getAppId()))) {
+            return ResponseEntity.badRequest().body(Map.of("message", "tenantId and appId are required"));
+        }
         if (items.size() > Math.max(ingestionProperties.getMaxBatchSize(), 1)) {
             return ResponseEntity.badRequest().body(Map.of("message", "batch too large"));
         }
+        if (!quotaService.tryAcquire(request.getTenantId(), request.getAppId(), items.size())) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("message", "quota exceeded"));
+        }
+
+        ingestionStore.saveBatch(request.getTenantId(), request.getAppId(), items);
 
         for (AICallLogUploadItem item : items) {
             logManager.addLog(toAICallLog(item));
@@ -57,6 +70,10 @@ public class AICallLogIngestionController {
     private boolean isApiKeyValid(String apiKey) {
         String expected = ingestionProperties.getApiKey();
         return expected != null && !expected.isBlank() && expected.equals(apiKey);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private static AICallLog toAICallLog(AICallLogUploadItem item) {

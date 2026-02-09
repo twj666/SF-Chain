@@ -1,10 +1,17 @@
 package com.suifeng.sfchain.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.suifeng.sfchain.controller.AICallLogIngestionController;
+import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
+import com.suifeng.sfchain.core.logging.ingestion.FileAICallLogIngestionStore;
+import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -17,4 +24,25 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableConfigurationProperties(SfChainIngestionProperties.class)
 @Import(AICallLogIngestionController.class)
 public class SfChainLogIngestionAutoConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean
+    public MinuteWindowQuotaService minuteWindowQuotaService(SfChainIngestionProperties properties) {
+        return new MinuteWindowQuotaService(properties);
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "sf-chain.ingestion", name = "file-persistence-enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnMissingBean
+    public AICallLogIngestionStore aiCallLogIngestionStore(
+            ObjectMapper objectMapper,
+            SfChainIngestionProperties properties) {
+        return new FileAICallLogIngestionStore(objectMapper, properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public AICallLogIngestionStore noOpAICallLogIngestionStore() {
+        return AICallLogIngestionStore.NO_OP;
+    }
 }
