@@ -39,7 +39,7 @@ public class SfChainConfigController {
         config.put("endpoints", Map.of(
             "AI_MODELS", apiPrefix + "/models",
             "AI_OPERATIONS", apiPrefix + "/operations",
-            "AI_CALL_LOGS", apiPrefix + "/call-logs",
+            "AI_CALL_LOGS", apiPrefix + "/ai-logs",
             "AI_SYSTEM", apiPrefix + "/system"
         ));
         

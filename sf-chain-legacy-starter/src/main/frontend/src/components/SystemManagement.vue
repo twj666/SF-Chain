@@ -54,6 +54,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { SystemOverview, ApiResponse } from '@/types/system'
+import { systemApi } from '@/services/systemApi'
+import { toast } from '@/utils/toast'
 
 // Props
 interface Props {
@@ -72,19 +74,13 @@ const backing = ref(false)
 const refreshing = ref(false)
 const resetting = ref(false)
 
-// API基础URL
-const API_BASE = '/api/sf-chain'
-
 // 创建备份
 const createBackup = async () => {
   backing.value = true
   try {
-    const response = await fetch(`${API_BASE}/system/backup`, {
-      method: 'POST'
-    })
-    const result: ApiResponse<SystemOverview> = await response.json()
+    const result = await systemApi.createBackup() as ApiResponse<SystemOverview>
     if (result.success) {
-      alert('系统配置备份创建成功')
+      toast.success('系统配置备份创建成功')
       if (result.data) {
         emit('update-overview', result.data)
       }
@@ -93,7 +89,7 @@ const createBackup = async () => {
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : '创建备份时出错'
-    alert('备份失败: ' + errorMessage)
+    toast.error('备份失败: ' + errorMessage)
   } finally {
     backing.value = false
   }
@@ -103,12 +99,9 @@ const createBackup = async () => {
 const refreshSystem = async () => {
   refreshing.value = true
   try {
-    const response = await fetch(`${API_BASE}/system/refresh`, {
-      method: 'POST'
-    })
-    const result: ApiResponse<SystemOverview> = await response.json()
+    const result = await systemApi.refreshSystem() as ApiResponse<SystemOverview>
     if (result.success) {
-      alert('系统配置刷新成功')
+      toast.success('系统配置刷新成功')
       if (result.data) {
         emit('update-overview', result.data)
       }
@@ -117,7 +110,7 @@ const refreshSystem = async () => {
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : '刷新系统配置时出错'
-    alert('刷新失败: ' + errorMessage)
+    toast.error('刷新失败: ' + errorMessage)
   } finally {
     refreshing.value = false
   }
@@ -125,18 +118,15 @@ const refreshSystem = async () => {
 
 // 重置系统
 const resetSystem = async () => {
-  if (!confirm('确定要重置系统配置吗？此操作不可撤销！')) {
+  if (!window.confirm('确定要重置系统配置吗？此操作不可撤销！')) {
     return
   }
 
   resetting.value = true
   try {
-    const response = await fetch(`${API_BASE}/system/reset`, {
-      method: 'POST'
-    })
-    const result: ApiResponse<SystemOverview> = await response.json()
+    const result = await systemApi.resetSystem() as ApiResponse<SystemOverview>
     if (result.success) {
-      alert('系统配置重置成功')
+      toast.success('系统配置重置成功')
       if (result.data) {
         emit('update-overview', result.data)
       }
@@ -145,7 +135,7 @@ const resetSystem = async () => {
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : '重置系统配置时出错'
-    alert('重置失败: ' + errorMessage)
+    toast.error('重置失败: ' + errorMessage)
   } finally {
     resetting.value = false
   }

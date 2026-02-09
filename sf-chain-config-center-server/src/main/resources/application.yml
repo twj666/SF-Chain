@@ -1,0 +1,39 @@
+server:
+  port: ${SERVER_PORT:19090}
+
+spring:
+  application:
+    name: sf-chain-config-center
+  datasource:
+    url: ${SF_CHAIN_DB_URL:jdbc:h2:file:./data/sf-chain-center;MODE=PostgreSQL;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1}
+    username: ${SF_CHAIN_DB_USERNAME:sa}
+    password: ${SF_CHAIN_DB_PASSWORD:}
+    driver-class-name: ${SF_CHAIN_DB_DRIVER:org.h2.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+sf-chain:
+  enabled: true
+  authEnabled: true
+  auth-token: ${SF_CHAIN_AUTH_TOKEN:change-me}
+  features:
+    management-api: true
+    local-persistence: true
+    local-migration: false
+    static-ui: true
+  persistence:
+    database-type: ${SF_CHAIN_DB_TYPE:postgresql}
+  path:
+    web-prefix: ${SF_CHAIN_WEB_PREFIX:/sf}
+    api-prefix: ${SF_CHAIN_API_PREFIX:/sf-chain}
+  ingestion:
+    api-key: ${SF_CHAIN_INGESTION_API_KEY:}
+    require-tenant-app: true
+    supported-contract-versions:
+      - v1
+      - v2

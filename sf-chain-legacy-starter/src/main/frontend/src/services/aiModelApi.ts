@@ -11,11 +11,10 @@ export const aiModelApi = {
     })
   },
 
-  // 获取单个模型配置 - 改为POST请求
+  // 获取单个模型配置
   async getModel(modelName: string): Promise<ModelConfigData> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/get`, {
-      method: 'POST',
-      body: JSON.stringify({ modelName }),
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/${encodeURIComponent(modelName)}`, {
+      method: 'GET',
       requireAuth: true
     })
   },
@@ -29,11 +28,10 @@ export const aiModelApi = {
     })
   },
 
-  // 删除模型配置 - 改为POST请求
+  // 删除模型配置
   async deleteModel(modelName: string): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/delete`, {
-      method: 'POST',
-      body: JSON.stringify({ modelName }),
+    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/${encodeURIComponent(modelName)}`, {
+      method: 'DELETE',
       requireAuth: true
     })
   },

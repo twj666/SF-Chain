@@ -18,13 +18,10 @@ export async function getApiConfig(): Promise<ApiConfig> {
   }
 
   try {
-    // 获取API前缀配置
     const apiPrefix = import.meta.env.VITE_API_PREFIX || '/sf-chain';
+    const serverOrigin = import.meta.env.VITE_SERVER_ORIGIN || '';
 
-    // 在生产环境中，从当前域名获取配置
-    const configUrl = import.meta.env.DEV
-      ? `http://localhost:5001/api${apiPrefix}/config/api-info`
-      : `${apiPrefix}/config/api-info`;
+    const configUrl = `${serverOrigin}${apiPrefix}/config/api-info`;
 
     const response = await fetch(configUrl);
     const config = await response.json();
@@ -34,7 +31,7 @@ export async function getApiConfig(): Promise<ApiConfig> {
       endpoints: config.endpoints || {
         AI_MODELS: `${apiPrefix}/models`,
         AI_OPERATIONS: `${apiPrefix}/operations`,
-        AI_CALL_LOGS: `${apiPrefix}/call-logs`,
+        AI_CALL_LOGS: `${apiPrefix}/ai-logs`,
         AI_SYSTEM: `${apiPrefix}/system`
       }
     };
@@ -42,16 +39,15 @@ export async function getApiConfig(): Promise<ApiConfig> {
     return apiConfig;
   } catch (error) {
     console.warn('Failed to fetch API config, using defaults:', error);
-    // 获取API前缀配置
     const apiPrefix = import.meta.env.VITE_API_PREFIX || '/sf-chain';
+    const serverOrigin = import.meta.env.VITE_SERVER_ORIGIN || '';
 
-    // 降级到默认配置
     apiConfig = {
-      baseUrl: import.meta.env.DEV ? 'http://localhost:5001/api' : '',
+      baseUrl: serverOrigin,
       endpoints: {
         AI_MODELS: `${apiPrefix}/models`,
         AI_OPERATIONS: `${apiPrefix}/operations`,
-        AI_CALL_LOGS: `${apiPrefix}/call-logs`,
+        AI_CALL_LOGS: `${apiPrefix}/ai-logs`,
         AI_SYSTEM: `${apiPrefix}/system`
       }
     };
@@ -61,8 +57,9 @@ export async function getApiConfig(): Promise<ApiConfig> {
 
 // 兼容性导出
 const apiPrefix = import.meta.env.VITE_API_PREFIX || '/sf-chain';
+const serverOrigin = import.meta.env.VITE_SERVER_ORIGIN || '';
 export const API_CONFIG = {
-  BASE_URL: '', // 将在运行时动态设置
+  BASE_URL: serverOrigin,
   ENDPOINTS: {
     AI_MODELS: `${apiPrefix}/models`,
     AI_OPERATIONS: `${apiPrefix}/operations`,

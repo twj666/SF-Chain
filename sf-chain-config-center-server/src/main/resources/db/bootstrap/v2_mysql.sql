@@ -1,0 +1,102 @@
+CREATE TABLE IF NOT EXISTS sfchain_cp_tenants (
+  tenant_id VARCHAR(64) PRIMARY KEY,
+  tenant_name VARCHAR(128) NOT NULL,
+  description VARCHAR(512),
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sfchain_cp_apps (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  app_id VARCHAR(128) NOT NULL,
+  app_name VARCHAR(128) NOT NULL,
+  description VARCHAR(512),
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_sfchain_cp_apps_tenant_app (tenant_id, app_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sfchain_cp_api_keys (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  app_id VARCHAR(128) NOT NULL,
+  key_name VARCHAR(128) NOT NULL,
+  key_prefix VARCHAR(32) NOT NULL,
+  secret_hash VARCHAR(128) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  expires_at TIMESTAMP NULL,
+  last_used_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sfchain_cp_model_configs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  app_id VARCHAR(128) NOT NULL,
+  model_name VARCHAR(128) NOT NULL,
+  provider VARCHAR(64) NOT NULL,
+  base_url VARCHAR(512),
+  api_key_ref BIGINT,
+  config_json JSON,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_sfchain_cp_model (tenant_id, app_id, model_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sfchain_cp_operation_configs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  app_id VARCHAR(128) NOT NULL,
+  operation_type VARCHAR(128) NOT NULL,
+  model_name VARCHAR(128),
+  config_json JSON,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_sfchain_cp_operation (tenant_id, app_id, operation_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sfchain_cp_config_releases (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  app_id VARCHAR(128) NOT NULL,
+  version VARCHAR(64) NOT NULL,
+  snapshot_json JSON NOT NULL,
+  published_by VARCHAR(128),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_sfchain_cp_release (tenant_id, app_id, version)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sfchain_cp_agent_instances (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  app_id VARCHAR(128) NOT NULL,
+  instance_id VARCHAR(128) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  metadata_json JSON,
+  last_heartbeat_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_sfchain_cp_agent (tenant_id, app_id, instance_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sfchain_cp_call_logs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  tenant_id VARCHAR(64) NOT NULL,
+  app_id VARCHAR(128) NOT NULL,
+  instance_id VARCHAR(128),
+  trace_id VARCHAR(128),
+  operation_type VARCHAR(128),
+  model_name VARCHAR(128),
+  status VARCHAR(32),
+  latency_ms BIGINT,
+  input_tokens INT,
+  output_tokens INT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_sfchain_cp_logs_tenant_app (tenant_id, app_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -48,7 +48,7 @@ export const aiOperationApi = {
   async setOperationMappings(mappings: Record<string, string>): Promise<ApiResponse> {
     return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_OPERATIONS}/mappings`, {
       method: 'POST',
-      body: JSON.stringify({ mappings }),
+      body: JSON.stringify(mappings),
       requireAuth: true
     })
   }
