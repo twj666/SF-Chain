@@ -14,6 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -64,6 +65,38 @@ public class RemoteConfigClient {
             return Optional.of(notModifiedSnapshot(currentVersion));
         }
         return Optional.of(snapshot);
+    }
+
+    public void pushGovernanceFeedback(String snapshotVersion, GovernanceSyncApplyResult result)
+            throws IOException, InterruptedException {
+        String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/feedback";
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(serverProperties.getConnectTimeoutMs()))
+                .build();
+        String body = objectMapper.writeValueAsString(Map.of(
+                "tenantId", serverProperties.getTenantId(),
+                "appId", serverProperties.getAppId(),
+                "snapshotVersion", snapshotVersion,
+                "valid", result.isValid(),
+                "applied", result.isApplied(),
+                "rebuilt", result.getRebuilt(),
+                "message", result.getMessage(),
+                "requestedVersions", result.getRequestedVersions(),
+                "activeVersions", result.getActiveVersions()
+        ));
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(requestUrl))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .header("X-SF-API-KEY", serverProperties.getApiKey())
+                .timeout(Duration.ofMillis(serverProperties.getReadTimeoutMs()))
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        int statusCode = response.statusCode();
+        if (statusCode < 200 || statusCode >= 300) {
+            throw new IllegalStateException("治理反馈上报失败, status=" + statusCode);
+        }
     }
 
     private String buildSnapshotUrl(String currentVersion) {

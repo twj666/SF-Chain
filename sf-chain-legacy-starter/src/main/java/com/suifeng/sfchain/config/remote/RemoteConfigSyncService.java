@@ -31,6 +31,7 @@ public class RemoteConfigSyncService {
     private final OpenAIModelFactory modelFactory;
     private final AIOperationRegistry operationRegistry;
     private final ObjectMapper objectMapper;
+    private final IngestionGovernanceSyncApplier governanceSyncApplier;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private volatile String currentVersion;
 
@@ -39,22 +40,24 @@ public class RemoteConfigSyncService {
             SfChainConfigSyncProperties syncProperties,
             OpenAIModelFactory modelFactory,
             AIOperationRegistry operationRegistry,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            IngestionGovernanceSyncApplier governanceSyncApplier) {
         this.remoteConfigClient = remoteConfigClient;
         this.syncProperties = syncProperties;
         this.modelFactory = modelFactory;
         this.operationRegistry = operationRegistry;
         this.objectMapper = objectMapper;
+        this.governanceSyncApplier = governanceSyncApplier;
     }
 
     @PostConstruct
     public void start() {
         loadCachedSnapshot();
-        syncSafely(true);
+        syncOnce(true);
 
         int interval = Math.max(syncProperties.getIntervalSeconds(), 5);
         scheduler.scheduleWithFixedDelay(
-                () -> syncSafely(false),
+                () -> syncOnce(false),
                 interval,
                 interval,
                 TimeUnit.SECONDS
@@ -67,7 +70,7 @@ public class RemoteConfigSyncService {
         scheduler.shutdownNow();
     }
 
-    private void syncSafely(boolean startup) {
+    void syncOnce(boolean startup) {
         try {
             Optional<RemoteConfigSnapshot> snapshotOpt = remoteConfigClient.fetchSnapshot(currentVersion);
             if (snapshotOpt.isEmpty()) {
@@ -77,9 +80,10 @@ public class RemoteConfigSyncService {
             if (snapshot.isNotModified()) {
                 return;
             }
-            applySnapshot(snapshot);
+            GovernanceSyncApplyResult governanceResult = applySnapshot(snapshot);
             persistSnapshot(snapshot);
             currentVersion = snapshot.getVersion();
+            pushGovernanceFeedback(snapshot.getVersion(), governanceResult);
             log.info("远程配置同步成功, version={}", currentVersion);
         } catch (Exception e) {
             if (!syncProperties.isFailOpen()) {
@@ -93,7 +97,7 @@ public class RemoteConfigSyncService {
         }
     }
 
-    void applySnapshot(RemoteConfigSnapshot snapshot) {
+    GovernanceSyncApplyResult applySnapshot(RemoteConfigSnapshot snapshot) {
         if (snapshot.getModels() != null) {
             snapshot.getModels().forEach(this::registerOrUpdateModel);
         }
@@ -103,6 +107,10 @@ public class RemoteConfigSyncService {
         if (snapshot.getOperationModelMapping() != null) {
             operationRegistry.setModelMapping(new ConcurrentHashMap<>(snapshot.getOperationModelMapping()));
         }
+        if (!syncProperties.isIngestionGovernanceEnabled() || governanceSyncApplier == null) {
+            return null;
+        }
+        return governanceSyncApplier.apply(snapshot.getIngestionGovernance());
     }
 
     private void registerOrUpdateModel(String modelName, OpenAIModelConfig config) {
@@ -141,5 +149,16 @@ public class RemoteConfigSyncService {
             Files.createDirectories(parent);
         }
         Files.writeString(cachePath, objectMapper.writeValueAsString(snapshot));
+    }
+
+    private void pushGovernanceFeedback(String snapshotVersion, GovernanceSyncApplyResult governanceResult) {
+        if (!syncProperties.isGovernanceFeedbackEnabled() || governanceResult == null) {
+            return;
+        }
+        try {
+            remoteConfigClient.pushGovernanceFeedback(snapshotVersion, governanceResult);
+        } catch (Exception ex) {
+            log.warn("治理反馈上报失败: {}", ex.getMessage());
+        }
     }
 }

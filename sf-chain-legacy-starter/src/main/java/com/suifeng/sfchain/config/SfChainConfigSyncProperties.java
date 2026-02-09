@@ -29,4 +29,14 @@ public class SfChainConfigSyncProperties {
      * 本地快照缓存文件
      */
     private String cacheFile = ".sf-chain/config-snapshot.json";
+
+    /**
+     * 是否启用日志治理配置同步
+     */
+    private boolean ingestionGovernanceEnabled = true;
+
+    /**
+     * 是否上报日志治理配置应用结果
+     */
+    private boolean governanceFeedbackEnabled = true;
 }

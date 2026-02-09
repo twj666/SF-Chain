@@ -1,10 +1,12 @@
 package com.suifeng.sfchain.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.suifeng.sfchain.config.remote.IngestionGovernanceSyncApplier;
 import com.suifeng.sfchain.config.remote.RemoteConfigClient;
 import com.suifeng.sfchain.config.remote.RemoteConfigSyncService;
 import com.suifeng.sfchain.core.AIOperationRegistry;
 import com.suifeng.sfchain.core.openai.OpenAIModelFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -37,13 +39,15 @@ public class SfChainRemoteConfigAutoConfiguration {
             SfChainConfigSyncProperties syncProperties,
             OpenAIModelFactory modelFactory,
             AIOperationRegistry operationRegistry,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            ObjectProvider<IngestionGovernanceSyncApplier> governanceSyncApplierProvider) {
         return new RemoteConfigSyncService(
                 remoteConfigClient,
                 syncProperties,
                 modelFactory,
                 operationRegistry,
-                objectMapper
+                objectMapper,
+                governanceSyncApplierProvider.getIfAvailable()
         );
     }
 }

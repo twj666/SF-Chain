@@ -24,4 +24,6 @@ public class RemoteConfigSnapshot {
     private Map<String, String> operationModelMapping = new HashMap<>();
 
     private Map<String, AIOperationRegistry.OperationConfig> operationConfigs = new HashMap<>();
+
+    private RemoteIngestionGovernanceSnapshot ingestionGovernance;
 }

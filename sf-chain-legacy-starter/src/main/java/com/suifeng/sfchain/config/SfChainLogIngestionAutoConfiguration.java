@@ -1,6 +1,7 @@
 package com.suifeng.sfchain.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.suifeng.sfchain.config.remote.IngestionGovernanceSyncApplier;
 import com.suifeng.sfchain.controller.AICallLogGovernanceController;
 import com.suifeng.sfchain.controller.AICallLogIngestionController;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
@@ -8,6 +9,7 @@ import com.suifeng.sfchain.core.logging.ingestion.ContractAllowlistGuardService;
 import com.suifeng.sfchain.core.logging.ingestion.FileAICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.IngestionIndexMaintenanceService;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -65,5 +67,18 @@ public class SfChainLogIngestionAutoConfiguration {
     @ConditionalOnMissingBean
     public ContractAllowlistGuardService contractAllowlistGuardService(SfChainIngestionProperties properties) {
         return new ContractAllowlistGuardService(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public IngestionGovernanceSyncApplier ingestionGovernanceSyncApplier(
+            SfChainIngestionProperties properties,
+            ContractAllowlistGuardService guardService,
+            ObjectProvider<IngestionIndexMaintenanceService> indexMaintenanceServiceProvider) {
+        return new IngestionGovernanceSyncApplier(
+                properties,
+                guardService,
+                indexMaintenanceServiceProvider.getIfAvailable()
+        );
     }
 }
