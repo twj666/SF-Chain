@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -384,6 +386,112 @@ class RemoteConfigSyncServiceTest {
         syncService.syncOnce(false);
 
         assertThat(client.reconcileCursorRequests).containsExactly("", "cursor-1");
+    }
+
+    @Test
+    void shouldResumeReconcileCursorAfterServiceRestart() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://localhost");
+        serverProperties.setApiKey("token");
+
+        Path tempDir = Files.createTempDirectory("sf-chain-reconcile-restart");
+        SfChainConfigSyncProperties syncProperties = new SfChainConfigSyncProperties();
+        syncProperties.setGovernanceLeaseEnabled(false);
+        syncProperties.setGovernanceFinalizeReconcileEnabled(true);
+        syncProperties.setIngestionGovernanceEnabled(false);
+        syncProperties.setGovernanceFeedbackEnabled(false);
+        syncProperties.setGovernanceEventEnabled(false);
+        syncProperties.setGovernanceFinalizeEnabled(false);
+        syncProperties.setGovernanceStateFile(tempDir.resolve("state.json").toString());
+        syncProperties.setCacheFile(tempDir.resolve("cache.json").toString());
+
+        RemoteConfigSnapshot notModified = new RemoteConfigSnapshot();
+        notModified.setVersion("v-restart-1");
+        notModified.setNotModified(true);
+
+        StubRemoteConfigClient client1 = new StubRemoteConfigClient(objectMapper, serverProperties);
+        client1.snapshot = notModified;
+        GovernanceFinalizeReconcileSnapshot first = new GovernanceFinalizeReconcileSnapshot();
+        first.setNextCursor("cursor-restart-1");
+        client1.reconcileSnapshotByCursor.put("", first);
+
+        RemoteConfigSyncService service1 = new RemoteConfigSyncService(
+                client1,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                null
+        );
+        service1.start();
+        service1.stop();
+
+        StubRemoteConfigClient client2 = new StubRemoteConfigClient(objectMapper, serverProperties);
+        client2.snapshot = notModified;
+        GovernanceFinalizeReconcileSnapshot second = new GovernanceFinalizeReconcileSnapshot();
+        second.setNextCursor("cursor-restart-2");
+        client2.reconcileSnapshotByCursor.put("cursor-restart-1", second);
+
+        RemoteConfigSyncService service2 = new RemoteConfigSyncService(
+                client2,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                null
+        );
+        service2.start();
+        service2.stop();
+
+        assertThat(client2.reconcileCursorRequests).contains("cursor-restart-1");
+    }
+
+    @Test
+    void shouldPullMultipleReconcilePagesInSingleSync() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://localhost");
+        serverProperties.setApiKey("token");
+
+        StubRemoteConfigClient client = new StubRemoteConfigClient(objectMapper, serverProperties);
+        SfChainConfigSyncProperties syncProperties = new SfChainConfigSyncProperties();
+        syncProperties.setGovernanceLeaseEnabled(false);
+        syncProperties.setGovernanceFinalizeReconcileEnabled(true);
+        syncProperties.setGovernanceFinalizeReconcileMaxPages(3);
+        syncProperties.setIngestionGovernanceEnabled(false);
+        syncProperties.setGovernanceFeedbackEnabled(false);
+        syncProperties.setGovernanceEventEnabled(false);
+        syncProperties.setGovernanceFinalizeEnabled(true);
+
+        RemoteConfigSnapshot notModified = new RemoteConfigSnapshot();
+        notModified.setVersion("v-page-1");
+        notModified.setNotModified(true);
+        client.snapshot = notModified;
+
+        GovernanceFinalizeReconcileSnapshot page1 = new GovernanceFinalizeReconcileSnapshot();
+        page1.setAckedTaskKeys(List.of("release-page|SUCCEEDED"));
+        page1.setNextCursor("cursor-page-1");
+        page1.setHasMore(true);
+        GovernanceFinalizeReconcileSnapshot page2 = new GovernanceFinalizeReconcileSnapshot();
+        page2.setNextCursor("cursor-page-2");
+        page2.setHasMore(false);
+        client.reconcileSnapshotByCursor.put("", page1);
+        client.reconcileSnapshotByCursor.put("cursor-page-1", page2);
+
+        RemoteConfigSyncService syncService = new RemoteConfigSyncService(
+                client,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                null
+        );
+        syncService.syncOnce(false);
+
+        assertThat(client.reconcileCursorRequests).containsExactly("", "cursor-page-1");
+        GovernanceSyncMetricsSnapshot metrics = syncService.metrics();
+        assertThat(metrics.getFinalizeReconcileAttempts()).isEqualTo(2);
     }
 
     private static class StubRemoteConfigClient extends RemoteConfigClient {

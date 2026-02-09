@@ -94,4 +94,9 @@ public class SfChainConfigSyncProperties {
      * 是否启用finalize对账拉取
      */
     private boolean governanceFinalizeReconcileEnabled = false;
+
+    /**
+     * finalize对账单次最大分页拉取次数
+     */
+    private int governanceFinalizeReconcileMaxPages = 5;
 }

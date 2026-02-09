@@ -319,26 +319,41 @@ public class RemoteConfigSyncService {
         if (!syncProperties.isGovernanceFinalizeReconcileEnabled()) {
             return;
         }
-        finalizeReconcileAttempts.incrementAndGet();
-        try {
-            remoteConfigClient.fetchFinalizeReconciliation(reconcileCursor).ifPresent(snapshot -> {
-                if (snapshot.getAckedTaskKeys() == null) {
-                    // no-op
-                } else {
+        int maxPages = Math.max(syncProperties.getGovernanceFinalizeReconcileMaxPages(), 1);
+        String cursor = reconcileCursor;
+        for (int page = 0; page < maxPages; page++) {
+            finalizeReconcileAttempts.incrementAndGet();
+            try {
+                Optional<GovernanceFinalizeReconcileSnapshot> snapshotOpt =
+                        remoteConfigClient.fetchFinalizeReconciliation(cursor);
+                if (snapshotOpt.isEmpty()) {
+                    finalizeReconcileSuccess.incrementAndGet();
+                    break;
+                }
+                GovernanceFinalizeReconcileSnapshot snapshot = snapshotOpt.get();
+                if (snapshot.getAckedTaskKeys() != null) {
                     for (String key : snapshot.getAckedTaskKeys()) {
                         if (key != null && !key.isBlank()) {
                             pendingFinalizations.remove(key.trim());
                         }
                     }
                 }
-                if (StringUtils.hasText(snapshot.getNextCursor())) {
-                    reconcileCursor = snapshot.getNextCursor().trim();
+                finalizeReconcileSuccess.incrementAndGet();
+                String nextCursor = StringUtils.hasText(snapshot.getNextCursor())
+                        ? snapshot.getNextCursor().trim()
+                        : null;
+                if (nextCursor != null) {
+                    reconcileCursor = nextCursor;
                 }
-            });
-            finalizeReconcileSuccess.incrementAndGet();
-        } catch (Exception ex) {
-            finalizeReconcileFailure.incrementAndGet();
-            log.warn("治理finalize对账拉取失败: {}", ex.getMessage());
+                if (!snapshot.isHasMore() || !StringUtils.hasText(nextCursor) || nextCursor.equals(cursor)) {
+                    break;
+                }
+                cursor = nextCursor;
+            } catch (Exception ex) {
+                finalizeReconcileFailure.incrementAndGet();
+                log.warn("治理finalize对账拉取失败: {}", ex.getMessage());
+                break;
+            }
         }
     }
 
