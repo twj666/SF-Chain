@@ -5,6 +5,7 @@ import com.suifeng.sfchain.config.SfChainConfigSyncProperties;
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
 import com.suifeng.sfchain.config.SfChainServerProperties;
 import com.suifeng.sfchain.core.logging.ingestion.ContractAllowlistGuardService;
+import com.suifeng.sfchain.core.logging.ingestion.IngestionContractHealthTracker;
 import com.suifeng.sfchain.core.AIOperationRegistry;
 import com.suifeng.sfchain.core.openai.OpenAIModelConfig;
 import com.suifeng.sfchain.core.openai.OpenAIModelFactory;
@@ -83,7 +84,13 @@ class RemoteConfigSyncServiceTest {
         SfChainIngestionProperties ingestionProperties = new SfChainIngestionProperties();
         ingestionProperties.setSupportedContractVersion("v1");
         ContractAllowlistGuardService guardService = new ContractAllowlistGuardService(ingestionProperties);
-        IngestionGovernanceSyncApplier applier = new IngestionGovernanceSyncApplier(ingestionProperties, guardService, null);
+        IngestionGovernanceSyncApplier applier = new IngestionGovernanceSyncApplier(
+                ingestionProperties,
+                guardService,
+                null,
+                new IngestionContractHealthTracker(),
+                "default"
+        );
 
         OpenAIModelFactory modelFactory = new OpenAIModelFactory();
         AIOperationRegistry operationRegistry = new AIOperationRegistry();

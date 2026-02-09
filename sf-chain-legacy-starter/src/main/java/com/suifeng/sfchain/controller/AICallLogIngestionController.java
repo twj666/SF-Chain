@@ -5,6 +5,7 @@ import com.suifeng.sfchain.core.logging.AICallLog;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionPage;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionRecord;
+import com.suifeng.sfchain.core.logging.ingestion.IngestionContractHealthTracker;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadItem;
@@ -33,6 +34,7 @@ public class AICallLogIngestionController {
     private final SfChainIngestionProperties ingestionProperties;
     private final MinuteWindowQuotaService quotaService;
     private final AICallLogIngestionStore ingestionStore;
+    private final IngestionContractHealthTracker contractHealthTracker;
 
     @PostMapping("/batch")
     public ResponseEntity<Map<String, Object>> ingestBatch(
@@ -45,6 +47,7 @@ public class AICallLogIngestionController {
         }
         String contractVersion = resolveContractVersion(request, headerContractVersion);
         if (!isContractVersionSupported(contractVersion)) {
+            contractHealthTracker.recordContractRejected();
             return ResponseEntity.badRequest().body(Map.of("message", "unsupported contract version"));
         }
 
@@ -68,6 +71,7 @@ public class AICallLogIngestionController {
         for (AICallLogUploadItem item : items) {
             logManager.addLog(toAICallLog(item));
         }
+        contractHealthTracker.recordAccepted();
 
         return ResponseEntity.ok(Map.of(
                 "accepted", items.size(),

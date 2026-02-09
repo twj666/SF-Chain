@@ -15,7 +15,19 @@ public class GovernanceSyncApplyResult {
 
     private boolean applied;
 
+    private boolean targeted;
+
+    private boolean rolledBack;
+
     private int rebuilt;
+
+    private long sampleCount;
+
+    private double rejectRate;
+
+    private String releaseId;
+
+    private String stage;
 
     private String message;
 

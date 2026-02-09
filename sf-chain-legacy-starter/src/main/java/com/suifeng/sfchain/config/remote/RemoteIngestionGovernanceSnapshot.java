@@ -22,4 +22,9 @@ public class RemoteIngestionGovernanceSnapshot {
      * 是否请求立即重建索引
      */
     private boolean rebuildIndexes;
+
+    /**
+     * 灰度发布计划
+     */
+    private RemoteGovernanceRolloutPlan rollout;
 }

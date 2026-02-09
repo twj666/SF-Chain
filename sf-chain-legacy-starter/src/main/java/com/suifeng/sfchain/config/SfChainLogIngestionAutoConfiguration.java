@@ -8,6 +8,7 @@ import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.ContractAllowlistGuardService;
 import com.suifeng.sfchain.core.logging.ingestion.FileAICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.IngestionIndexMaintenanceService;
+import com.suifeng.sfchain.core.logging.ingestion.IngestionContractHealthTracker;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -34,6 +35,12 @@ public class SfChainLogIngestionAutoConfiguration {
     @ConditionalOnMissingBean
     public MinuteWindowQuotaService minuteWindowQuotaService(SfChainIngestionProperties properties) {
         return new MinuteWindowQuotaService(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public IngestionContractHealthTracker ingestionContractHealthTracker() {
+        return new IngestionContractHealthTracker();
     }
 
     @Bean
@@ -74,11 +81,17 @@ public class SfChainLogIngestionAutoConfiguration {
     public IngestionGovernanceSyncApplier ingestionGovernanceSyncApplier(
             SfChainIngestionProperties properties,
             ContractAllowlistGuardService guardService,
-            ObjectProvider<IngestionIndexMaintenanceService> indexMaintenanceServiceProvider) {
+            ObjectProvider<IngestionIndexMaintenanceService> indexMaintenanceServiceProvider,
+            ObjectProvider<IngestionContractHealthTracker> healthTrackerProvider,
+            ObjectProvider<SfChainServerProperties> serverPropertiesProvider) {
+        SfChainServerProperties serverProperties = serverPropertiesProvider.getIfAvailable();
+        String appId = serverProperties == null ? "default" : serverProperties.getAppId();
         return new IngestionGovernanceSyncApplier(
                 properties,
                 guardService,
-                indexMaintenanceServiceProvider.getIfAvailable()
+                indexMaintenanceServiceProvider.getIfAvailable(),
+                healthTrackerProvider.getIfAvailable(),
+                appId
         );
     }
 }

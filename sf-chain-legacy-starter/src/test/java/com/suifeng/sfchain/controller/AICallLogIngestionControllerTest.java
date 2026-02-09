@@ -6,6 +6,7 @@ import com.suifeng.sfchain.core.logging.AICallLogManager;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionPage;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionRecord;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
+import com.suifeng.sfchain.core.logging.ingestion.IngestionContractHealthTracker;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadItem;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,8 @@ class AICallLogIngestionControllerTest {
                 manager,
                 ingestionProps,
                 new MinuteWindowQuotaService(ingestionProps),
-                AICallLogIngestionStore.NO_OP
+                AICallLogIngestionStore.NO_OP,
+                new IngestionContractHealthTracker()
         );
 
         ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", null, buildRequest());
@@ -57,7 +59,8 @@ class AICallLogIngestionControllerTest {
                 new AICallLogManager(logProps),
                 ingestionProps,
                 new MinuteWindowQuotaService(ingestionProps),
-                AICallLogIngestionStore.NO_OP
+                AICallLogIngestionStore.NO_OP,
+                new IngestionContractHealthTracker()
         );
     }
 
@@ -89,7 +92,8 @@ class AICallLogIngestionControllerTest {
                 new AICallLogManager(logProps),
                 ingestionProps,
                 new MinuteWindowQuotaService(ingestionProps),
-                AICallLogIngestionStore.NO_OP
+                AICallLogIngestionStore.NO_OP,
+                new IngestionContractHealthTracker()
         );
         AICallLogIngestionController.AICallLogUploadBatchRequest request = buildRequest();
         request.setTenantId(null);
@@ -109,7 +113,8 @@ class AICallLogIngestionControllerTest {
                 new AICallLogManager(logProps),
                 ingestionProps,
                 new MinuteWindowQuotaService(ingestionProps),
-                AICallLogIngestionStore.NO_OP
+                AICallLogIngestionStore.NO_OP,
+                new IngestionContractHealthTracker()
         );
         AICallLogIngestionController.AICallLogUploadBatchRequest request = buildRequest();
 
@@ -130,7 +135,8 @@ class AICallLogIngestionControllerTest {
                 new AICallLogManager(logProps),
                 ingestionProps,
                 new MinuteWindowQuotaService(ingestionProps),
-                store
+                store,
+                new IngestionContractHealthTracker()
         );
 
         ResponseEntity<?> response = controller.queryRecords("center-key", "t-1", "a-1", 10);
@@ -153,7 +159,8 @@ class AICallLogIngestionControllerTest {
                 new AICallLogManager(logProps),
                 ingestionProps,
                 new MinuteWindowQuotaService(ingestionProps),
-                store
+                store,
+                new IngestionContractHealthTracker()
         );
 
         ResponseEntity<?> response = controller.queryRecordsByCursor("center-key", "t-1", "a-1", 0, 2);
@@ -174,7 +181,8 @@ class AICallLogIngestionControllerTest {
                 new AICallLogManager(logProps),
                 ingestionProps,
                 new MinuteWindowQuotaService(ingestionProps),
-                AICallLogIngestionStore.NO_OP
+                AICallLogIngestionStore.NO_OP,
+                new IngestionContractHealthTracker()
         );
 
         ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", "v2", buildRequest());
@@ -193,7 +201,8 @@ class AICallLogIngestionControllerTest {
                 new AICallLogManager(logProps),
                 ingestionProps,
                 new MinuteWindowQuotaService(ingestionProps),
-                AICallLogIngestionStore.NO_OP
+                AICallLogIngestionStore.NO_OP,
+                new IngestionContractHealthTracker()
         );
 
         ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", "v2", buildRequest());
@@ -220,7 +229,8 @@ class AICallLogIngestionControllerTest {
                 new AICallLogManager(logProps),
                 ingestionProps,
                 new MinuteWindowQuotaService(ingestionProps),
-                store
+                store,
+                new IngestionContractHealthTracker()
         );
 
         ResponseEntity<?> response = controller.purgeExpired("center-key");

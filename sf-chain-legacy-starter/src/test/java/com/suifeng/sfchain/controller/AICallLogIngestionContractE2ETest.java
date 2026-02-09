@@ -6,6 +6,7 @@ import com.suifeng.sfchain.config.SfChainServerProperties;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.FileAICallLogIngestionStore;
+import com.suifeng.sfchain.core.logging.ingestion.IngestionContractHealthTracker;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadItem;
 import com.suifeng.sfchain.core.logging.upload.HttpAICallLogUploadClient;
@@ -199,6 +200,11 @@ class AICallLogIngestionContractE2ETest {
                 ObjectMapper objectMapper,
                 SfChainIngestionProperties properties) {
             return new FileAICallLogIngestionStore(objectMapper, properties);
+        }
+
+        @Bean
+        IngestionContractHealthTracker ingestionContractHealthTracker() {
+            return new IngestionContractHealthTracker();
         }
     }
 
