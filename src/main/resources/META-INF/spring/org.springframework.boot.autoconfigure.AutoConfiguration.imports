@@ -1,1 +1,6 @@
 com.suifeng.sfchain.config.SfChainAutoConfiguration
+com.suifeng.sfchain.config.OpenAIAutoConfiguration
+com.suifeng.sfchain.config.SfChainPersistenceAutoConfiguration
+com.suifeng.sfchain.config.SfChainManagementAutoConfiguration
+com.suifeng.sfchain.config.SfChainPersistenceManagementAutoConfiguration
+com.suifeng.sfchain.config.SfChainStaticUiAutoConfiguration

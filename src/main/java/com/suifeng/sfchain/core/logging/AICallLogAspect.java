@@ -1,10 +1,10 @@
 package com.suifeng.sfchain.core.logging;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -16,10 +16,10 @@ import java.util.UUID;
 @Slf4j
 @Aspect
 @Component
+@RequiredArgsConstructor
 public class AICallLogAspect {
-    
-    @Autowired
-    private AICallLogManager logManager;
+
+    private final AICallLogManager logManager;
     
     /**
      * 拦截BaseAIOperation的execute方法
