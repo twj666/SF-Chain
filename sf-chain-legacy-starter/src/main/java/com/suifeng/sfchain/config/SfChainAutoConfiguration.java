@@ -5,6 +5,7 @@ import com.suifeng.sfchain.core.AIService;
 import com.suifeng.sfchain.core.ModelRegistry;
 import com.suifeng.sfchain.core.logging.AICallLogAspect;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
+import com.suifeng.sfchain.core.logging.upload.AICallLogUploadGateway;
 import com.suifeng.sfchain.core.openai.OpenAIModelFactory;
 import com.suifeng.sfchain.operations.JSONRepairOperation;
 import com.suifeng.sfchain.operations.ModelValidationOperation;
@@ -15,6 +16,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 
 /**
@@ -60,9 +62,11 @@ public class SfChainAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public AICallLogManager aiCallLogManager(SfChainLoggingProperties logProperties) {
+    public AICallLogManager aiCallLogManager(
+            SfChainLoggingProperties logProperties,
+            ObjectProvider<AICallLogUploadGateway> uploadGatewayProvider) {
         log.info("初始化SF-Chain AI调用日志管理器");
-        return new AICallLogManager(logProperties);
+        return new AICallLogManager(logProperties, uploadGatewayProvider.getIfAvailable(() -> AICallLogUploadGateway.NO_OP));
     }
 
     @Bean

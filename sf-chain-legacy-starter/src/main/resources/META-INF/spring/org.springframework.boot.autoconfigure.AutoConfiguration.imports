@@ -5,3 +5,4 @@ com.suifeng.sfchain.config.SfChainManagementAutoConfiguration
 com.suifeng.sfchain.config.SfChainPersistenceManagementAutoConfiguration
 com.suifeng.sfchain.config.SfChainStaticUiAutoConfiguration
 com.suifeng.sfchain.config.SfChainRemoteConfigAutoConfiguration
+com.suifeng.sfchain.config.SfChainLogUploadAutoConfiguration

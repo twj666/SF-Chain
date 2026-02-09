@@ -1,8 +1,8 @@
 package com.suifeng.sfchain.core.logging;
 
 import com.suifeng.sfchain.config.SfChainLoggingProperties;
+import com.suifeng.sfchain.core.logging.upload.AICallLogUploadGateway;
 import lombok.extern.slf4j.Slf4j;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class AICallLogManager {
 
     private final SfChainLoggingProperties logProperties;
+    private final AICallLogUploadGateway uploadGateway;
     
     /** 日志存储 */
     private final Map<String, AICallLog> logStorage = new ConcurrentHashMap<>();
@@ -37,6 +37,15 @@ public class AICallLogManager {
     
     /** 读写锁 */
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
+    public AICallLogManager(SfChainLoggingProperties logProperties) {
+        this(logProperties, AICallLogUploadGateway.NO_OP);
+    }
+
+    public AICallLogManager(SfChainLoggingProperties logProperties, AICallLogUploadGateway uploadGateway) {
+        this.logProperties = logProperties;
+        this.uploadGateway = uploadGateway == null ? AICallLogUploadGateway.NO_OP : uploadGateway;
+    }
     
     /**
      * 添加调用日志
@@ -54,6 +63,7 @@ public class AICallLogManager {
             // 添加或更新日志
             logStorage.put(callId, callLog);
             updateFrequency(callId);
+            uploadGateway.publish(callLog);
             
             log.debug("添加AI调用日志: {}", callId);
     
