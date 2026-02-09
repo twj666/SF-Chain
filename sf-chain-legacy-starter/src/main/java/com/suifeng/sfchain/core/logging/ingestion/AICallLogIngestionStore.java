@@ -16,6 +16,10 @@ public interface AICallLogIngestionStore {
         return Collections.emptyList();
     }
 
+    default AICallLogIngestionPage queryPage(String tenantId, String appId, int cursor, int limit) {
+        return new AICallLogIngestionPage(Collections.emptyList(), null, false);
+    }
+
     default int purgeExpired() {
         return 0;
     }

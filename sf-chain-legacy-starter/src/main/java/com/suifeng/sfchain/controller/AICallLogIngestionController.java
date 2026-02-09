@@ -3,6 +3,7 @@ package com.suifeng.sfchain.controller;
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
 import com.suifeng.sfchain.core.logging.AICallLog;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
+import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionPage;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionRecord;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
@@ -34,10 +35,15 @@ public class AICallLogIngestionController {
     @PostMapping("/batch")
     public ResponseEntity<Map<String, Object>> ingestBatch(
             @RequestHeader(value = "X-SF-API-KEY", required = false) String apiKey,
+            @RequestHeader(value = "X-SF-CONTRACT-VERSION", required = false) String headerContractVersion,
             @RequestBody AICallLogUploadBatchRequest request) {
         if (!isApiKeyValid(apiKey)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "invalid api key"));
+        }
+        String contractVersion = resolveContractVersion(request, headerContractVersion);
+        if (!isContractVersionSupported(contractVersion)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "unsupported contract version"));
         }
 
         List<AICallLogUploadItem> items = request == null ? Collections.emptyList() : request.getItems();
@@ -63,6 +69,7 @@ public class AICallLogIngestionController {
 
         return ResponseEntity.ok(Map.of(
                 "accepted", items.size(),
+                "contractVersion", contractVersion,
                 "tenantId", request.getTenantId(),
                 "appId", request.getAppId()
         ));
@@ -82,6 +89,31 @@ public class AICallLogIngestionController {
         return ResponseEntity.ok(Map.of("tenantId", tenantId, "appId", appId, "count", records.size(), "records", records));
     }
 
+    @GetMapping("/records/page")
+    public ResponseEntity<?> queryRecordsByCursor(
+            @RequestHeader(value = "X-SF-API-KEY", required = false) String apiKey,
+            @RequestParam String tenantId,
+            @RequestParam String appId,
+            @RequestParam(defaultValue = "0") int cursor,
+            @RequestParam(defaultValue = "100") int limit) {
+        if (!isApiKeyValid(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "invalid api key"));
+        }
+        int safeLimit = Math.min(Math.max(limit, 1), Math.max(ingestionProperties.getMaxQueryLimit(), 1));
+        int safeCursor = Math.max(cursor, 0);
+        AICallLogIngestionPage page = ingestionStore.queryPage(tenantId, appId, safeCursor, safeLimit);
+        return ResponseEntity.ok(Map.of(
+                "tenantId", tenantId,
+                "appId", appId,
+                "cursor", safeCursor,
+                "limit", safeLimit,
+                "nextCursor", page.getNextCursor(),
+                "hasMore", page.isHasMore(),
+                "count", page.getRecords().size(),
+                "records", page.getRecords()
+        ));
+    }
+
     @DeleteMapping("/records/expired")
     public ResponseEntity<?> purgeExpired(
             @RequestHeader(value = "X-SF-API-KEY", required = false) String apiKey) {
@@ -99,6 +131,22 @@ public class AICallLogIngestionController {
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String resolveContractVersion(AICallLogUploadBatchRequest request, String headerContractVersion) {
+        String fromBody = request == null ? null : request.getContractVersion();
+        if (!isBlank(fromBody)) {
+            return fromBody.trim();
+        }
+        if (!isBlank(headerContractVersion)) {
+            return headerContractVersion.trim();
+        }
+        return "v1";
+    }
+
+    private boolean isContractVersionSupported(String version) {
+        String supported = ingestionProperties.getSupportedContractVersion();
+        return !isBlank(supported) && supported.equals(version);
     }
 
     private static AICallLog toAICallLog(AICallLogUploadItem item) {
@@ -137,6 +185,7 @@ public class AICallLogIngestionController {
 
     @Data
     public static class AICallLogUploadBatchRequest {
+        private String contractVersion;
         private String tenantId;
         private String appId;
         private List<AICallLogUploadItem> items;

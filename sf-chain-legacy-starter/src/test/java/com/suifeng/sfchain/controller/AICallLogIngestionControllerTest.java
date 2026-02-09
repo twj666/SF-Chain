@@ -3,6 +3,7 @@ package com.suifeng.sfchain.controller;
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
 import com.suifeng.sfchain.config.SfChainLoggingProperties;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
+import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionPage;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionRecord;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
@@ -23,7 +24,7 @@ class AICallLogIngestionControllerTest {
     @Test
     void shouldRejectRequestWhenApiKeyInvalid() {
         AICallLogIngestionController controller = newController("center-key");
-        ResponseEntity<Map<String, Object>> response = controller.ingestBatch("wrong-key", buildRequest());
+        ResponseEntity<Map<String, Object>> response = controller.ingestBatch("wrong-key", null, buildRequest());
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
@@ -41,7 +42,7 @@ class AICallLogIngestionControllerTest {
                 AICallLogIngestionStore.NO_OP
         );
 
-        ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", buildRequest());
+        ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", null, buildRequest());
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsEntry("accepted", 1);
@@ -93,7 +94,7 @@ class AICallLogIngestionControllerTest {
         AICallLogIngestionController.AICallLogUploadBatchRequest request = buildRequest();
         request.setTenantId(null);
 
-        ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", request);
+        ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", null, request);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
@@ -112,8 +113,8 @@ class AICallLogIngestionControllerTest {
         );
         AICallLogIngestionController.AICallLogUploadBatchRequest request = buildRequest();
 
-        ResponseEntity<Map<String, Object>> first = controller.ingestBatch("center-key", request);
-        ResponseEntity<Map<String, Object>> second = controller.ingestBatch("center-key", request);
+        ResponseEntity<Map<String, Object>> first = controller.ingestBatch("center-key", null, request);
+        ResponseEntity<Map<String, Object>> second = controller.ingestBatch("center-key", null, request);
         assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(second.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
     }
@@ -135,6 +136,50 @@ class AICallLogIngestionControllerTest {
         ResponseEntity<?> response = controller.queryRecords("center-key", "t-1", "a-1", 10);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void shouldQueryRecordsByCursor() {
+        SfChainLoggingProperties logProps = new SfChainLoggingProperties();
+        SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
+        ingestionProps.setApiKey("center-key");
+        MemoryStore store = new MemoryStore();
+        store.saveBatch("t-1", "a-1", List.of(
+                AICallLogUploadItem.builder().callId("c1").status("SUCCESS").build(),
+                AICallLogUploadItem.builder().callId("c2").status("SUCCESS").build(),
+                AICallLogUploadItem.builder().callId("c3").status("SUCCESS").build()
+        ));
+        AICallLogIngestionController controller = new AICallLogIngestionController(
+                new AICallLogManager(logProps),
+                ingestionProps,
+                new MinuteWindowQuotaService(ingestionProps),
+                store
+        );
+
+        ResponseEntity<?> response = controller.queryRecordsByCursor("center-key", "t-1", "a-1", 0, 2);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertThat(body.get("count")).isEqualTo(2);
+        assertThat(body.get("hasMore")).isEqualTo(true);
+    }
+
+    @Test
+    void shouldRejectUnsupportedContractVersion() {
+        SfChainLoggingProperties logProps = new SfChainLoggingProperties();
+        SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
+        ingestionProps.setApiKey("center-key");
+        ingestionProps.setSupportedContractVersion("v1");
+        AICallLogIngestionController controller = new AICallLogIngestionController(
+                new AICallLogManager(logProps),
+                ingestionProps,
+                new MinuteWindowQuotaService(ingestionProps),
+                AICallLogIngestionStore.NO_OP
+        );
+
+        ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", "v2", buildRequest());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -177,6 +222,16 @@ class AICallLogIngestionControllerTest {
         @Override
         public List<AICallLogIngestionRecord> query(String tenantId, String appId, int limit) {
             return records;
+        }
+
+        @Override
+        public AICallLogIngestionPage queryPage(String tenantId, String appId, int cursor, int limit) {
+            int from = Math.max(cursor, 0);
+            int to = Math.min(from + limit, records.size());
+            List<AICallLogIngestionRecord> page = records.subList(from, to);
+            boolean hasMore = to < records.size();
+            Integer nextCursor = hasMore ? to : null;
+            return new AICallLogIngestionPage(page, nextCursor, hasMore);
         }
     }
 }

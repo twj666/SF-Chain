@@ -75,6 +75,20 @@ class FileAICallLogIngestionStoreTest {
         assertThat(Files.exists(file)).isFalse();
     }
 
+    @Test
+    void shouldQueryByCursor() {
+        SfChainIngestionProperties properties = new SfChainIngestionProperties();
+        properties.setFilePersistenceDir(tempDir.toString());
+        FileAICallLogIngestionStore store = new FileAICallLogIngestionStore(new ObjectMapper(), properties);
+
+        store.saveBatch("tenant-a", "app-a", List.of(sampleItem("call-1"), sampleItem("call-2"), sampleItem("call-3")));
+
+        AICallLogIngestionPage page = store.queryPage("tenant-a", "app-a", 0, 2);
+        assertThat(page.getRecords()).hasSize(2);
+        assertThat(page.isHasMore()).isTrue();
+        assertThat(page.getNextCursor()).isEqualTo(2);
+    }
+
     private static AICallLogUploadItem sampleItem(String callId) {
         return AICallLogUploadItem.builder()
                 .callId(callId)

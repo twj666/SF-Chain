@@ -41,6 +41,7 @@ public class HttpAICallLogUploadClient implements AICallLogUploadClient {
         try {
             String endpoint = buildEndpointUrl();
             String body = objectMapper.writeValueAsString(new UploadRequest(
+                    "v1",
                     serverProperties.getTenantId(),
                     serverProperties.getAppId(),
                     items
@@ -82,6 +83,7 @@ public class HttpAICallLogUploadClient implements AICallLogUploadClient {
 
     @lombok.Value
     private static class UploadRequest {
+        String contractVersion;
         String tenantId;
         String appId;
         List<AICallLogUploadItem> items;

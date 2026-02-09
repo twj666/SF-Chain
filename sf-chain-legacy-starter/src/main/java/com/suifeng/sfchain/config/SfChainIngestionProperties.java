@@ -54,4 +54,9 @@ public class SfChainIngestionProperties {
      * 查询最大返回条数
      */
     private int maxQueryLimit = 500;
+
+    /**
+     * 接入契约版本
+     */
+    private String supportedContractVersion = "v1";
 }
