@@ -79,4 +79,19 @@ public class SfChainConfigSyncProperties {
      * pending finalize 保留上限
      */
     private int governanceStateMaxPending = 1000;
+
+    /**
+     * 是否启用远程租约锁
+     */
+    private boolean governanceRemoteLeaseEnabled = false;
+
+    /**
+     * 远程租约ttl（秒）
+     */
+    private int governanceRemoteLeaseTtlSeconds = 30;
+
+    /**
+     * 是否启用finalize对账拉取
+     */
+    private boolean governanceFinalizeReconcileEnabled = false;
 }

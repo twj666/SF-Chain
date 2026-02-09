@@ -39,4 +39,14 @@ public class SfChainServerProperties {
      * 读取超时（毫秒）
      */
     private int readTimeoutMs = 5000;
+
+    /**
+     * 是否启用治理回调签名
+     */
+    private boolean callbackSignatureEnabled = false;
+
+    /**
+     * 治理回调签名密钥
+     */
+    private String callbackSigningSecret;
 }

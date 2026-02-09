@@ -12,8 +12,22 @@ class GovernanceLeaseManagerTest {
     @Test
     void shouldAllowOnlyOneHolderForSameLockFile() throws Exception {
         Path lockFile = Files.createTempFile("sf-chain-lease", ".lock");
-        GovernanceLeaseManager first = new GovernanceLeaseManager(true, lockFile.toString());
-        GovernanceLeaseManager second = new GovernanceLeaseManager(true, lockFile.toString());
+        GovernanceLeaseManager first = new GovernanceLeaseManager(
+                true,
+                false,
+                30,
+                "owner-1",
+                null,
+                lockFile.toString()
+        );
+        GovernanceLeaseManager second = new GovernanceLeaseManager(
+                true,
+                false,
+                30,
+                "owner-2",
+                null,
+                lockFile.toString()
+        );
 
         boolean firstAcquired = first.tryAcquire();
         boolean secondAcquired = second.tryAcquire();

@@ -237,6 +237,67 @@ class RemoteConfigSyncServiceTest {
         assertThat(client.finalizePushCount).isGreaterThanOrEqualTo(2);
     }
 
+    @Test
+    void shouldSkipFinalizeRetryWhenReconcileMarksTaskAcked() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://localhost");
+        serverProperties.setApiKey("token");
+
+        StubRemoteConfigClient client = new StubRemoteConfigClient(objectMapper, serverProperties);
+        client.finalizeAck = false;
+        SfChainConfigSyncProperties syncProperties = new SfChainConfigSyncProperties();
+        syncProperties.setGovernanceFeedbackEnabled(false);
+        syncProperties.setGovernanceEventEnabled(false);
+        syncProperties.setGovernanceFinalizeEnabled(true);
+        syncProperties.setIngestionGovernanceEnabled(true);
+        syncProperties.setGovernanceFinalizeReconcileEnabled(true);
+
+        SfChainIngestionProperties ingestionProperties = new SfChainIngestionProperties();
+        ingestionProperties.setSupportedContractVersion("v1");
+        ingestionProperties.setRequireCurrentVersionOverlap(false);
+        ContractAllowlistGuardService guardService = new ContractAllowlistGuardService(ingestionProperties);
+        IngestionGovernanceSyncApplier applier = new IngestionGovernanceSyncApplier(
+                ingestionProperties,
+                guardService,
+                null,
+                new IngestionContractHealthTracker(),
+                "default"
+        );
+        RemoteConfigSyncService syncService = new RemoteConfigSyncService(
+                client,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                applier
+        );
+
+        RemoteGovernanceRolloutPlan rollout = new RemoteGovernanceRolloutPlan();
+        rollout.setReleaseId("release-reconcile");
+        rollout.setStage("FULL");
+        RemoteConfigSnapshot snapshot = new RemoteConfigSnapshot();
+        snapshot.setVersion("v-reconcile-1");
+        RemoteIngestionGovernanceSnapshot governance = new RemoteIngestionGovernanceSnapshot();
+        governance.setContractAllowlist(List.of("v2", "v1"));
+        governance.setRollout(rollout);
+        snapshot.setIngestionGovernance(governance);
+        client.snapshot = snapshot;
+        syncService.syncOnce(true);
+
+        GovernanceFinalizeReconcileSnapshot reconcile = new GovernanceFinalizeReconcileSnapshot();
+        reconcile.setAckedTaskKeys(List.of("release-reconcile|SUCCEEDED"));
+        client.reconcileSnapshot = reconcile;
+
+        RemoteConfigSnapshot notModified = new RemoteConfigSnapshot();
+        notModified.setVersion("v-reconcile-1");
+        notModified.setNotModified(true);
+        client.snapshot = notModified;
+        syncService.syncOnce(false);
+
+        assertThat(client.finalizePushCount).isEqualTo(1);
+    }
+
     private static class StubRemoteConfigClient extends RemoteConfigClient {
 
         private RemoteConfigSnapshot snapshot;
@@ -245,6 +306,7 @@ class RemoteConfigSyncServiceTest {
         private int eventPushCount;
         private int finalizePushCount;
         private boolean finalizeAck = true;
+        private GovernanceFinalizeReconcileSnapshot reconcileSnapshot;
 
         StubRemoteConfigClient(ObjectMapper objectMapper, SfChainServerProperties serverProperties) {
             super(objectMapper, serverProperties);
@@ -274,6 +336,11 @@ class RemoteConfigSyncServiceTest {
             ack.setAckId("ack-" + finalizePushCount);
             ack.setAckVersion((long) finalizePushCount);
             return ack;
+        }
+
+        @Override
+        public Optional<GovernanceFinalizeReconcileSnapshot> fetchFinalizeReconciliation() {
+            return Optional.ofNullable(reconcileSnapshot);
         }
     }
 }

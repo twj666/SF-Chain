@@ -57,6 +57,10 @@ public class RemoteConfigSyncService {
         this.stateStore = new GovernanceSyncStateStore(objectMapper, syncProperties.getGovernanceStateFile());
         this.leaseManager = new GovernanceLeaseManager(
                 syncProperties.isGovernanceLeaseEnabled(),
+                syncProperties.isGovernanceRemoteLeaseEnabled(),
+                syncProperties.getGovernanceRemoteLeaseTtlSeconds(),
+                "sf-chain:" + syncProperties.getGovernanceLeaseFile(),
+                remoteConfigClient,
                 syncProperties.getGovernanceLeaseFile()
         );
     }
@@ -87,6 +91,7 @@ public class RemoteConfigSyncService {
         boolean leaseAcquired = leaseManager.tryAcquire();
         try {
             if (leaseAcquired) {
+                reconcileFinalizeState();
                 flushPendingFinalizations();
             }
             Optional<RemoteConfigSnapshot> snapshotOpt = remoteConfigClient.fetchSnapshot(currentVersion);
@@ -266,6 +271,26 @@ public class RemoteConfigSyncService {
                 log.warn("重试治理终态回调失败: {}", ex.getMessage());
                 scheduleFinalizeRetry(task);
             }
+        }
+    }
+
+    private void reconcileFinalizeState() {
+        if (!syncProperties.isGovernanceFinalizeReconcileEnabled()) {
+            return;
+        }
+        try {
+            remoteConfigClient.fetchFinalizeReconciliation().ifPresent(snapshot -> {
+                if (snapshot.getAckedTaskKeys() == null) {
+                    return;
+                }
+                for (String key : snapshot.getAckedTaskKeys()) {
+                    if (key != null && !key.isBlank()) {
+                        pendingFinalizations.remove(key.trim());
+                    }
+                }
+            });
+        } catch (Exception ex) {
+            log.warn("治理finalize对账拉取失败: {}", ex.getMessage());
         }
     }
 

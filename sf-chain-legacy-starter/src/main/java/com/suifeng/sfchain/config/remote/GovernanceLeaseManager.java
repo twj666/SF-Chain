@@ -16,18 +16,47 @@ import java.nio.file.StandardOpenOption;
 public class GovernanceLeaseManager {
 
     private final boolean enabled;
+    private final boolean remoteLeaseEnabled;
+    private final int remoteLeaseTtlSeconds;
+    private final String leaseOwner;
+    private final RemoteConfigClient remoteConfigClient;
     private final String lockFile;
     private FileChannel channel;
     private FileLock lock;
+    private String remoteLeaseToken;
 
-    public GovernanceLeaseManager(boolean enabled, String lockFile) {
+    public GovernanceLeaseManager(
+            boolean enabled,
+            boolean remoteLeaseEnabled,
+            int remoteLeaseTtlSeconds,
+            String leaseOwner,
+            RemoteConfigClient remoteConfigClient,
+            String lockFile) {
         this.enabled = enabled;
+        this.remoteLeaseEnabled = remoteLeaseEnabled;
+        this.remoteLeaseTtlSeconds = remoteLeaseTtlSeconds;
+        this.leaseOwner = leaseOwner;
+        this.remoteConfigClient = remoteConfigClient;
         this.lockFile = lockFile;
     }
 
     public synchronized boolean tryAcquire() {
         if (!enabled) {
             return true;
+        }
+        if (remoteLeaseEnabled && remoteConfigClient != null) {
+            try {
+                java.util.Optional<String> leaseToken = remoteConfigClient.tryAcquireGovernanceLease(
+                        leaseOwner,
+                        Math.max(remoteLeaseTtlSeconds, 5)
+                );
+                if (leaseToken.isPresent()) {
+                    remoteLeaseToken = leaseToken.get();
+                    return true;
+                }
+            } catch (Exception ex) {
+                log.debug("远程治理租约获取失败: {}", ex.getMessage());
+            }
         }
         if (lock != null && lock.isValid()) {
             return true;
@@ -52,6 +81,15 @@ public class GovernanceLeaseManager {
     }
 
     public synchronized void release() {
+        if (remoteLeaseToken != null && remoteConfigClient != null) {
+            try {
+                remoteConfigClient.releaseGovernanceLease(remoteLeaseToken);
+            } catch (Exception ex) {
+                log.debug("远程治理租约释放失败: {}", ex.getMessage());
+            } finally {
+                remoteLeaseToken = null;
+            }
+        }
         try {
             if (lock != null && lock.isValid()) {
                 lock.release();

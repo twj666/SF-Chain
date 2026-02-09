@@ -18,6 +18,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * 远程配置中心HTTP客户端
@@ -89,6 +91,73 @@ public class RemoteConfigClient {
         return parseFinalizeAck(response.body());
     }
 
+    public Optional<String> tryAcquireGovernanceLease(String owner, int ttlSeconds)
+            throws IOException, InterruptedException {
+        String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/lease/acquire";
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("tenantId", serverProperties.getTenantId());
+        payload.put("appId", serverProperties.getAppId());
+        payload.put("owner", owner);
+        payload.put("ttlSeconds", ttlSeconds);
+        HttpResponse<String> response = postJson(requestUrl, payload, "治理租约获取失败");
+        if (response.body() == null || response.body().isBlank()) {
+            return Optional.empty();
+        }
+        Map<?, ?> parsed = objectMapper.readValue(response.body(), Map.class);
+        Object acquired = parsed.get("acquired");
+        if (!(acquired instanceof Boolean) || !((Boolean) acquired)) {
+            return Optional.empty();
+        }
+        Object token = parsed.get("leaseToken");
+        if (token instanceof String && !((String) token).isBlank()) {
+            return Optional.of(((String) token).trim());
+        }
+        return Optional.empty();
+    }
+
+    public void releaseGovernanceLease(String leaseToken) throws IOException, InterruptedException {
+        if (leaseToken == null || leaseToken.isBlank()) {
+            return;
+        }
+        String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/lease/release";
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("tenantId", serverProperties.getTenantId());
+        payload.put("appId", serverProperties.getAppId());
+        payload.put("leaseToken", leaseToken);
+        postJson(requestUrl, payload, "治理租约释放失败");
+    }
+
+    public Optional<GovernanceFinalizeReconcileSnapshot> fetchFinalizeReconciliation()
+            throws IOException, InterruptedException {
+        String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/finalize/reconcile?"
+                + "tenantId=" + encode(serverProperties.getTenantId())
+                + "&appId=" + encode(serverProperties.getAppId());
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(serverProperties.getConnectTimeoutMs()))
+                .build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(requestUrl))
+                .header("Accept", "application/json")
+                .header("X-SF-API-KEY", serverProperties.getApiKey())
+                .timeout(Duration.ofMillis(serverProperties.getReadTimeoutMs()))
+                .GET()
+                .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        int statusCode = response.statusCode();
+        if (statusCode == 404) {
+            return Optional.empty();
+        }
+        if (statusCode < 200 || statusCode >= 300) {
+            throw new IllegalStateException("finalize对账拉取失败, status=" + statusCode);
+        }
+        if (response.body() == null || response.body().isBlank()) {
+            return Optional.empty();
+        }
+        GovernanceFinalizeReconcileSnapshot snapshot =
+                objectMapper.readValue(response.body(), GovernanceFinalizeReconcileSnapshot.class);
+        return Optional.ofNullable(snapshot);
+    }
+
     private String buildSnapshotUrl(String currentVersion) {
         StringBuilder url = new StringBuilder(trimTrailingSlash(serverProperties.getBaseUrl()))
                 .append("/v1/config/snapshot?")
@@ -140,14 +209,15 @@ public class RemoteConfigClient {
                 .connectTimeout(Duration.ofMillis(serverProperties.getConnectTimeoutMs()))
                 .build();
         String body = objectMapper.writeValueAsString(payload);
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(requestUrl))
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
                 .header("X-SF-API-KEY", serverProperties.getApiKey())
                 .timeout(Duration.ofMillis(serverProperties.getReadTimeoutMs()))
-                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
+        applySignatureHeaders(builder, body);
+        HttpRequest request = builder.build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         int statusCode = response.statusCode();
         if (statusCode < 200 || statusCode >= 300) {
@@ -193,6 +263,43 @@ public class RemoteConfigClient {
             ack.setAcknowledged(true);
         }
         return ack;
+    }
+
+    private void applySignatureHeaders(HttpRequest.Builder builder, String body) {
+        if (!serverProperties.isCallbackSignatureEnabled()) {
+            return;
+        }
+        String secret = serverProperties.getCallbackSigningSecret();
+        if (!StringUtils.hasText(secret)) {
+            return;
+        }
+        long timestamp = System.currentTimeMillis();
+        String payload = timestamp + "\n" + (body == null ? "" : body);
+        builder.header("X-SF-SIGNATURE-TS", String.valueOf(timestamp));
+        builder.header("X-SF-SIGNATURE", hmacSha256Hex(secret, payload));
+    }
+
+    private static String hmacSha256Hex(String secret, String data) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] digest = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+            return toHex(digest);
+        } catch (Exception ex) {
+            throw new IllegalStateException("签名计算失败", ex);
+        }
+    }
+
+    private static String toHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(b & 0xff);
+            if (hex.length() == 1) {
+                sb.append('0');
+            }
+            sb.append(hex);
+        }
+        return sb.toString();
     }
 
     private static RemoteConfigSnapshot notModifiedSnapshot(String version) {
