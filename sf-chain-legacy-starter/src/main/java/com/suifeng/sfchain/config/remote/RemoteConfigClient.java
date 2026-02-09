@@ -71,42 +71,19 @@ public class RemoteConfigClient {
     public void pushGovernanceFeedback(String snapshotVersion, GovernanceSyncApplyResult result)
             throws IOException, InterruptedException {
         String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/feedback";
-        HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(serverProperties.getConnectTimeoutMs()))
-                .build();
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("tenantId", serverProperties.getTenantId());
-        payload.put("appId", serverProperties.getAppId());
-        payload.put("snapshotVersion", snapshotVersion);
-        payload.put("releaseId", result.getReleaseId());
-        payload.put("stage", result.getStage());
-        payload.put("status", result.getStatus() == null ? null : result.getStatus().name());
-        payload.put("reasonCode", result.getReasonCode());
-        payload.put("nextRetryAtEpochMs", result.getNextRetryAtEpochMs());
-        payload.put("valid", result.isValid());
-        payload.put("applied", result.isApplied());
-        payload.put("targeted", result.isTargeted());
-        payload.put("rolledBack", result.isRolledBack());
-        payload.put("rebuilt", result.getRebuilt());
-        payload.put("sampleCount", result.getSampleCount());
-        payload.put("rejectRate", result.getRejectRate());
-        payload.put("message", result.getMessage());
-        payload.put("requestedVersions", result.getRequestedVersions());
-        payload.put("activeVersions", result.getActiveVersions());
-        String body = objectMapper.writeValueAsString(payload);
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(requestUrl))
-                .header("Content-Type", "application/json")
-                .header("Accept", "application/json")
-                .header("X-SF-API-KEY", serverProperties.getApiKey())
-                .timeout(Duration.ofMillis(serverProperties.getReadTimeoutMs()))
-                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        int statusCode = response.statusCode();
-        if (statusCode < 200 || statusCode >= 300) {
-            throw new IllegalStateException("治理反馈上报失败, status=" + statusCode);
-        }
+        postJson(requestUrl, toGovernancePayload(snapshotVersion, result), "治理反馈上报失败");
+    }
+
+    public void pushGovernanceEvent(String snapshotVersion, GovernanceSyncApplyResult result)
+            throws IOException, InterruptedException {
+        String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/events";
+        postJson(requestUrl, toGovernancePayload(snapshotVersion, result), "治理事件上报失败");
+    }
+
+    public void pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult result)
+            throws IOException, InterruptedException {
+        String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/finalize";
+        postJson(requestUrl, toGovernancePayload(snapshotVersion, result), "治理终态回调失败");
     }
 
     private String buildSnapshotUrl(String currentVersion) {
@@ -127,6 +104,51 @@ public class RemoteConfigClient {
 
     private static String trimTrailingSlash(String value) {
         return value != null && value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+    }
+
+    private Map<String, Object> toGovernancePayload(String snapshotVersion, GovernanceSyncApplyResult result) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("tenantId", serverProperties.getTenantId());
+        payload.put("appId", serverProperties.getAppId());
+        payload.put("snapshotVersion", snapshotVersion);
+        payload.put("releaseId", result.getReleaseId());
+        payload.put("stage", result.getStage());
+        payload.put("status", result.getStatus() == null ? null : result.getStatus().name());
+        payload.put("reasonCode", result.getReasonCode());
+        payload.put("nextRetryAtEpochMs", result.getNextRetryAtEpochMs());
+        payload.put("eventTimeEpochMs", result.getEventTimeEpochMs());
+        payload.put("valid", result.isValid());
+        payload.put("applied", result.isApplied());
+        payload.put("targeted", result.isTargeted());
+        payload.put("rolledBack", result.isRolledBack());
+        payload.put("rebuilt", result.getRebuilt());
+        payload.put("sampleCount", result.getSampleCount());
+        payload.put("rejectRate", result.getRejectRate());
+        payload.put("message", result.getMessage());
+        payload.put("requestedVersions", result.getRequestedVersions());
+        payload.put("activeVersions", result.getActiveVersions());
+        return payload;
+    }
+
+    private void postJson(String requestUrl, Map<String, Object> payload, String failurePrefix)
+            throws IOException, InterruptedException {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(serverProperties.getConnectTimeoutMs()))
+                .build();
+        String body = objectMapper.writeValueAsString(payload);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(requestUrl))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .header("X-SF-API-KEY", serverProperties.getApiKey())
+                .timeout(Duration.ofMillis(serverProperties.getReadTimeoutMs()))
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        int statusCode = response.statusCode();
+        if (statusCode < 200 || statusCode >= 300) {
+            throw new IllegalStateException(failurePrefix + ", status=" + statusCode);
+        }
     }
 
     private static RemoteConfigSnapshot notModifiedSnapshot(String version) {

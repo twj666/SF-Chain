@@ -35,6 +35,8 @@ public class GovernanceSyncApplyResult {
 
     private long nextRetryAtEpochMs;
 
+    private long eventTimeEpochMs;
+
     private String message;
 
     private List<String> requestedVersions = new ArrayList<>();

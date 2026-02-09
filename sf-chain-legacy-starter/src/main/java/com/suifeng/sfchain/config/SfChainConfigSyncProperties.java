@@ -39,4 +39,14 @@ public class SfChainConfigSyncProperties {
      * 是否上报日志治理配置应用结果
      */
     private boolean governanceFeedbackEnabled = true;
+
+    /**
+     * 是否上报治理状态事件
+     */
+    private boolean governanceEventEnabled = true;
+
+    /**
+     * 是否上报治理终态回调
+     */
+    private boolean governanceFinalizeEnabled = true;
 }

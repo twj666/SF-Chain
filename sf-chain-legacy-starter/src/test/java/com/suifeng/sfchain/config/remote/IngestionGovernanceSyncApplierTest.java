@@ -198,4 +198,42 @@ class IngestionGovernanceSyncApplierTest {
         assertThat(cooling.getStatus()).isEqualTo(GovernanceReleaseStatus.COOLDOWN);
         assertThat(cooling.getNextRetryAtEpochMs()).isPositive();
     }
+
+    @Test
+    void shouldSkipLowerPriorityReleaseWhenAnotherReleaseActive() {
+        SfChainIngestionProperties properties = new SfChainIngestionProperties();
+        properties.setSupportedContractVersion("v1");
+        ContractAllowlistGuardService guardService = new ContractAllowlistGuardService(properties);
+        IngestionGovernanceSyncApplier applier = new IngestionGovernanceSyncApplier(
+                properties,
+                guardService,
+                null,
+                new IngestionContractHealthTracker(),
+                "default"
+        );
+
+        RemoteGovernanceRolloutPlan activeRollout = new RemoteGovernanceRolloutPlan();
+        activeRollout.setReleaseId("r-high");
+        activeRollout.setStage("CANARY");
+        activeRollout.setPriority(10);
+        activeRollout.setTrafficPercent(100);
+        RemoteIngestionGovernanceSnapshot first = new RemoteIngestionGovernanceSnapshot();
+        first.setContractAllowlist(List.of("v2", "v1"));
+        first.setRollout(activeRollout);
+        GovernanceSyncApplyResult running = applier.apply(first);
+
+        RemoteGovernanceRolloutPlan incomingRollout = new RemoteGovernanceRolloutPlan();
+        incomingRollout.setReleaseId("r-low");
+        incomingRollout.setStage("CANARY");
+        incomingRollout.setPriority(1);
+        incomingRollout.setTrafficPercent(100);
+        RemoteIngestionGovernanceSnapshot second = new RemoteIngestionGovernanceSnapshot();
+        second.setContractAllowlist(List.of("v1", "v2"));
+        second.setRollout(incomingRollout);
+        GovernanceSyncApplyResult blocked = applier.apply(second);
+
+        assertThat(running.getStatus()).isEqualTo(GovernanceReleaseStatus.RUNNING);
+        assertThat(blocked.getStatus()).isEqualTo(GovernanceReleaseStatus.SKIPPED);
+        assertThat(blocked.getReasonCode()).isEqualTo("RELEASE_CONFLICT");
+    }
 }

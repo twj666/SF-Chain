@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +33,7 @@ public class RemoteConfigSyncService {
     private final AIOperationRegistry operationRegistry;
     private final ObjectMapper objectMapper;
     private final IngestionGovernanceSyncApplier governanceSyncApplier;
+    private final ConcurrentMap<String, GovernanceReleaseStatus> finalizedReleaseStates = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private volatile String currentVersion;
 
@@ -84,6 +86,8 @@ public class RemoteConfigSyncService {
             persistSnapshot(snapshot);
             currentVersion = snapshot.getVersion();
             pushGovernanceFeedback(snapshot.getVersion(), governanceResult);
+            pushGovernanceEvent(snapshot.getVersion(), governanceResult);
+            pushGovernanceFinalize(snapshot.getVersion(), governanceResult);
             log.info("远程配置同步成功, version={}", currentVersion);
         } catch (Exception e) {
             if (!syncProperties.isFailOpen()) {
@@ -160,5 +164,47 @@ public class RemoteConfigSyncService {
         } catch (Exception ex) {
             log.warn("治理反馈上报失败: {}", ex.getMessage());
         }
+    }
+
+    private void pushGovernanceEvent(String snapshotVersion, GovernanceSyncApplyResult governanceResult) {
+        if (!syncProperties.isGovernanceEventEnabled() || governanceResult == null) {
+            return;
+        }
+        try {
+            remoteConfigClient.pushGovernanceEvent(snapshotVersion, governanceResult);
+        } catch (Exception ex) {
+            log.warn("治理事件上报失败: {}", ex.getMessage());
+        }
+    }
+
+    private void pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult governanceResult) {
+        if (!syncProperties.isGovernanceFinalizeEnabled() || governanceResult == null) {
+            return;
+        }
+        if (!isTerminal(governanceResult.getStatus())) {
+            return;
+        }
+        String releaseId = governanceResult.getReleaseId();
+        if (!StringUtils.hasText(releaseId)) {
+            return;
+        }
+        GovernanceReleaseStatus status = governanceResult.getStatus();
+        String normalizedReleaseId = releaseId.trim();
+        GovernanceReleaseStatus existing = finalizedReleaseStates.get(normalizedReleaseId);
+        if (existing == status) {
+            return;
+        }
+        finalizedReleaseStates.put(normalizedReleaseId, status);
+        try {
+            remoteConfigClient.pushGovernanceFinalize(snapshotVersion, governanceResult);
+        } catch (Exception ex) {
+            log.warn("治理终态回调失败: {}", ex.getMessage());
+        }
+    }
+
+    private static boolean isTerminal(GovernanceReleaseStatus status) {
+        return status == GovernanceReleaseStatus.SUCCEEDED
+                || status == GovernanceReleaseStatus.FAILED
+                || status == GovernanceReleaseStatus.ROLLED_BACK;
     }
 }

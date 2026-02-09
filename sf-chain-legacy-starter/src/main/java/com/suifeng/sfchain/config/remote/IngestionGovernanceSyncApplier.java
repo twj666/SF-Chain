@@ -28,6 +28,8 @@ public class IngestionGovernanceSyncApplier {
     private volatile String failedReleaseId;
     private volatile long retryBlockedUntilEpochMs;
     private volatile long rollbackCooldownUntilEpochMs;
+    private volatile String activeReleaseId;
+    private volatile int activeReleasePriority;
 
     public synchronized GovernanceSyncApplyResult apply(RemoteIngestionGovernanceSnapshot snapshot) {
         GovernanceSyncApplyResult result = new GovernanceSyncApplyResult();
@@ -49,6 +51,7 @@ public class IngestionGovernanceSyncApplier {
         }
 
         long now = System.currentTimeMillis();
+        result.setEventTimeEpochMs(now);
         if (isRollbackCoolingDown(now)) {
             result.setValid(true);
             result.setApplied(false);
@@ -72,6 +75,17 @@ public class IngestionGovernanceSyncApplier {
             return result;
         }
 
+        if (hasReleaseConflict(rollout)) {
+            result.setValid(true);
+            result.setApplied(false);
+            result.setTargeted(false);
+            result.setStatus(GovernanceReleaseStatus.SKIPPED);
+            result.setReasonCode("RELEASE_CONFLICT");
+            result.setMessage("blocked by active release");
+            result.setActiveVersions(resolveActiveVersions());
+            return result;
+        }
+
         List<String> requestedVersions = normalize(snapshot.getContractAllowlist());
         result.setRequestedVersions(requestedVersions);
 
@@ -86,6 +100,7 @@ public class IngestionGovernanceSyncApplier {
             return result;
         }
         result.setTargeted(true);
+        enterReleaseIfNeeded(rollout);
 
         if (!requestedVersions.isEmpty()) {
             ContractAllowlistGuardService.ValidationResult validation = guardService.validate(requestedVersions);
@@ -96,6 +111,7 @@ public class IngestionGovernanceSyncApplier {
                 result.setStatus(GovernanceReleaseStatus.FAILED);
                 result.setReasonCode("VALIDATION_FAILED");
                 markReleaseFailed(rollout, now);
+                clearReleaseIfTerminal(result.getStatus(), rollout);
                 result.setActiveVersions(resolveActiveVersions());
                 return result;
             }
@@ -105,6 +121,7 @@ public class IngestionGovernanceSyncApplier {
             result.setStatus(isCanaryStage(rollout) ? GovernanceReleaseStatus.RUNNING : GovernanceReleaseStatus.SUCCEEDED);
             result.setReasonCode(isCanaryStage(rollout) ? "CANARY_APPLIED" : "FULL_APPLIED");
             clearReleaseFailure();
+            clearReleaseIfTerminal(result.getStatus(), rollout);
         } else {
             result.setValid(true);
             result.setApplied(false);
@@ -124,11 +141,13 @@ public class IngestionGovernanceSyncApplier {
                 result.setMessage("canary rollback triggered");
                 markRollbackCooldown(rollout, now);
                 markReleaseFailed(rollout, now);
+                clearReleaseIfTerminal(result.getStatus(), rollout);
             } else {
                 result.setStatus(GovernanceReleaseStatus.FAILED);
                 result.setReasonCode("ROLLBACK_TARGET_MISSING");
                 result.setMessage("rollback target missing");
                 markReleaseFailed(rollout, now);
+                clearReleaseIfTerminal(result.getStatus(), rollout);
             }
         }
 
@@ -228,6 +247,28 @@ public class IngestionGovernanceSyncApplier {
         return rollout != null && "CANARY".equalsIgnoreCase(normalizeStage(rollout.getStage()));
     }
 
+    private boolean hasReleaseConflict(RemoteGovernanceRolloutPlan rollout) {
+        if (!StringUtils.hasText(activeReleaseId) || rollout == null || !StringUtils.hasText(rollout.getReleaseId())) {
+            return false;
+        }
+        String incomingReleaseId = rollout.getReleaseId().trim();
+        if (incomingReleaseId.equals(activeReleaseId)) {
+            return false;
+        }
+        return rollout.getPriority() <= activeReleasePriority;
+    }
+
+    private void enterReleaseIfNeeded(RemoteGovernanceRolloutPlan rollout) {
+        if (rollout == null || !StringUtils.hasText(rollout.getReleaseId())) {
+            return;
+        }
+        String incomingReleaseId = rollout.getReleaseId().trim();
+        if (!incomingReleaseId.equals(activeReleaseId)) {
+            activeReleaseId = incomingReleaseId;
+            activeReleasePriority = rollout.getPriority();
+        }
+    }
+
     private boolean isRetryBlocked(long now, String releaseId) {
         return releaseId != null
                 && releaseId.equals(failedReleaseId)
@@ -258,5 +299,20 @@ public class IngestionGovernanceSyncApplier {
         }
         int cooldownSeconds = Math.max(rollout.getRollbackCooldownSeconds(), 0);
         rollbackCooldownUntilEpochMs = now + cooldownSeconds * 1000L;
+    }
+
+    private void clearReleaseIfTerminal(GovernanceReleaseStatus status, RemoteGovernanceRolloutPlan rollout) {
+        if (rollout == null || !StringUtils.hasText(rollout.getReleaseId())) {
+            return;
+        }
+        if (status == GovernanceReleaseStatus.SUCCEEDED
+                || status == GovernanceReleaseStatus.FAILED
+                || status == GovernanceReleaseStatus.ROLLED_BACK) {
+            String releaseId = rollout.getReleaseId().trim();
+            if (releaseId.equals(activeReleaseId)) {
+                activeReleaseId = null;
+                activeReleasePriority = 0;
+            }
+        }
     }
 }

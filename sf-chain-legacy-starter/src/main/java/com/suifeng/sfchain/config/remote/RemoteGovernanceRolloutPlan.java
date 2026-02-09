@@ -16,6 +16,11 @@ public class RemoteGovernanceRolloutPlan {
     private String releaseId;
 
     /**
+     * 发布优先级（值越大优先级越高）
+     */
+    private int priority;
+
+    /**
      * CANARY 或 FULL
      */
     private String stage = "FULL";
