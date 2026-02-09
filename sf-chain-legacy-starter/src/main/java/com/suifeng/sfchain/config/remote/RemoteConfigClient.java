@@ -141,7 +141,11 @@ public class RemoteConfigClient {
         payload.put("tenantId", serverProperties.getTenantId());
         payload.put("appId", serverProperties.getAppId());
         payload.put("leaseToken", leaseToken);
-        postJson(requestUrl, payload, "治理租约释放失败");
+        HttpResponse<String> response = postJson(requestUrl, payload, "治理租约释放失败", 404, 409);
+        int status = response.statusCode();
+        if (status == 404 || status == 409) {
+            log.debug("治理租约释放幂等跳过, status={}", status);
+        }
     }
 
     public Optional<GovernanceFinalizeReconcileSnapshot> fetchFinalizeReconciliation()
@@ -221,7 +225,7 @@ public class RemoteConfigClient {
         return payload;
     }
 
-    private HttpResponse<String> postJson(String requestUrl, Map<String, Object> payload, String failurePrefix)
+    private HttpResponse<String> postJson(String requestUrl, Map<String, Object> payload, String failurePrefix, int... toleratedStatus)
             throws IOException, InterruptedException {
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(serverProperties.getConnectTimeoutMs()))
@@ -238,11 +242,28 @@ public class RemoteConfigClient {
         HttpRequest request = builder.build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         int statusCode = response.statusCode();
-        if (statusCode < 200 || statusCode >= 300) {
+        if (!isSuccessOrTolerated(statusCode, toleratedStatus)) {
             throw new IllegalStateException(failurePrefix + ", status=" + statusCode);
         }
-        verifyResponseSignature(response, response.body());
+        if (statusCode >= 200 && statusCode < 300) {
+            verifyResponseSignature(response, response.body());
+        }
         return response;
+    }
+
+    private static boolean isSuccessOrTolerated(int statusCode, int... toleratedStatus) {
+        if (statusCode >= 200 && statusCode < 300) {
+            return true;
+        }
+        if (toleratedStatus == null || toleratedStatus.length == 0) {
+            return false;
+        }
+        for (int status : toleratedStatus) {
+            if (statusCode == status) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String buildIdempotencyKey(GovernanceSyncApplyResult result) {
