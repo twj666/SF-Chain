@@ -37,6 +37,7 @@ public class OpenAIModelFactory {
         }
         
         modelConfigs.put(config.getModelName(), config);
+        modelInstances.remove(config.getModelName());
         log.info("注册模型配置: {} ({})", config.getModelName(), config.getProvider());
     }
     
