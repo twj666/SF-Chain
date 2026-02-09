@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -107,6 +108,35 @@ class FileAICallLogIngestionStoreTest {
         assertThat(rebuilt).isEqualTo(2);
         assertThat(Files.exists(tempDir.resolve("tenant-a__app-a.jsonl.idx.json"))).isTrue();
         assertThat(Files.exists(tempDir.resolve("tenant-b__app-b.jsonl.idx.json"))).isTrue();
+    }
+
+    @Test
+    void shouldUseAdaptiveStrideForLargeFile() throws Exception {
+        SfChainIngestionProperties properties = new SfChainIngestionProperties();
+        properties.setFilePersistenceDir(tempDir.toString());
+        properties.setIndexEnabled(true);
+        properties.setIndexStride(1);
+        properties.setAdaptiveIndexStrideEnabled(true);
+        FileAICallLogIngestionStore store = new FileAICallLogIngestionStore(new ObjectMapper(), properties);
+
+        String hugePrompt = "x".repeat(550_000);
+        AICallLogUploadItem item = AICallLogUploadItem.builder()
+                .callId("large-call")
+                .operationType("PERSIST_TEST")
+                .modelName("test-model")
+                .callTime(LocalDateTime.now())
+                .status("SUCCESS")
+                .duration(7L)
+                .prompt(hugePrompt)
+                .build();
+        store.saveBatch("tenant-l", "app-l", List.of(item, item, item, item, item, item, item, item, item, item));
+
+        store.queryPage("tenant-l", "app-l", 0, 1);
+        Path idxPath = tempDir.resolve("tenant-l__app-l.jsonl.idx.json");
+        assertThat(Files.exists(idxPath)).isTrue();
+        Map<?, ?> index = new ObjectMapper().readValue(Files.readString(idxPath), Map.class);
+        Number stride = (Number) index.get("stride");
+        assertThat(stride.intValue()).isGreaterThan(1);
     }
 
     private static AICallLogUploadItem sampleItem(String callId) {

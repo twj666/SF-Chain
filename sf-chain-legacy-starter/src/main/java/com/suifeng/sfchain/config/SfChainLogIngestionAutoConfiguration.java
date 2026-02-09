@@ -1,8 +1,10 @@
 package com.suifeng.sfchain.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.suifeng.sfchain.controller.AICallLogGovernanceController;
 import com.suifeng.sfchain.controller.AICallLogIngestionController;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
+import com.suifeng.sfchain.core.logging.ingestion.ContractAllowlistGuardService;
 import com.suifeng.sfchain.core.logging.ingestion.FileAICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.IngestionIndexMaintenanceService;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
@@ -23,7 +25,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @ConditionalOnExpression("${sf-chain.enabled:true} and ${sf-chain.features.management-api:false} and ${sf-chain.ingestion.enabled:false}")
 @ConditionalOnClass(WebMvcConfigurer.class)
 @EnableConfigurationProperties(SfChainIngestionProperties.class)
-@Import(AICallLogIngestionController.class)
+@Import({AICallLogIngestionController.class, AICallLogGovernanceController.class})
 public class SfChainLogIngestionAutoConfiguration {
 
     @Bean
@@ -57,5 +59,11 @@ public class SfChainLogIngestionAutoConfiguration {
             SfChainIngestionProperties properties,
             AICallLogIngestionStore ingestionStore) {
         return new IngestionIndexMaintenanceService(properties, ingestionStore);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public ContractAllowlistGuardService contractAllowlistGuardService(SfChainIngestionProperties properties) {
+        return new ContractAllowlistGuardService(properties);
     }
 }

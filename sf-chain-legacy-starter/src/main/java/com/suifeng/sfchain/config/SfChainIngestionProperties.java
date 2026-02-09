@@ -87,4 +87,19 @@ public class SfChainIngestionProperties {
      * 后台索引维护间隔（秒）
      */
     private int indexMaintenanceIntervalSeconds = 300;
+
+    /**
+     * 是否启用自适应索引步长
+     */
+    private boolean adaptiveIndexStrideEnabled = true;
+
+    /**
+     * 契约白名单最大活跃版本数
+     */
+    private int maxActiveContractVersions = 2;
+
+    /**
+     * 是否要求新白名单与当前白名单存在交集
+     */
+    private boolean requireCurrentVersionOverlap = true;
 }

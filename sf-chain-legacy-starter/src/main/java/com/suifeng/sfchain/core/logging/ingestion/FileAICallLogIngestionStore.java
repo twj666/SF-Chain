@@ -227,22 +227,44 @@ public class FileAICallLogIngestionStore implements AICallLogIngestionStore {
         Path idxPath = indexPath(file);
         long fileSize = Files.size(file);
         long lastModified = Files.getLastModifiedTime(file).toMillis();
+        int stride = resolveStride(fileSize);
         if (Files.exists(idxPath)) {
             try {
                 LineIndex loaded = objectMapper.readValue(Files.readString(idxPath, StandardCharsets.UTF_8), LineIndex.class);
                 if (loaded != null
                         && loaded.fileSize == fileSize
                         && loaded.lastModifiedMillis == lastModified
-                        && loaded.stride == Math.max(properties.getIndexStride(), 1)) {
+                        && loaded.stride == stride) {
                     return loaded;
                 }
             } catch (Exception ignored) {
             }
         }
-        LineIndex built = buildIndex(file, Math.max(properties.getIndexStride(), 1), fileSize, lastModified);
+        LineIndex built = buildIndex(file, stride, fileSize, lastModified);
         Files.writeString(idxPath, objectMapper.writeValueAsString(built), StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
         return built;
+    }
+
+    private int resolveStride(long fileSize) {
+        int base = Math.max(properties.getIndexStride(), 1);
+        if (!properties.isAdaptiveIndexStrideEnabled()) {
+            return base;
+        }
+        long mb = 1024L * 1024L;
+        if (fileSize >= 256L * mb) {
+            return base * 16;
+        }
+        if (fileSize >= 64L * mb) {
+            return base * 8;
+        }
+        if (fileSize >= 16L * mb) {
+            return base * 4;
+        }
+        if (fileSize >= 4L * mb) {
+            return base * 2;
+        }
+        return base;
     }
 
     private static LineIndex buildIndex(Path file, int stride, long fileSize, long lastModifiedMillis) throws IOException {
