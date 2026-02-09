@@ -1,6 +1,7 @@
 package com.suifeng.sfchain.controller;
 
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
+import com.suifeng.sfchain.config.remote.RemoteConfigSyncService;
 import com.suifeng.sfchain.core.logging.ingestion.ContractAllowlistGuardService;
 import com.suifeng.sfchain.core.logging.ingestion.IngestionIndexMaintenanceService;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class AICallLogGovernanceController {
     private final SfChainIngestionProperties ingestionProperties;
     private final ContractAllowlistGuardService guardService;
     private final ObjectProvider<IngestionIndexMaintenanceService> indexMaintenanceServiceProvider;
+    private final ObjectProvider<RemoteConfigSyncService> remoteConfigSyncServiceProvider;
 
     @GetMapping("/index-maintenance/metrics")
     public ResponseEntity<?> metrics(
@@ -32,6 +34,19 @@ public class AICallLogGovernanceController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "invalid api key"));
         }
         IngestionIndexMaintenanceService service = indexMaintenanceServiceProvider.getIfAvailable();
+        if (service == null) {
+            return ResponseEntity.ok(Map.of("enabled", false));
+        }
+        return ResponseEntity.ok(Map.of("enabled", true, "metrics", service.metrics()));
+    }
+
+    @GetMapping("/governance-sync/metrics")
+    public ResponseEntity<?> governanceSyncMetrics(
+            @RequestHeader(value = "X-SF-API-KEY", required = false) String apiKey) {
+        if (!isApiKeyValid(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "invalid api key"));
+        }
+        RemoteConfigSyncService service = remoteConfigSyncServiceProvider.getIfAvailable();
         if (service == null) {
             return ResponseEntity.ok(Map.of("enabled", false));
         }

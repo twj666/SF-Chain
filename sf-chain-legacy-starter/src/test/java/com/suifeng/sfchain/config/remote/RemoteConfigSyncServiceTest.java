@@ -344,6 +344,48 @@ class RemoteConfigSyncServiceTest {
         assertThat(metrics.getFinalizeReconcileFailure()).isEqualTo(0);
     }
 
+    @Test
+    void shouldAdvanceReconcileCursorAcrossSyncCycles() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://localhost");
+        serverProperties.setApiKey("token");
+
+        StubRemoteConfigClient client = new StubRemoteConfigClient(objectMapper, serverProperties);
+        SfChainConfigSyncProperties syncProperties = new SfChainConfigSyncProperties();
+        syncProperties.setGovernanceLeaseEnabled(false);
+        syncProperties.setGovernanceFinalizeReconcileEnabled(true);
+        syncProperties.setIngestionGovernanceEnabled(false);
+        syncProperties.setGovernanceFeedbackEnabled(false);
+        syncProperties.setGovernanceEventEnabled(false);
+        syncProperties.setGovernanceFinalizeEnabled(false);
+
+        RemoteConfigSnapshot notModified = new RemoteConfigSnapshot();
+        notModified.setVersion("v-cursor-1");
+        notModified.setNotModified(true);
+        client.snapshot = notModified;
+
+        GovernanceFinalizeReconcileSnapshot first = new GovernanceFinalizeReconcileSnapshot();
+        first.setNextCursor("cursor-1");
+        GovernanceFinalizeReconcileSnapshot second = new GovernanceFinalizeReconcileSnapshot();
+        second.setNextCursor("cursor-2");
+        client.reconcileSnapshotByCursor.put("", first);
+        client.reconcileSnapshotByCursor.put("cursor-1", second);
+
+        RemoteConfigSyncService syncService = new RemoteConfigSyncService(
+                client,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                null
+        );
+        syncService.syncOnce(false);
+        syncService.syncOnce(false);
+
+        assertThat(client.reconcileCursorRequests).containsExactly("", "cursor-1");
+    }
+
     private static class StubRemoteConfigClient extends RemoteConfigClient {
 
         private RemoteConfigSnapshot snapshot;
@@ -354,6 +396,8 @@ class RemoteConfigSyncServiceTest {
         private boolean finalizeAck = true;
         private GovernanceFinalizeReconcileSnapshot reconcileSnapshot;
         private String leaseAcquireToken;
+        private final java.util.Map<String, GovernanceFinalizeReconcileSnapshot> reconcileSnapshotByCursor = new java.util.HashMap<>();
+        private final java.util.List<String> reconcileCursorRequests = new java.util.ArrayList<>();
 
         StubRemoteConfigClient(ObjectMapper objectMapper, SfChainServerProperties serverProperties) {
             super(objectMapper, serverProperties);
@@ -387,6 +431,16 @@ class RemoteConfigSyncServiceTest {
 
         @Override
         public Optional<GovernanceFinalizeReconcileSnapshot> fetchFinalizeReconciliation() {
+            return Optional.ofNullable(reconcileSnapshot);
+        }
+
+        @Override
+        public Optional<GovernanceFinalizeReconcileSnapshot> fetchFinalizeReconciliation(String cursor) {
+            String normalized = cursor == null ? "" : cursor;
+            reconcileCursorRequests.add(normalized);
+            if (!reconcileSnapshotByCursor.isEmpty()) {
+                return Optional.ofNullable(reconcileSnapshotByCursor.get(normalized));
+            }
             return Optional.ofNullable(reconcileSnapshot);
         }
 

@@ -13,4 +13,6 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GovernanceFinalizeReconcileSnapshot {
     private List<String> ackedTaskKeys = new ArrayList<>();
+    private String nextCursor;
+    private boolean hasMore;
 }

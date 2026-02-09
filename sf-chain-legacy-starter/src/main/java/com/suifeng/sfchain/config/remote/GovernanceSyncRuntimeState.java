@@ -16,4 +16,6 @@ public class GovernanceSyncRuntimeState {
     private Map<String, GovernanceFinalizeRecord> finalizedStates = new LinkedHashMap<>();
 
     private Map<String, GovernanceFinalizeTask> pendingFinalizations = new LinkedHashMap<>();
+
+    private String reconcileCursor;
 }

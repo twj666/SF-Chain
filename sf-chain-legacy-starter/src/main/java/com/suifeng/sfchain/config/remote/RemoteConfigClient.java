@@ -150,9 +150,17 @@ public class RemoteConfigClient {
 
     public Optional<GovernanceFinalizeReconcileSnapshot> fetchFinalizeReconciliation()
             throws IOException, InterruptedException {
+        return fetchFinalizeReconciliation(null);
+    }
+
+    public Optional<GovernanceFinalizeReconcileSnapshot> fetchFinalizeReconciliation(String cursor)
+            throws IOException, InterruptedException {
         String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/finalize/reconcile?"
                 + "tenantId=" + encode(serverProperties.getTenantId())
                 + "&appId=" + encode(serverProperties.getAppId());
+        if (StringUtils.hasText(cursor)) {
+            requestUrl = requestUrl + "&cursor=" + encode(cursor.trim());
+        }
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(serverProperties.getConnectTimeoutMs()))
                 .build();

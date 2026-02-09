@@ -53,6 +53,7 @@ public class RemoteConfigSyncService {
     private final AtomicLong finalizeRetrySuccess = new AtomicLong();
     private final AtomicLong finalizeRetryFailure = new AtomicLong();
     private volatile String currentVersion;
+    private volatile String reconcileCursor;
 
     public RemoteConfigSyncService(
             RemoteConfigClient remoteConfigClient,
@@ -120,10 +121,18 @@ public class RemoteConfigSyncService {
             }
             Optional<RemoteConfigSnapshot> snapshotOpt = remoteConfigClient.fetchSnapshot(currentVersion);
             if (snapshotOpt.isEmpty()) {
+                if (leaseAcquired) {
+                    compactRuntimeState();
+                    persistRuntimeState();
+                }
                 return;
             }
             RemoteConfigSnapshot snapshot = snapshotOpt.get();
             if (snapshot.isNotModified()) {
+                if (leaseAcquired) {
+                    compactRuntimeState();
+                    persistRuntimeState();
+                }
                 return;
             }
             GovernanceSyncApplyResult governanceResult = applySnapshot(snapshot, leaseAcquired);
@@ -312,14 +321,18 @@ public class RemoteConfigSyncService {
         }
         finalizeReconcileAttempts.incrementAndGet();
         try {
-            remoteConfigClient.fetchFinalizeReconciliation().ifPresent(snapshot -> {
+            remoteConfigClient.fetchFinalizeReconciliation(reconcileCursor).ifPresent(snapshot -> {
                 if (snapshot.getAckedTaskKeys() == null) {
-                    return;
-                }
-                for (String key : snapshot.getAckedTaskKeys()) {
-                    if (key != null && !key.isBlank()) {
-                        pendingFinalizations.remove(key.trim());
+                    // no-op
+                } else {
+                    for (String key : snapshot.getAckedTaskKeys()) {
+                        if (key != null && !key.isBlank()) {
+                            pendingFinalizations.remove(key.trim());
+                        }
                     }
+                }
+                if (StringUtils.hasText(snapshot.getNextCursor())) {
+                    reconcileCursor = snapshot.getNextCursor().trim();
                 }
             });
             finalizeReconcileSuccess.incrementAndGet();
@@ -340,6 +353,9 @@ public class RemoteConfigSyncService {
             if (state.getPendingFinalizations() != null) {
                 pendingFinalizations.putAll(state.getPendingFinalizations());
             }
+            if (StringUtils.hasText(state.getReconcileCursor())) {
+                reconcileCursor = state.getReconcileCursor().trim();
+            }
         });
     }
 
@@ -350,6 +366,7 @@ public class RemoteConfigSyncService {
         }
         state.setFinalizedStates(new LinkedHashMap<>(finalizedReleaseStates));
         state.setPendingFinalizations(new LinkedHashMap<>(pendingFinalizations));
+        state.setReconcileCursor(reconcileCursor);
         stateStore.save(state);
     }
 
