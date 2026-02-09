@@ -18,7 +18,7 @@ spring:
         format_sql: false
 
 sf-chain:
-  enabled: true
+  enabled: false
   authEnabled: true
   auth-token: ${SF_CHAIN_AUTH_TOKEN:change-me}
   features:
@@ -37,3 +37,7 @@ sf-chain:
     supported-contract-versions:
       - v1
       - v2
+
+ai:
+  openai-models:
+    enabled: false

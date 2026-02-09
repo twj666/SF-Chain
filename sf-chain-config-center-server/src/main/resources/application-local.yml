@@ -16,6 +16,7 @@ spring:
       path: /h2-console
 
 sf-chain:
+  enabled: false
   authEnabled: false
   persistence:
     database-type: postgresql
@@ -24,3 +25,7 @@ sf-chain:
     local-migration: false
     management-api: true
     static-ui: true
+
+ai:
+  openai-models:
+    enabled: false

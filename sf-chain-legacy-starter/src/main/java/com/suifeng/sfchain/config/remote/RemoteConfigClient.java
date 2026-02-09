@@ -14,6 +14,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -189,6 +190,21 @@ public class RemoteConfigClient {
         GovernanceFinalizeReconcileSnapshot snapshot =
                 objectMapper.readValue(response.body(), GovernanceFinalizeReconcileSnapshot.class);
         return Optional.ofNullable(snapshot);
+    }
+
+    public void pushOperationCatalog(List<OperationCatalogItem> operations) throws IOException, InterruptedException {
+        if (!StringUtils.hasText(serverProperties.getBaseUrl())) {
+            throw new IllegalStateException("sf-chain.server.base-url not configured");
+        }
+        if (!StringUtils.hasText(serverProperties.getApiKey())) {
+            throw new IllegalStateException("sf-chain.server.api-key not configured");
+        }
+        String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl())
+                + "/v1/config/operations/catalog?tenantId=" + encode(serverProperties.getTenantId())
+                + "&appId=" + encode(serverProperties.getAppId());
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("operations", operations == null ? List.of() : operations);
+        postJson(requestUrl, payload, "鎿嶄綔鑺傜偣鐩綍涓婃姤澶辫触");
     }
 
     private String buildSnapshotUrl(String currentVersion) {
@@ -426,5 +442,98 @@ public class RemoteConfigClient {
         snapshot.setVersion(version);
         snapshot.setNotModified(true);
         return snapshot;
+    }
+
+    public static class OperationCatalogItem {
+        private String operationType;
+        private String sourceClass;
+        private String description;
+        private String defaultModel;
+        private boolean enabled;
+        private boolean requireJsonOutput;
+        private boolean supportThinking;
+        private int defaultMaxTokens;
+        private double defaultTemperature;
+        private List<String> supportedModels;
+
+        public String getOperationType() {
+            return operationType;
+        }
+
+        public void setOperationType(String operationType) {
+            this.operationType = operationType;
+        }
+
+        public String getSourceClass() {
+            return sourceClass;
+        }
+
+        public void setSourceClass(String sourceClass) {
+            this.sourceClass = sourceClass;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public String getDefaultModel() {
+            return defaultModel;
+        }
+
+        public void setDefaultModel(String defaultModel) {
+            this.defaultModel = defaultModel;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public boolean isRequireJsonOutput() {
+            return requireJsonOutput;
+        }
+
+        public void setRequireJsonOutput(boolean requireJsonOutput) {
+            this.requireJsonOutput = requireJsonOutput;
+        }
+
+        public boolean isSupportThinking() {
+            return supportThinking;
+        }
+
+        public void setSupportThinking(boolean supportThinking) {
+            this.supportThinking = supportThinking;
+        }
+
+        public int getDefaultMaxTokens() {
+            return defaultMaxTokens;
+        }
+
+        public void setDefaultMaxTokens(int defaultMaxTokens) {
+            this.defaultMaxTokens = defaultMaxTokens;
+        }
+
+        public double getDefaultTemperature() {
+            return defaultTemperature;
+        }
+
+        public void setDefaultTemperature(double defaultTemperature) {
+            this.defaultTemperature = defaultTemperature;
+        }
+
+        public List<String> getSupportedModels() {
+            return supportedModels;
+        }
+
+        public void setSupportedModels(List<String> supportedModels) {
+            this.supportedModels = supportedModels;
+        }
     }
 }

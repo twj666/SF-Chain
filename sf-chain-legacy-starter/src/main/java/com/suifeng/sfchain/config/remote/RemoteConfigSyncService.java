@@ -1,8 +1,10 @@
 package com.suifeng.sfchain.config.remote;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.suifeng.sfchain.annotation.AIOp;
 import com.suifeng.sfchain.config.SfChainConfigSyncProperties;
 import com.suifeng.sfchain.core.AIOperationRegistry;
+import com.suifeng.sfchain.core.BaseAIOperation;
 import com.suifeng.sfchain.core.openai.OpenAIModelConfig;
 import com.suifeng.sfchain.core.openai.OpenAIModelFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +16,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -86,6 +90,7 @@ public class RemoteConfigSyncService {
     public void start() {
         loadRuntimeState();
         loadCachedSnapshot();
+        syncOperationCatalogAtStartup();
         syncOnce(true);
 
         int interval = Math.max(syncProperties.getIntervalSeconds(), 5);
@@ -164,6 +169,64 @@ public class RemoteConfigSyncService {
         } finally {
             leaseManager.release();
         }
+    }
+
+    private void syncOperationCatalogAtStartup() {
+        if (!syncProperties.isOperationCatalogSyncEnabled()) {
+            return;
+        }
+        List<RemoteConfigClient.OperationCatalogItem> items = buildOperationCatalog();
+        if (items.isEmpty()) {
+            log.info("Skip operation catalog sync: no available AIOp operations");
+            return;
+        }
+        try {
+            remoteConfigClient.pushOperationCatalog(items);
+            log.info("Operation catalog sync completed: count={}", items.size());
+        } catch (Exception ex) {
+            if (!syncProperties.isFailOpen()) {
+                throw new IllegalStateException("Operation catalog sync failed and fail-open=false", ex);
+            }
+            log.warn("Operation catalog sync failed, continue because fail-open=true: {}", ex.getMessage());
+        }
+    }
+
+    private List<RemoteConfigClient.OperationCatalogItem> buildOperationCatalog() {
+        List<String> operationTypes = new ArrayList<>(operationRegistry.getAllOperations());
+        operationTypes.sort(String::compareTo);
+        List<RemoteConfigClient.OperationCatalogItem> items = new ArrayList<>(operationTypes.size());
+        for (String operationType : operationTypes) {
+            if (!StringUtils.hasText(operationType)) {
+                continue;
+            }
+            try {
+                BaseAIOperation<?, ?> operation = operationRegistry.getOperation(operationType);
+                if (operation == null) {
+                    continue;
+                }
+                AIOp annotation = operation.getAnnotation();
+                RemoteConfigClient.OperationCatalogItem item = new RemoteConfigClient.OperationCatalogItem();
+                item.setOperationType(operationType);
+                item.setSourceClass(operation.getClass().getName());
+                if (annotation != null) {
+                    item.setDescription(annotation.description());
+                    item.setDefaultModel(annotation.defaultModel());
+                    item.setEnabled(annotation.enabled());
+                    item.setRequireJsonOutput(annotation.requireJsonOutput());
+                    item.setSupportThinking(annotation.supportThinking());
+                    item.setDefaultMaxTokens(annotation.defaultMaxTokens());
+                    item.setDefaultTemperature(annotation.defaultTemperature());
+                    String[] supportedModels = annotation.supportedModels();
+                    if (supportedModels != null && supportedModels.length > 0) {
+                        item.setSupportedModels(List.of(supportedModels));
+                    }
+                }
+                items.add(item);
+            } catch (Exception ex) {
+                log.warn("Failed to build operation catalog item, operationType={}, err={}", operationType, ex.getMessage());
+            }
+        }
+        return items;
     }
 
     GovernanceSyncApplyResult applySnapshot(RemoteConfigSnapshot snapshot, boolean leaseAcquired) {

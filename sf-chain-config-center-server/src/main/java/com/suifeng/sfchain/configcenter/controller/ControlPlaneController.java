@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -111,6 +112,26 @@ public class ControlPlaneController {
     @PostMapping("/v1/config/snapshot")
     public ConfigDtos.ConfigSnapshotResponse snapshot(@RequestBody ConfigDtos.ConfigSnapshotRequest request) {
         return controlPlaneService.snapshot(request);
+    }
+
+    @GetMapping("/v1/config/snapshot")
+    public ResponseEntity<ConfigDtos.ConfigSnapshotResponse> snapshot(
+            @RequestParam String tenantId,
+            @RequestParam String appId,
+            @RequestParam(required = false) String version,
+            @RequestHeader(name = "X-SF-API-KEY") String apiKey) {
+        return controlPlaneService.snapshot(tenantId, appId, apiKey, version)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(304).build());
+    }
+
+    @PostMapping("/v1/config/operations/catalog")
+    public ConfigDtos.OperationCatalogSyncResponse syncOperationCatalog(
+            @RequestParam String tenantId,
+            @RequestParam String appId,
+            @RequestHeader(name = "X-SF-API-KEY") String apiKey,
+            @RequestBody(required = false) ConfigDtos.OperationCatalogSyncRequest request) {
+        return controlPlaneService.syncOperationCatalog(tenantId, appId, apiKey, request);
     }
 
     @PostMapping("/v1/auth/token/validate")

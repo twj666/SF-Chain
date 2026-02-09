@@ -17,13 +17,17 @@ import com.suifeng.sfchain.configcenter.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.ZoneOffset;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -216,6 +220,65 @@ public class ControlPlaneService {
         return request;
     }
 
+    @Transactional
+    public ConfigDtos.OperationCatalogSyncResponse syncOperationCatalog(
+            String tenantId,
+            String appId,
+            String apiKey,
+            ConfigDtos.OperationCatalogSyncRequest request) {
+        String normalizedTenantId = normalizeRequired(tenantId, "tenantId");
+        String normalizedAppId = normalizeRequired(appId, "appId");
+        String normalizedApiKey = normalizeRequired(apiKey, "apiKey");
+        ApiKeyDtos.ValidateApiKeyResponse keyCheck = validateBySecret(normalizedApiKey, normalizedTenantId, normalizedAppId);
+        if (!keyCheck.isValid()) {
+            throw new IllegalArgumentException("api key invalid: " + keyCheck.getMessage());
+        }
+        assertTenantActive(normalizedTenantId);
+        assertAppActive(normalizedTenantId, normalizedAppId);
+
+        List<ConfigDtos.OperationCatalogItem> operations =
+                request == null || request.getOperations() == null ? List.of() : request.getOperations();
+        Map<String, TenantOperationConfigEntity> existing = tenantOperationConfigRepository
+                .findByTenantIdAndAppIdOrderByCreatedAtDesc(normalizedTenantId, normalizedAppId)
+                .stream()
+                .collect(Collectors.toMap(TenantOperationConfigEntity::getOperationType, it -> it, (a, b) -> a));
+
+        int created = 0;
+        int existed = 0;
+        int ignored = 0;
+        for (ConfigDtos.OperationCatalogItem item : operations) {
+            if (item == null || normalizeOptional(item.getOperationType()) == null) {
+                ignored++;
+                continue;
+            }
+            String operationType = normalizeRequired(item.getOperationType(), "operationType");
+            if (existing.containsKey(operationType)) {
+                existed++;
+                continue;
+            }
+            TenantOperationConfigEntity entity = new TenantOperationConfigEntity();
+            entity.setTenantId(normalizedTenantId);
+            entity.setAppId(normalizedAppId);
+            entity.setOperationType(operationType);
+            entity.setActive(item.isEnabled());
+            entity.setModelName(normalizeOptional(item.getDefaultModel()));
+            entity.setConfigJson(toCatalogMeta(item));
+            TenantOperationConfigEntity saved = tenantOperationConfigRepository.save(entity);
+            existing.put(saved.getOperationType(), saved);
+            created++;
+        }
+
+        ConfigDtos.OperationCatalogSyncResponse response = new ConfigDtos.OperationCatalogSyncResponse();
+        response.setTenantId(normalizedTenantId);
+        response.setAppId(normalizedAppId);
+        response.setReceived(operations.size());
+        response.setCreated(created);
+        response.setExisted(existed);
+        response.setIgnored(ignored);
+        response.setSyncedAt(LocalDateTime.now());
+        return response;
+    }
+
     @Transactional(readOnly = true)
     public List<Map<String, Object>> listOperationConfigs(String tenantId, String appId) {
         assertTenantActive(tenantId);
@@ -252,20 +315,98 @@ public class ControlPlaneService {
         String tenantId = normalizeRequired(request.getTenantId(), "tenantId");
         String appId = normalizeRequired(request.getAppId(), "appId");
         String apiKey = normalizeRequired(request.getApiKey(), "apiKey");
+        return buildSnapshotResponse(tenantId, appId, apiKey);
+    }
 
+    @Transactional(readOnly = true)
+    public Optional<ConfigDtos.ConfigSnapshotResponse> snapshot(
+            String tenantId,
+            String appId,
+            String apiKey,
+            String currentVersion) {
+        ConfigDtos.ConfigSnapshotResponse response = buildSnapshotResponse(
+                normalizeRequired(tenantId, "tenantId"),
+                normalizeRequired(appId, "appId"),
+                normalizeRequired(apiKey, "apiKey"));
+        String normalizedCurrentVersion = normalizeOptional(currentVersion);
+        if (StringUtils.hasText(normalizedCurrentVersion) && normalizedCurrentVersion.equals(response.getVersion())) {
+            return Optional.empty();
+        }
+        return Optional.of(response);
+    }
+
+    private ConfigDtos.ConfigSnapshotResponse buildSnapshotResponse(String tenantId, String appId, String apiKey) {
         ApiKeyDtos.ValidateApiKeyResponse keyCheck = validateBySecret(apiKey, tenantId, appId);
         if (!keyCheck.isValid()) {
             throw new IllegalArgumentException("api key invalid: " + keyCheck.getMessage());
         }
 
+        List<Map<String, Object>> models = listModelConfigs(tenantId, appId);
+        List<Map<String, Object>> operations = listOperationConfigs(tenantId, appId);
         ConfigDtos.ConfigSnapshotResponse response = new ConfigDtos.ConfigSnapshotResponse();
         response.setTenantId(tenantId);
         response.setAppId(appId);
         response.setGeneratedAt(LocalDateTime.now());
-        response.setVersion("v" + System.currentTimeMillis());
-        response.setModels(listModelConfigs(tenantId, appId));
-        response.setOperations(listOperationConfigs(tenantId, appId));
+        response.setVersion(buildSnapshotVersion(models, operations));
+        response.setModels(models);
+        response.setOperations(operations);
         return response;
+    }
+
+    private static String buildSnapshotVersion(List<Map<String, Object>> models, List<Map<String, Object>> operations) {
+        long latestUpdatedAt = 0L;
+        for (Map<String, Object> model : models) {
+            Object updatedAt = model.get("updatedAt");
+            latestUpdatedAt = Math.max(latestUpdatedAt, toEpochMillis(updatedAt));
+        }
+        for (Map<String, Object> operation : operations) {
+            Object updatedAt = operation.get("updatedAt");
+            latestUpdatedAt = Math.max(latestUpdatedAt, toEpochMillis(updatedAt));
+        }
+        return "v" + latestUpdatedAt + "_m" + models.size() + "_o" + operations.size();
+    }
+
+    private static long toEpochMillis(Object updatedAt) {
+        if (updatedAt instanceof LocalDateTime) {
+            return ((LocalDateTime) updatedAt).toInstant(ZoneOffset.UTC).toEpochMilli();
+        }
+        return 0L;
+    }
+
+    private static Map<String, Object> toCatalogMeta(ConfigDtos.OperationCatalogItem item) {
+        Map<String, Object> meta = new LinkedHashMap<>();
+        if (normalizeOptional(item.getSourceClass()) != null) {
+            meta.put("sourceClass", item.getSourceClass().trim());
+        }
+        if (normalizeOptional(item.getDescription()) != null) {
+            meta.put("description", item.getDescription().trim());
+        }
+        if (normalizeOptional(item.getDefaultModel()) != null) {
+            meta.put("defaultModel", item.getDefaultModel().trim());
+        }
+        meta.put("requireJsonOutput", item.isRequireJsonOutput());
+        meta.put("supportThinking", item.isSupportThinking());
+        if (item.getDefaultMaxTokens() > 0) {
+            meta.put("defaultMaxTokens", item.getDefaultMaxTokens());
+        }
+        if (item.getDefaultTemperature() >= 0) {
+            meta.put("defaultTemperature", item.getDefaultTemperature());
+        }
+        List<String> supportedModels = item.getSupportedModels() == null ? List.of() : item.getSupportedModels();
+        List<String> cleanedModels = new ArrayList<>();
+        for (String supportedModel : supportedModels) {
+            String model = normalizeOptional(supportedModel);
+            if (model != null) {
+                cleanedModels.add(model);
+            }
+        }
+        if (!cleanedModels.isEmpty()) {
+            meta.put("supportedModels", cleanedModels);
+        }
+        if (meta.isEmpty()) {
+            return Map.of();
+        }
+        return Map.of("_catalog", meta);
     }
 
     private ApiKeyDtos.ValidateApiKeyResponse validateBySecret(String apiKey, String tenantId, String appId) {

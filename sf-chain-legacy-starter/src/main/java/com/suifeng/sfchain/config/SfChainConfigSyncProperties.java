@@ -111,4 +111,9 @@ public class SfChainConfigSyncProperties {
      * 无效游标告警阈值（达到阈值及其倍数时告警）
      */
     private int governanceFinalizeReconcileInvalidCursorWarnThreshold = 10;
+
+    /**
+     * 鏄惁鍦ㄥ惎鍔ㄦ椂涓婃姤鏈湴鎿嶄綔鑺傜偣鐩綍鍒伴厤缃腑蹇?
+     */
+    private boolean operationCatalogSyncEnabled = true;
 }

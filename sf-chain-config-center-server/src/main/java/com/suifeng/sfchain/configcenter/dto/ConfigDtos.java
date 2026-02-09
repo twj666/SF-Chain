@@ -3,6 +3,7 @@ package com.suifeng.sfchain.configcenter.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 public final class ConfigDtos {
@@ -42,5 +43,35 @@ public final class ConfigDtos {
         private LocalDateTime generatedAt;
         private Object models;
         private Object operations;
+    }
+
+    @Data
+    public static class OperationCatalogSyncRequest {
+        private List<OperationCatalogItem> operations;
+    }
+
+    @Data
+    public static class OperationCatalogItem {
+        private String operationType;
+        private String sourceClass;
+        private String description;
+        private String defaultModel;
+        private boolean enabled;
+        private boolean requireJsonOutput;
+        private boolean supportThinking;
+        private int defaultMaxTokens;
+        private double defaultTemperature;
+        private List<String> supportedModels;
+    }
+
+    @Data
+    public static class OperationCatalogSyncResponse {
+        private String tenantId;
+        private String appId;
+        private int received;
+        private int created;
+        private int existed;
+        private int ignored;
+        private LocalDateTime syncedAt;
     }
 }
