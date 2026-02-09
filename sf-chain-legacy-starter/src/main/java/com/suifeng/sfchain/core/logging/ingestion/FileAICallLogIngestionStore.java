@@ -139,6 +139,26 @@ public class FileAICallLogIngestionStore implements AICallLogIngestionStore {
         return deleted;
     }
 
+    @Override
+    public int rebuildIndexes() {
+        if (!properties.isIndexEnabled() || !Files.exists(baseDir)) {
+            return 0;
+        }
+        int rebuilt = 0;
+        try (var stream = Files.list(baseDir)) {
+            for (Path file : stream.collect(Collectors.toList())) {
+                if (!Files.isRegularFile(file) || !isDataFile(file)) {
+                    continue;
+                }
+                loadOrBuildIndex(file);
+                rebuilt++;
+            }
+        } catch (IOException e) {
+            log.debug("后台索引维护失败: {}", e.getMessage());
+        }
+        return rebuilt;
+    }
+
     private AICallLogIngestionRecord toRecord(String line) {
         try {
             return objectMapper.readValue(line, AICallLogIngestionRecord.class);

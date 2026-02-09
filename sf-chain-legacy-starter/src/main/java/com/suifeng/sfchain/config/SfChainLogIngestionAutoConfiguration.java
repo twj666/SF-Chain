@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.suifeng.sfchain.controller.AICallLogIngestionController;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.FileAICallLogIngestionStore;
+import com.suifeng.sfchain.core.logging.ingestion.IngestionIndexMaintenanceService;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -44,5 +45,17 @@ public class SfChainLogIngestionAutoConfiguration {
     @ConditionalOnMissingBean
     public AICallLogIngestionStore noOpAICallLogIngestionStore() {
         return AICallLogIngestionStore.NO_OP;
+    }
+
+    @Bean
+    @ConditionalOnProperty(
+            prefix = "sf-chain.ingestion",
+            name = {"index-enabled", "index-maintenance-enabled"},
+            havingValue = "true")
+    @ConditionalOnMissingBean
+    public IngestionIndexMaintenanceService ingestionIndexMaintenanceService(
+            SfChainIngestionProperties properties,
+            AICallLogIngestionStore ingestionStore) {
+        return new IngestionIndexMaintenanceService(properties, ingestionStore);
     }
 }

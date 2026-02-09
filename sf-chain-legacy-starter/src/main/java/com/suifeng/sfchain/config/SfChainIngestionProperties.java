@@ -77,4 +77,14 @@ public class SfChainIngestionProperties {
      * 索引步长（每N行一个偏移）
      */
     private int indexStride = 200;
+
+    /**
+     * 是否启用后台索引维护
+     */
+    private boolean indexMaintenanceEnabled = true;
+
+    /**
+     * 后台索引维护间隔（秒）
+     */
+    private int indexMaintenanceIntervalSeconds = 300;
 }

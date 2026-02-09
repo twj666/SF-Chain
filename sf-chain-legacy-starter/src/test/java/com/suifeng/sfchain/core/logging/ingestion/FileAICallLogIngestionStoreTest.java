@@ -92,6 +92,23 @@ class FileAICallLogIngestionStoreTest {
         assertThat(Files.exists(tempDir.resolve("tenant-a__app-a.jsonl.idx.json"))).isTrue();
     }
 
+    @Test
+    void shouldRebuildIndexesInBatch() {
+        SfChainIngestionProperties properties = new SfChainIngestionProperties();
+        properties.setFilePersistenceDir(tempDir.toString());
+        properties.setIndexEnabled(true);
+        properties.setIndexStride(1);
+        FileAICallLogIngestionStore store = new FileAICallLogIngestionStore(new ObjectMapper(), properties);
+
+        store.saveBatch("tenant-a", "app-a", List.of(sampleItem("call-a")));
+        store.saveBatch("tenant-b", "app-b", List.of(sampleItem("call-b")));
+
+        int rebuilt = store.rebuildIndexes();
+        assertThat(rebuilt).isEqualTo(2);
+        assertThat(Files.exists(tempDir.resolve("tenant-a__app-a.jsonl.idx.json"))).isTrue();
+        assertThat(Files.exists(tempDir.resolve("tenant-b__app-b.jsonl.idx.json"))).isTrue();
+    }
+
     private static AICallLogUploadItem sampleItem(String callId) {
         return AICallLogUploadItem.builder()
                 .callId(callId)

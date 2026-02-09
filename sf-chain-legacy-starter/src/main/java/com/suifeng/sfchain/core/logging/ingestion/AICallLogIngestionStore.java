@@ -24,6 +24,10 @@ public interface AICallLogIngestionStore {
         return 0;
     }
 
+    default int rebuildIndexes() {
+        return 0;
+    }
+
     AICallLogIngestionStore NO_OP = (tenantId, appId, items) -> {
     };
 }

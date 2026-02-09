@@ -29,6 +29,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,6 +92,62 @@ class AICallLogIngestionContractE2ETest {
         assertThat(content).contains("call-e2e-1");
     }
 
+    @Test
+    void shouldSupportMixedContractVersions() throws Exception {
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://127.0.0.1:" + port);
+        serverProperties.setApiKey("center-key");
+        serverProperties.setTenantId("tenant-mixed");
+        serverProperties.setAppId("app-mixed");
+
+        SfChainLoggingProperties loggingProperties = new SfChainLoggingProperties();
+        loggingProperties.setUploadEndpoint("/v1/logs/ai-calls/batch");
+        HttpAICallLogUploadClient v1Client = new HttpAICallLogUploadClient(
+                new ObjectMapper(),
+                serverProperties,
+                loggingProperties
+        );
+
+        boolean v1Ok = v1Client.upload(List.of(AICallLogUploadItem.builder()
+                .callId("call-v1-1")
+                .operationType("MIXED_OP")
+                .modelName("mixed-model")
+                .callTime(LocalDateTime.now())
+                .duration(9L)
+                .status("SUCCESS")
+                .build()));
+        assertThat(v1Ok).isTrue();
+
+        String body = new ObjectMapper().findAndRegisterModules().writeValueAsString(new V2Request(
+                "v2",
+                "tenant-mixed",
+                "app-mixed",
+                List.of(AICallLogUploadItem.builder()
+                        .callId("call-v2-1")
+                        .operationType("MIXED_OP")
+                        .modelName("mixed-model")
+                        .callTime(LocalDateTime.now())
+                        .duration(9L)
+                        .status("SUCCESS")
+                        .build())
+        ));
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://127.0.0.1:" + port + "/v1/logs/ai-calls/batch"))
+                .header("Content-Type", "application/json")
+                .header("X-SF-API-KEY", "center-key")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        assertThat(response.statusCode()).isEqualTo(200);
+
+        Path file = Path.of(ingestionProperties.getFilePersistenceDir())
+                .resolve("tenant-mixed__app-mixed.jsonl");
+        String content = Files.readString(file, StandardCharsets.UTF_8);
+        assertThat(content).contains("call-v1-1");
+        assertThat(content).contains("call-v2-1");
+    }
+
     @AfterAll
     static void cleanup() throws Exception {
         if (!Files.exists(TEMP_DIR)) {
@@ -106,6 +166,8 @@ class AICallLogIngestionContractE2ETest {
             TestPropertyValues.of(
                     "sf-chain.ingestion.api-key=center-key",
                     "sf-chain.ingestion.require-tenant-app=true",
+                    "sf-chain.ingestion.supported-contract-versions[0]=v1",
+                    "sf-chain.ingestion.supported-contract-versions[1]=v2",
                     "sf-chain.ingestion.file-persistence-enabled=true",
                     "sf-chain.ingestion.file-persistence-dir=" + TEMP_DIR,
                     "spring.autoconfigure.exclude="
@@ -146,5 +208,13 @@ class AICallLogIngestionContractE2ETest {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @lombok.Value
+    private static class V2Request {
+        String contractVersion;
+        String tenantId;
+        String appId;
+        List<AICallLogUploadItem> items;
     }
 }
