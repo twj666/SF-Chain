@@ -43,6 +43,23 @@ export interface AppView {
   updatedAt: string
 }
 
+export interface TenantModelConfig {
+  modelName: string
+  provider: string
+  baseUrl: string
+  active: boolean
+  config: Record<string, unknown>
+  updatedAt: string
+}
+
+export interface TenantOperationConfig {
+  operationType: string
+  modelName: string
+  active: boolean
+  config: Record<string, unknown>
+  updatedAt: string
+}
+
 const base = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_SYSTEM.replace('/system', '')}`
 
 export const controlPlaneApi = {
@@ -111,6 +128,44 @@ export const controlPlaneApi = {
   async revokeApiKey(id: number): Promise<ApiKeyView> {
     return apiJsonRequest(`${base}/control/api-keys/${id}/revoke`, {
       method: 'PATCH',
+      requireAuth: true
+    })
+  },
+
+  async listModelConfigs(tenantId: string, appId: string): Promise<TenantModelConfig[]> {
+    return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/models`, {
+      method: 'GET',
+      requireAuth: true
+    })
+  },
+
+  async upsertModelConfig(
+    tenantId: string,
+    appId: string,
+    payload: { modelName: string; provider: string; baseUrl?: string; active: boolean; config: Record<string, unknown> }
+  ): Promise<void> {
+    return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/models`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      requireAuth: true
+    })
+  },
+
+  async listOperationConfigs(tenantId: string, appId: string): Promise<TenantOperationConfig[]> {
+    return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/operations`, {
+      method: 'GET',
+      requireAuth: true
+    })
+  },
+
+  async upsertOperationConfig(
+    tenantId: string,
+    appId: string,
+    payload: { operationType: string; modelName?: string; active: boolean; config: Record<string, unknown> }
+  ): Promise<void> {
+    return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/operations`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
       requireAuth: true
     })
   }

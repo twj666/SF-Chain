@@ -2,33 +2,53 @@
   <div class="console-root">
     <HeaderBar :on-refresh="refreshOverview" />
 
-    <div class="console-main">
-      <aside class="sidebar">
-        <h3 class="side-title">控制台</h3>
+    <main class="console-layout">
+      <section class="overview page-shell">
+        <div class="overview-head">
+          <div>
+            <h2 class="section-title">SF-Chain 配置中心</h2>
+            <p class="section-sub">卡片式控制台，按租户和应用管理模型、Operation、密钥与持久化。</p>
+          </div>
+          <button class="btn btn-secondary" @click="refreshOverview">刷新概览</button>
+        </div>
+        <div class="kv-grid">
+          <div class="kv-card">
+            <div class="kv-label">模型总数</div>
+            <div class="kv-value">{{ systemOverview.totalModels }}</div>
+          </div>
+          <div class="kv-card">
+            <div class="kv-label">启用模型</div>
+            <div class="kv-value">{{ systemOverview.enabledModels }}</div>
+          </div>
+          <div class="kv-card">
+            <div class="kv-label">Operation总数</div>
+            <div class="kv-value">{{ systemOverview.totalOperations }}</div>
+          </div>
+          <div class="kv-card">
+            <div class="kv-label">已配置Operation</div>
+            <div class="kv-value">{{ systemOverview.configuredOperations }}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tabs-grid">
         <button
           v-for="tab in tabs"
           :key="tab.key"
-          class="tab-btn"
+          class="tab-card"
           :class="{ active: activeTab === tab.key }"
           @click="activeTab = tab.key"
         >
-          <span>{{ tab.title }}</span>
-          <small>{{ tab.desc }}</small>
+          <div class="tab-title">{{ tab.title }}</div>
+          <div class="tab-desc">{{ tab.desc }}</div>
         </button>
-      </aside>
+      </section>
 
-      <section class="content">
-        <ApiInfoConfig
-          v-if="activeTab === 'models'"
-          :system-overview="systemOverview"
-          @update-overview="handleOverviewUpdate"
-        />
-
-        <AiNodeConfig
-          v-if="activeTab === 'operations'"
-          :system-overview="systemOverview"
-          @update-overview="handleOverviewUpdate"
-        />
+      <section class="workspace page-shell">
+        <ScopedModelConfig v-if="activeTab === 'models'" />
+        <ScopedOperationConfig v-if="activeTab === 'operations'" />
+        <TenantKeyManagement v-if="activeTab === 'tenant'" />
+        <DatabaseBootstrapPanel v-if="activeTab === 'bootstrap'" />
 
         <AICallLogViewer
           v-if="activeTab === 'logs'"
@@ -41,20 +61,16 @@
           :system-overview="systemOverview"
           @update-overview="handleOverviewUpdate"
         />
-
-        <TenantKeyManagement v-if="activeTab === 'tenant'" />
-
-        <DatabaseBootstrapPanel v-if="activeTab === 'bootstrap'" />
       </section>
-    </div>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import HeaderBar from '@/components/HeaderBar.vue'
-import ApiInfoConfig from '@/components/ApiInfoConfig.vue'
-import AiNodeConfig from '@/components/AiNodeConfig.vue'
+import ScopedModelConfig from '@/components/ScopedModelConfig.vue'
+import ScopedOperationConfig from '@/components/ScopedOperationConfig.vue'
 import AICallLogViewer from '@/components/AICallLogViewer.vue'
 import SystemManagement from '@/components/SystemManagement.vue'
 import TenantKeyManagement from '@/components/TenantKeyManagement.vue'
@@ -64,12 +80,12 @@ import { getAuthToken } from '@/services/apiUtils'
 import type { SystemOverview } from '@/types/system'
 
 const tabs = [
-  { key: 'models', title: '模型配置', desc: '模型与参数' },
-  { key: 'operations', title: 'Operation配置', desc: '节点映射' },
-  { key: 'tenant', title: '租户与密钥', desc: '租户 + API Key' },
-  { key: 'bootstrap', title: '数据库初始化', desc: '一键持久化' },
-  { key: 'logs', title: '调用日志', desc: '日志与统计' },
-  { key: 'system', title: '系统管理', desc: '重置与维护' }
+  { key: 'models', title: '模型配置', desc: '租户/应用模型池' },
+  { key: 'operations', title: 'Operation配置', desc: '节点映射与策略' },
+  { key: 'tenant', title: '租户与密钥', desc: '租户/应用/API Key' },
+  { key: 'bootstrap', title: '数据库', desc: '保存配置与初始化' },
+  { key: 'logs', title: '调用日志', desc: '日志与统计分析' },
+  { key: 'system', title: '系统管理', desc: '重置与维护操作' }
 ]
 
 const activeTab = ref('models')
@@ -107,60 +123,82 @@ onMounted(() => {
 <style scoped>
 .console-root {
   min-height: 100vh;
-  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
-}
-
-.console-main {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 1rem;
   padding: 1rem;
 }
 
-.sidebar {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+.console-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.overview,
+.workspace {
+  padding: 1rem;
+}
+
+.overview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 0.95rem;
+}
+
+.tabs-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.tab-card {
+  border: 1px solid var(--line);
   border-radius: 14px;
-  padding: 0.9rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.side-title {
-  margin: 0 0 0.2rem;
-  font-size: 1rem;
-  color: #334155;
-}
-
-.tab-btn {
+  background: #f7fbfc;
   text-align: left;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 0.65rem 0.75rem;
+  padding: 0.72rem;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
 }
 
-.tab-btn small {
-  color: #64748b;
+.tab-card:hover {
+  transform: translateY(-1px);
+  border-color: #8cc4d2;
 }
 
-.tab-btn.active {
-  border-color: #3b82f6;
-  background: #eff6ff;
+.tab-card.active {
+  border-color: #0f766e;
+  background: linear-gradient(180deg, #edfffc 0%, #f4fbff 100%);
 }
 
-.content {
-  min-width: 0;
+.tab-title {
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
-@media (max-width: 960px) {
-  .console-main {
-    grid-template-columns: 1fr;
+.tab-desc {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-sub);
+}
+
+@media (max-width: 1200px) {
+  .tabs-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .console-root {
+    padding: 0.7rem;
+  }
+
+  .tabs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overview-head {
+    flex-direction: column;
   }
 }
 </style>

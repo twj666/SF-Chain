@@ -29,6 +29,17 @@ public class DatabaseBootstrapController {
         return ResponseEntity.ok(Map.of("message", "connection ok"));
     }
 
+    @PostMapping("/save")
+    public ResponseEntity<Map<String, Object>> save(@RequestBody DatabaseBootstrapService.DatabaseRequest request) {
+        bootstrapService.saveConfig(request);
+        return ResponseEntity.ok(Map.of("message", "database config saved", "restartRequired", true));
+    }
+
+    @PostMapping("/precheck")
+    public DatabaseBootstrapService.PrecheckResult precheck(@RequestBody DatabaseBootstrapService.DatabaseRequest request) {
+        return bootstrapService.precheck(request);
+    }
+
     @PostMapping("/init")
     public DatabaseBootstrapService.InitResult init(@RequestBody DatabaseBootstrapService.DatabaseRequest request) {
         return bootstrapService.initialize(request);

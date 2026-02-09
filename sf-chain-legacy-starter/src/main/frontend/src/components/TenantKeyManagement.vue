@@ -1,107 +1,99 @@
 <template>
-  <div class="tenant-page">
-    <div class="content-header">
-      <h2>租户与密钥</h2>
-      <p>创建租户、申请 API Key、吊销密钥</p>
-    </div>
-
-    <div class="card create-card">
-      <h3>创建租户</h3>
-      <div class="row">
-        <input v-model="tenantForm.tenantId" placeholder="tenantId（如 poet-prod）" class="form-input" />
-        <input v-model="tenantForm.name" placeholder="租户名称" class="form-input" />
+  <div class="tenant-shell">
+    <header class="panel-head">
+      <div>
+        <h2 class="section-title">租户与密钥</h2>
+        <p class="section-sub">左到右三步：选租户 -> 选应用 -> 管理 API Key。</p>
       </div>
-      <div class="row">
-        <input v-model="tenantForm.description" placeholder="描述（可选）" class="form-input" />
-        <button class="btn btn-primary" :disabled="creatingTenant" @click="createTenant">{{ creatingTenant ? '创建中...' : '创建租户' }}</button>
+      <div class="context" v-if="selectedTenantId">
+        <span class="pill pill-ok">租户 {{ selectedTenantId }}</span>
+        <span class="pill" :class="selectedAppId ? 'pill-ok' : 'pill-off'">应用 {{ selectedAppId || '未选择' }}</span>
       </div>
-    </div>
+    </header>
 
-    <div class="card list-card">
-      <h3>租户列表</h3>
-      <div v-if="loadingTenants" class="empty">加载中...</div>
-      <div v-else-if="tenants.length === 0" class="empty">暂无租户</div>
-      <div v-else class="tenant-list">
-        <div
-          v-for="tenant in tenants"
-          :key="tenant.tenantId"
-          class="tenant-item"
-          :class="{ active: selectedTenantId === tenant.tenantId }"
-          @click="selectTenant(tenant.tenantId)"
-        >
-          <div>
-            <div class="tenant-title">{{ tenant.name }} <span class="tenant-id">({{ tenant.tenantId }})</span></div>
-            <div class="tenant-desc">{{ tenant.description || '无描述' }}</div>
-          </div>
-          <button class="btn btn-secondary" @click.stop="toggleTenant(tenant)">{{ tenant.active ? '禁用' : '启用' }}</button>
+    <div class="flow-grid">
+      <section class="soft-card block">
+        <h3>租户</h3>
+        <div class="form-grid">
+          <input v-model="tenantForm.tenantId" class="input" placeholder="tenantId（poet-prod）" />
+          <input v-model="tenantForm.name" class="input" placeholder="租户名称" />
+          <input v-model="tenantForm.description" class="input" placeholder="描述（可选）" />
+          <button class="btn btn-primary" :disabled="creatingTenant" @click="createTenant">{{ creatingTenant ? '创建中...' : '创建租户' }}</button>
         </div>
-      </div>
-    </div>
 
-    <div v-if="selectedTenantId" class="card app-card">
-      <h3>应用管理（{{ selectedTenantId }}）</h3>
-      <div class="row">
-        <input v-model="appForm.appId" placeholder="appId（如 poet-agent）" class="form-input" />
-        <input v-model="appForm.appName" placeholder="应用名称" class="form-input" />
-      </div>
-      <div class="row">
-        <input v-model="appForm.description" placeholder="描述（可选）" class="form-input" />
-        <button class="btn btn-primary" :disabled="creatingApp" @click="createApp">{{ creatingApp ? '创建中...' : '创建应用' }}</button>
-      </div>
-      <div v-if="loadingApps" class="empty">应用加载中...</div>
-      <div v-else-if="apps.length === 0" class="empty">当前租户暂无应用，请先创建应用</div>
-      <div v-else class="tenant-list">
-        <div
-          v-for="app in apps"
-          :key="app.appId"
-          class="tenant-item"
-          :class="{ active: selectedAppId === app.appId }"
-          @click="selectApp(app.appId)"
-        >
-          <div>
-            <div class="tenant-title">{{ app.appName }} <span class="tenant-id">({{ app.appId }})</span></div>
-            <div class="tenant-desc">{{ app.description || '无描述' }}</div>
-          </div>
-          <button class="btn btn-secondary" @click.stop="toggleApp(app)">{{ app.active ? '禁用' : '启用' }}</button>
+        <div class="list-wrap" v-if="loadingTenants">租户加载中...</div>
+        <div class="list-wrap" v-else-if="tenants.length === 0">暂无租户</div>
+        <div class="list-wrap" v-else>
+          <article
+            v-for="tenant in tenants"
+            :key="tenant.tenantId"
+            class="list-item"
+            :class="{ active: selectedTenantId === tenant.tenantId }"
+            @click="selectTenant(tenant.tenantId)"
+          >
+            <div class="item-main">
+              <div class="item-title">{{ tenant.name }}</div>
+              <div class="item-sub">{{ tenant.tenantId }} · {{ tenant.description || '无描述' }}</div>
+            </div>
+            <button class="btn btn-secondary" @click.stop="toggleTenant(tenant)">{{ tenant.active ? '禁用' : '启用' }}</button>
+          </article>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <div v-if="selectedTenantId && selectedAppId" class="card key-card">
-      <h3>申请 API Key（{{ selectedTenantId }} / {{ selectedAppId }}）</h3>
-      <div class="row">
-        <input v-model="keyForm.keyName" placeholder="key 名称（如 prod-key）" class="form-input" />
-        <button class="btn btn-primary" :disabled="creatingKey" @click="createKey">{{ creatingKey ? '申请中...' : '申请 Key' }}</button>
-      </div>
-      <div v-if="createdKey" class="key-result">新 Key：<code>{{ createdKey }}</code></div>
+      <section class="soft-card block" :class="{ muted: !selectedTenantId }">
+        <h3>应用</h3>
+        <div class="form-grid">
+          <input v-model="appForm.appId" class="input" placeholder="appId（poet-agent）" :disabled="!selectedTenantId" />
+          <input v-model="appForm.appName" class="input" placeholder="应用名称" :disabled="!selectedTenantId" />
+          <input v-model="appForm.description" class="input" placeholder="描述（可选）" :disabled="!selectedTenantId" />
+          <button class="btn btn-primary" :disabled="creatingApp || !selectedTenantId" @click="createApp">{{ creatingApp ? '创建中...' : '创建应用' }}</button>
+        </div>
 
-      <h3>Key 列表</h3>
-      <div v-if="loadingKeys" class="empty">加载中...</div>
-      <div v-else-if="keys.length === 0" class="empty">当前租户暂无 key</div>
-      <table v-else class="key-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>App</th>
-            <th>名称</th>
-            <th>前缀</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in keys" :key="item.id">
-            <td>{{ item.id }}</td>
-            <td>{{ item.appId }}</td>
-            <td>{{ item.keyName }}</td>
-            <td><code>{{ item.keyPrefix }}</code></td>
-            <td>{{ item.active ? '启用' : '禁用' }}</td>
-            <td>
-              <button class="btn btn-danger" :disabled="!item.active" @click="revoke(item.id)">吊销</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <div class="list-wrap" v-if="!selectedTenantId">请先选择租户</div>
+        <div class="list-wrap" v-else-if="loadingApps">应用加载中...</div>
+        <div class="list-wrap" v-else-if="apps.length === 0">暂无应用</div>
+        <div class="list-wrap" v-else>
+          <article
+            v-for="app in apps"
+            :key="app.appId"
+            class="list-item"
+            :class="{ active: selectedAppId === app.appId }"
+            @click="selectApp(app.appId)"
+          >
+            <div class="item-main">
+              <div class="item-title">{{ app.appName }}</div>
+              <div class="item-sub">{{ app.appId }} · {{ app.description || '无描述' }}</div>
+            </div>
+            <button class="btn btn-secondary" @click.stop="toggleApp(app)">{{ app.active ? '禁用' : '启用' }}</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="soft-card block" :class="{ muted: !selectedAppId }">
+        <h3>API Key</h3>
+        <div class="form-grid key-form">
+          <input v-model="keyForm.keyName" class="input" placeholder="key 名称（prod-key）" :disabled="!selectedAppId" />
+          <button class="btn btn-primary" :disabled="creatingKey || !selectedAppId" @click="createKey">{{ creatingKey ? '申请中...' : '申请 Key' }}</button>
+        </div>
+
+        <div v-if="createdKey" class="new-key soft-card">
+          <div class="new-key-title">新 Key（仅展示一次）</div>
+          <code>{{ createdKey }}</code>
+        </div>
+
+        <div class="list-wrap" v-if="!selectedAppId">请先选择应用</div>
+        <div class="list-wrap" v-else-if="loadingKeys">Key 加载中...</div>
+        <div class="list-wrap" v-else-if="keys.length === 0">暂无 Key</div>
+        <div class="list-wrap" v-else>
+          <article v-for="item in keys" :key="item.id" class="list-item key-item">
+            <div class="item-main">
+              <div class="item-title">{{ item.keyName }}</div>
+              <div class="item-sub">{{ item.keyPrefix }} · {{ item.active ? '启用' : '禁用' }}</div>
+            </div>
+            <button class="btn btn-danger" :disabled="!item.active" @click="revoke(item.id)">吊销</button>
+          </article>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -133,8 +125,7 @@ async function loadTenants() {
   try {
     tenants.value = await controlPlaneApi.listTenants()
   } catch (e) {
-    const message = e instanceof Error ? e.message : '加载租户失败'
-    toast.error(message)
+    toast.error(e instanceof Error ? e.message : '加载租户失败')
   } finally {
     loadingTenants.value = false
   }
@@ -148,12 +139,11 @@ async function createTenant() {
   creatingTenant.value = true
   try {
     await controlPlaneApi.createTenant(tenantForm.value)
-    toast.success('租户创建成功')
     tenantForm.value = { tenantId: '', name: '', description: '' }
+    toast.success('租户创建成功')
     await loadTenants()
   } catch (e) {
-    const message = e instanceof Error ? e.message : '创建租户失败'
-    toast.error(message)
+    toast.error(e instanceof Error ? e.message : '创建租户失败')
   } finally {
     creatingTenant.value = false
   }
@@ -165,8 +155,7 @@ async function toggleTenant(tenant: TenantView) {
     toast.success('租户状态已更新')
     await loadTenants()
   } catch (e) {
-    const message = e instanceof Error ? e.message : '更新租户失败'
-    toast.error(message)
+    toast.error(e instanceof Error ? e.message : '更新租户失败')
   }
 }
 
@@ -175,8 +164,7 @@ async function loadApps(tenantId: string) {
   try {
     apps.value = await controlPlaneApi.listApps(tenantId)
   } catch (e) {
-    const message = e instanceof Error ? e.message : '加载应用失败'
-    toast.error(message)
+    toast.error(e instanceof Error ? e.message : '加载应用失败')
   } finally {
     loadingApps.value = false
   }
@@ -194,12 +182,11 @@ async function createApp() {
   creatingApp.value = true
   try {
     await controlPlaneApi.createApp(selectedTenantId.value, appForm.value)
-    toast.success('应用创建成功')
     appForm.value = { appId: '', appName: '', description: '' }
+    toast.success('应用创建成功')
     await loadApps(selectedTenantId.value)
   } catch (e) {
-    const message = e instanceof Error ? e.message : '创建应用失败'
-    toast.error(message)
+    toast.error(e instanceof Error ? e.message : '创建应用失败')
   } finally {
     creatingApp.value = false
   }
@@ -218,8 +205,7 @@ async function toggleApp(app: AppView) {
       keys.value = []
     }
   } catch (e) {
-    const message = e instanceof Error ? e.message : '更新应用失败'
-    toast.error(message)
+    toast.error(e instanceof Error ? e.message : '更新应用失败')
   }
 }
 
@@ -228,8 +214,7 @@ async function loadKeys(tenantId: string, appId: string) {
   try {
     keys.value = await controlPlaneApi.listApiKeys(tenantId, appId)
   } catch (e) {
-    const message = e instanceof Error ? e.message : '加载 key 失败'
-    toast.error(message)
+    toast.error(e instanceof Error ? e.message : '加载 Key 失败')
   } finally {
     loadingKeys.value = false
   }
@@ -239,8 +224,8 @@ function selectTenant(tenantId: string) {
   selectedTenantId.value = tenantId
   selectedAppId.value = ''
   apps.value = []
-  createdKey.value = ''
   keys.value = []
+  createdKey.value = ''
   loadApps(tenantId)
 }
 
@@ -254,12 +239,8 @@ function selectApp(appId: string) {
 }
 
 async function createKey() {
-  if (!selectedTenantId.value) {
-    toast.error('请先选择租户')
-    return
-  }
-  if (!selectedAppId.value) {
-    toast.error('请先选择应用')
+  if (!selectedTenantId.value || !selectedAppId.value) {
+    toast.error('请先选择租户和应用')
     return
   }
   if (!keyForm.value.keyName) {
@@ -268,14 +249,16 @@ async function createKey() {
   }
   creatingKey.value = true
   try {
-    const result = await controlPlaneApi.createApiKey(selectedTenantId.value, { appId: selectedAppId.value, keyName: keyForm.value.keyName })
+    const result = await controlPlaneApi.createApiKey(selectedTenantId.value, {
+      appId: selectedAppId.value,
+      keyName: keyForm.value.keyName
+    })
     createdKey.value = result.apiKey
     keyForm.value = { keyName: '' }
     toast.success('API Key 申请成功')
     await loadKeys(selectedTenantId.value, selectedAppId.value)
   } catch (e) {
-    const message = e instanceof Error ? e.message : '申请 key 失败'
-    toast.error(message)
+    toast.error(e instanceof Error ? e.message : '申请 Key 失败')
   } finally {
     creatingKey.value = false
   }
@@ -290,8 +273,7 @@ async function revoke(keyId: number) {
     toast.success('Key 已吊销')
     await loadKeys(selectedTenantId.value, selectedAppId.value)
   } catch (e) {
-    const message = e instanceof Error ? e.message : '吊销失败'
-    toast.error(message)
+    toast.error(e instanceof Error ? e.message : '吊销失败')
   }
 }
 
@@ -299,23 +281,120 @@ onMounted(loadTenants)
 </script>
 
 <style scoped>
-.tenant-page { display: flex; flex-direction: column; gap: 1rem; }
-.card { background: #fff; border-radius: 12px; padding: 1rem; border: 1px solid #e2e8f0; }
-.row { display: flex; gap: 0.75rem; margin-top: 0.75rem; }
-.form-input { flex: 1; padding: 0.65rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; }
-.tenant-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
-.tenant-item { display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem; cursor: pointer; }
-.tenant-item.active { border-color: #3b82f6; background: #eff6ff; }
-.tenant-title { font-weight: 600; }
-.tenant-id { color: #64748b; font-weight: 400; }
-.tenant-desc { font-size: 0.9rem; color: #64748b; }
-.key-table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; }
-.key-table th, .key-table td { border-bottom: 1px solid #e2e8f0; padding: 0.55rem; text-align: left; }
-.key-result { margin-top: 0.75rem; background: #f8fafc; padding: 0.65rem; border-radius: 8px; word-break: break-all; }
-.empty { color: #64748b; margin-top: 0.75rem; }
-.btn { border: none; border-radius: 8px; padding: 0.5rem 0.75rem; cursor: pointer; }
-.btn-primary { background: #2563eb; color: #fff; }
-.btn-secondary { background: #e2e8f0; color: #334155; }
-.btn-danger { background: #ef4444; color: #fff; }
-@media (max-width: 768px) { .row { flex-direction: column; } }
+.tenant-shell {
+  padding: 1rem;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.context {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.flow-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.block {
+  padding: 0.85rem;
+}
+
+.block h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.form-grid {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: 1fr;
+}
+
+.key-form {
+  grid-template-columns: 1fr auto;
+}
+
+.list-wrap {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  color: var(--text-sub);
+}
+
+.item-main {
+  min-width: 0;
+}
+
+.item-title {
+  font-weight: 800;
+  font-size: 0.92rem;
+}
+
+.item-sub {
+  margin-top: 0.25rem;
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.new-key {
+  margin-top: 0.75rem;
+  padding: 0.72rem;
+}
+
+.new-key-title {
+  font-size: 0.82rem;
+  color: var(--text-sub);
+}
+
+.new-key code {
+  margin-top: 0.35rem;
+  display: block;
+  background: #102127;
+  color: #d1fae5;
+  padding: 0.4rem;
+  border-radius: 8px;
+  word-break: break-all;
+}
+
+.muted {
+  opacity: 0.65;
+}
+
+@media (max-width: 1200px) {
+  .flow-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-head {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .key-form {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

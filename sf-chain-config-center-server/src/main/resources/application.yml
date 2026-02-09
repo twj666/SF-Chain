@@ -27,7 +27,7 @@ sf-chain:
     local-migration: false
     static-ui: true
   persistence:
-    database-type: ${SF_CHAIN_DB_TYPE:postgresql}
+    database-type: ${SF_CHAIN_DB_TYPE:mysql}
   path:
     web-prefix: ${SF_CHAIN_WEB_PREFIX:/sf}
     api-prefix: ${SF_CHAIN_API_PREFIX:/sf-chain}
