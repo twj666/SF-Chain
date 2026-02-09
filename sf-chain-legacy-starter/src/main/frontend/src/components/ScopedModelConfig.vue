@@ -3,12 +3,12 @@
     <header class="panel-head">
       <div>
         <h2 class="section-title">模型配置</h2>
-        <p class="section-sub">按租户/应用管理模型，配置内容支持 JSON 快速扩展。</p>
+        <p class="section-sub">在当前租户 / 应用作用域下管理模型池。</p>
       </div>
       <button class="btn btn-secondary" :disabled="!canLoad || loading" @click="loadModels">{{ loading ? '加载中...' : '刷新模型' }}</button>
     </header>
 
-    <section class="soft-card filter-card">
+    <section v-if="!hasExternalScope" class="soft-card filter-card">
       <div class="row">
         <select v-model="selectedTenantId" class="select" @change="onTenantChange">
           <option value="">选择租户</option>
@@ -27,7 +27,7 @@
       <div class="soft-card list-card">
         <h3>模型列表</h3>
         <div v-if="loading" class="empty">加载中...</div>
-        <div v-else-if="models.length === 0" class="empty">暂无模型配置，先在右侧创建一个模型</div>
+        <div v-else-if="models.length === 0" class="empty">暂无模型配置，先在右侧创建一个模型。</div>
         <div v-else class="list">
           <article
             v-for="item in models"
@@ -38,7 +38,7 @@
           >
             <div>
               <div class="item-title">{{ item.modelName }}</div>
-              <div class="item-sub">{{ item.provider }} · {{ item.baseUrl || '未设置 Base URL' }}</div>
+              <div class="item-sub">{{ item.provider }} | {{ item.baseUrl || '未设置 Base URL' }}</div>
             </div>
             <span class="pill" :class="item.active ? 'pill-ok' : 'pill-off'">{{ item.active ? '启用' : '禁用' }}</span>
           </article>
@@ -61,16 +61,21 @@
       </div>
     </section>
 
-    <section v-else class="soft-card placeholder">
-      先选择租户和应用，再开始配置模型。
-    </section>
+    <section v-else class="soft-card placeholder">请先选择租户和应用，再开始模型配置。</section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { controlPlaneApi, type AppView, type TenantModelConfig, type TenantView } from '@/services/controlPlaneApi'
 import { toast } from '@/utils/toast'
+
+interface Props {
+  tenantId?: string
+  appId?: string
+}
+
+const props = defineProps<Props>()
 
 const tenants = ref<TenantView[]>([])
 const apps = ref<AppView[]>([])
@@ -89,24 +94,25 @@ const form = ref({
 })
 const configText = ref('{}')
 const canLoad = ref(false)
+const hasExternalScope = computed(() => !!props.tenantId && !!props.appId)
 
 async function loadTenants() {
   tenants.value = await controlPlaneApi.listTenants()
 }
 
 async function onTenantChange() {
+  if (hasExternalScope.value) return
   selectedAppId.value = ''
   apps.value = []
   models.value = []
   canLoad.value = false
   resetForm()
-  if (!selectedTenantId.value) {
-    return
-  }
+  if (!selectedTenantId.value) return
   apps.value = await controlPlaneApi.listApps(selectedTenantId.value)
 }
 
 function onAppChange() {
+  if (hasExternalScope.value) return
   models.value = []
   canLoad.value = !!selectedTenantId.value && !!selectedAppId.value
   resetForm()
@@ -116,9 +122,7 @@ function onAppChange() {
 }
 
 async function loadModels() {
-  if (!selectedTenantId.value || !selectedAppId.value) {
-    return
-  }
+  if (!selectedTenantId.value || !selectedAppId.value) return
   loading.value = true
   try {
     models.value = await controlPlaneApi.listModelConfigs(selectedTenantId.value, selectedAppId.value)
@@ -183,116 +187,58 @@ async function save() {
   }
 }
 
+function applyExternalScope() {
+  selectedTenantId.value = props.tenantId || ''
+  selectedAppId.value = props.appId || ''
+  canLoad.value = !!selectedTenantId.value && !!selectedAppId.value
+}
+
 onMounted(async () => {
   try {
+    applyExternalScope()
+    if (hasExternalScope.value) {
+      if (canLoad.value) await loadModels()
+      return
+    }
     await loadTenants()
   } catch (e) {
     toast.error(e instanceof Error ? e.message : '加载租户失败')
   }
 })
+
+watch(
+  () => [props.tenantId, props.appId],
+  async () => {
+    if (!hasExternalScope.value) return
+    applyExternalScope()
+    models.value = []
+    resetForm()
+    if (canLoad.value) {
+      await loadModels()
+    }
+  }
+)
 </script>
 
 <style scoped>
-.page {
-  padding: 1rem;
-}
-
-.panel-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.8rem;
-}
-
-.filter-card {
-  margin-top: 0.9rem;
-  padding: 0.8rem;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.7rem;
-}
-
-.work-grid {
-  margin-top: 0.9rem;
-  display: grid;
-  grid-template-columns: 1fr 1.15fr;
-  gap: 0.8rem;
-}
-
-.list-card,
-.form-card {
-  padding: 0.85rem;
-}
-
-h3 {
-  margin: 0;
-  font-size: 0.96rem;
-  font-weight: 800;
-}
-
-.list,
-.field-grid {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.item-title {
-  font-weight: 800;
-  font-size: 0.9rem;
-}
-
-.item-sub {
-  margin-top: 0.2rem;
-  font-size: 0.78rem;
-  color: var(--text-sub);
-}
-
-.switch {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: var(--text-sub);
-}
-
-.actions {
-  display: flex;
-  gap: 0.55rem;
-  margin-top: 0.7rem;
-}
-
-.placeholder {
-  margin-top: 0.9rem;
-  padding: 1rem;
-  color: var(--text-sub);
-}
-
-.empty {
-  margin-top: 0.7rem;
-  color: var(--text-sub);
-}
-
-@media (max-width: 1100px) {
-  .work-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
+.page { padding: 1rem; }
+.panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; }
+.filter-card { margin-top: 0.9rem; padding: 0.8rem; }
+.row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+.work-grid { margin-top: 0.9rem; display: grid; grid-template-columns: 1fr 1.15fr; gap: 0.8rem; }
+.list-card, .form-card { padding: 0.85rem; }
+h3 { margin: 0; font-size: 0.96rem; font-weight: 800; }
+.list, .field-grid { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.55rem; }
+.item-title { font-weight: 800; font-size: 0.9rem; }
+.item-sub { margin-top: 0.2rem; font-size: 0.78rem; color: var(--text-sub); }
+.switch { display: flex; align-items: center; gap: 0.45rem; color: var(--text-sub); }
+.actions { display: flex; gap: 0.55rem; margin-top: 0.7rem; }
+.placeholder { margin-top: 0.9rem; padding: 1rem; color: var(--text-sub); }
+.empty { margin-top: 0.7rem; color: var(--text-sub); }
+@media (max-width: 1100px) { .work-grid { grid-template-columns: 1fr; } }
 @media (max-width: 760px) {
-  .row {
-    grid-template-columns: 1fr;
-  }
-
-  .panel-head {
-    flex-direction: column;
-  }
-
-  .actions {
-    flex-direction: column;
-  }
+  .row { grid-template-columns: 1fr; }
+  .panel-head { flex-direction: column; }
+  .actions { flex-direction: column; }
 }
 </style>

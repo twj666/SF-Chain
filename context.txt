@@ -1,203 +1,61 @@
-Tracking Prevention blocked access to storage for https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css.
-sf/:1  Tracking Prevention blocked access to storage for https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css.
-sf/:1  Tracking Prevention blocked access to storage for https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css.
-sf/:1  Tracking Prevention blocked access to storage for https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css.
-index-BIMfIGjj.js:37 🔍 AI请求调试信息:
-index-BIMfIGjj.js:37 URL: /sf-chain/models/list
-index-BIMfIGjj.js:37 Authorization Token: suifeng666
-index-BIMfIGjj.js:37 请求头: {Content-Type: 'application/json', Authorization: 'suifeng666'}
-index-BIMfIGjj.js:37 📤 发送请求: {url: '/sf-chain/models/list', method: 'GET', headers: {…}}
-index-BIMfIGjj.js:37 🔍 AI请求调试信息:
-index-BIMfIGjj.js:37 URL: /sf-chain/system/overview
-index-BIMfIGjj.js:37 Authorization Token: suifeng666
-index-BIMfIGjj.js:37 请求头: {Content-Type: 'application/json', Authorization: 'suifeng666'}
-index-BIMfIGjj.js:37 📤 发送请求: {url: '/sf-chain/system/overview', method: 'GET', headers: {…}}
-index-BIMfIGjj.js:37   GET http://127.0.0.1:19090/sf-chain/models/list 404 (Not Found)
-ku @ index-BIMfIGjj.js:37
-Pe @ index-BIMfIGjj.js:37
-getAllModels @ index-BIMfIGjj.js:37
-P @ index-BIMfIGjj.js:37
-(匿名) @ index-BIMfIGjj.js:37
-(匿名) @ index-BIMfIGjj.js:13
-Gs @ index-BIMfIGjj.js:13
-it @ index-BIMfIGjj.js:13
-An.t.__weh.t.__weh @ index-BIMfIGjj.js:13
-wi @ index-BIMfIGjj.js:13
-q @ index-BIMfIGjj.js:13
-mount @ index-BIMfIGjj.js:13
-t.mount @ index-BIMfIGjj.js:17
-(匿名) @ index-BIMfIGjj.js:75
-Promise.then
-(匿名) @ index-BIMfIGjj.js:75
-index-BIMfIGjj.js:37  加载模型列表失败: Error: 资源不存在
-    at ku (index-BIMfIGjj.js:37:5879)
-    at async Pe (index-BIMfIGjj.js:37:6459)
-    at async P (index-BIMfIGjj.js:37:20886)
-P @ index-BIMfIGjj.js:37
-await in P
-(匿名) @ index-BIMfIGjj.js:37
-(匿名) @ index-BIMfIGjj.js:13
-Gs @ index-BIMfIGjj.js:13
-it @ index-BIMfIGjj.js:13
-An.t.__weh.t.__weh @ index-BIMfIGjj.js:13
-wi @ index-BIMfIGjj.js:13
-q @ index-BIMfIGjj.js:13
-mount @ index-BIMfIGjj.js:13
-t.mount @ index-BIMfIGjj.js:17
-(匿名) @ index-BIMfIGjj.js:75
-Promise.then
-(匿名) @ index-BIMfIGjj.js:75
-index-BIMfIGjj.js:37   GET http://127.0.0.1:19090/sf-chain/system/overview 404 (Not Found)
-ku @ index-BIMfIGjj.js:37
-Pe @ index-BIMfIGjj.js:37
-getSystemOverview @ index-BIMfIGjj.js:37
-l @ index-BIMfIGjj.js:71
-(匿名) @ index-BIMfIGjj.js:71
-(匿名) @ index-BIMfIGjj.js:13
-Gs @ index-BIMfIGjj.js:13
-it @ index-BIMfIGjj.js:13
-An.t.__weh.t.__weh @ index-BIMfIGjj.js:13
-wi @ index-BIMfIGjj.js:13
-q @ index-BIMfIGjj.js:13
-mount @ index-BIMfIGjj.js:13
-t.mount @ index-BIMfIGjj.js:17
-(匿名) @ index-BIMfIGjj.js:75
-Promise.then
-(匿名) @ index-BIMfIGjj.js:75
-index-BIMfIGjj.js:71  Failed to fetch system overview: 资源不存在
-l @ index-BIMfIGjj.js:71
-await in l
-(匿名) @ index-BIMfIGjj.js:71
-(匿名) @ index-BIMfIGjj.js:13
-Gs @ index-BIMfIGjj.js:13
-it @ index-BIMfIGjj.js:13
-An.t.__weh.t.__weh @ index-BIMfIGjj.js:13
-wi @ index-BIMfIGjj.js:13
-q @ index-BIMfIGjj.js:13
-mount @ index-BIMfIGjj.js:13
-t.mount @ index-BIMfIGjj.js:17
-(匿名) @ index-BIMfIGjj.js:75
-Promise.then
-(匿名) @ index-BIMfIGjj.js:75
-index-BIMfIGjj.js:37 🔍 AI请求调试信息:
-index-BIMfIGjj.js:37 URL: /sf-chain/models/list
-index-BIMfIGjj.js:37 Authorization Token: suifeng666
-index-BIMfIGjj.js:37 请求头: {Content-Type: 'application/json', Authorization: 'suifeng666'}
-index-BIMfIGjj.js:37 📤 发送请求: {url: '/sf-chain/models/list', method: 'GET', headers: {…}}
-index-BIMfIGjj.js:37 🔍 AI请求调试信息:
-index-BIMfIGjj.js:37 URL: /sf-chain/operations
-index-BIMfIGjj.js:37 Authorization Token: suifeng666
-index-BIMfIGjj.js:37 请求头: {Content-Type: 'application/json', Authorization: 'suifeng666'}
-index-BIMfIGjj.js:37 📤 发送请求: {url: '/sf-chain/operations', method: 'GET', headers: {…}}
-index-BIMfIGjj.js:37   GET http://127.0.0.1:19090/sf-chain/operations 404 (Not Found)
-ku @ index-BIMfIGjj.js:37
-Pe @ index-BIMfIGjj.js:37
-getAllOperations @ index-BIMfIGjj.js:37
-Y @ index-BIMfIGjj.js:37
-setup @ index-BIMfIGjj.js:37
-Gs @ index-BIMfIGjj.js:13
-gc @ index-BIMfIGjj.js:13
-vc @ index-BIMfIGjj.js:13
-B @ index-BIMfIGjj.js:13
-b @ index-BIMfIGjj.js:13
-R @ index-BIMfIGjj.js:13
-W @ index-BIMfIGjj.js:13
-M @ index-BIMfIGjj.js:13
-P @ index-BIMfIGjj.js:13
-R @ index-BIMfIGjj.js:13
-H @ index-BIMfIGjj.js:13
-run @ index-BIMfIGjj.js:9
-runIfDirty @ index-BIMfIGjj.js:9
-Gs @ index-BIMfIGjj.js:13
-ki @ index-BIMfIGjj.js:13
-Promise.then
-bi @ index-BIMfIGjj.js:13
-To @ index-BIMfIGjj.js:13
-U.scheduler @ index-BIMfIGjj.js:13
-trigger @ index-BIMfIGjj.js:9
-ko @ index-BIMfIGjj.js:9
-notify @ index-BIMfIGjj.js:9
-trigger @ index-BIMfIGjj.js:9
-set value @ index-BIMfIGjj.js:9
-o @ index-BIMfIGjj.js:71
-onClick @ index-BIMfIGjj.js:71
-Gs @ index-BIMfIGjj.js:13
-it @ index-BIMfIGjj.js:13
-s @ index-BIMfIGjj.js:17
-index-BIMfIGjj.js:37  加载数据失败: Error: 资源不存在
-    at ku (index-BIMfIGjj.js:37:5879)
-    at async Pe (index-BIMfIGjj.js:37:6459)
-    at async Promise.all (sf/index 1)
-    at async Y (index-BIMfIGjj.js:37:36603)
-Y @ index-BIMfIGjj.js:37
-await in Y
-setup @ index-BIMfIGjj.js:37
-Gs @ index-BIMfIGjj.js:13
-gc @ index-BIMfIGjj.js:13
-vc @ index-BIMfIGjj.js:13
-B @ index-BIMfIGjj.js:13
-b @ index-BIMfIGjj.js:13
-R @ index-BIMfIGjj.js:13
-W @ index-BIMfIGjj.js:13
-M @ index-BIMfIGjj.js:13
-P @ index-BIMfIGjj.js:13
-R @ index-BIMfIGjj.js:13
-H @ index-BIMfIGjj.js:13
-run @ index-BIMfIGjj.js:9
-runIfDirty @ index-BIMfIGjj.js:9
-Gs @ index-BIMfIGjj.js:13
-ki @ index-BIMfIGjj.js:13
-Promise.then
-bi @ index-BIMfIGjj.js:13
-To @ index-BIMfIGjj.js:13
-U.scheduler @ index-BIMfIGjj.js:13
-trigger @ index-BIMfIGjj.js:9
-ko @ index-BIMfIGjj.js:9
-notify @ index-BIMfIGjj.js:9
-trigger @ index-BIMfIGjj.js:9
-set value @ index-BIMfIGjj.js:9
-o @ index-BIMfIGjj.js:71
-onClick @ index-BIMfIGjj.js:71
-Gs @ index-BIMfIGjj.js:13
-it @ index-BIMfIGjj.js:13
-s @ index-BIMfIGjj.js:17
-index-BIMfIGjj.js:37   GET http://127.0.0.1:19090/sf-chain/models/list 404 (Not Found)
-ku @ index-BIMfIGjj.js:37
-Pe @ index-BIMfIGjj.js:37
-getAllModels @ index-BIMfIGjj.js:37
-Y @ index-BIMfIGjj.js:37
-setup @ index-BIMfIGjj.js:37
-Gs @ index-BIMfIGjj.js:13
-gc @ index-BIMfIGjj.js:13
-vc @ index-BIMfIGjj.js:13
-B @ index-BIMfIGjj.js:13
-b @ index-BIMfIGjj.js:13
-R @ index-BIMfIGjj.js:13
-W @ index-BIMfIGjj.js:13
-M @ index-BIMfIGjj.js:13
-P @ index-BIMfIGjj.js:13
-R @ index-BIMfIGjj.js:13
-H @ index-BIMfIGjj.js:13
-run @ index-BIMfIGjj.js:9
-runIfDirty @ index-BIMfIGjj.js:9
-Gs @ index-BIMfIGjj.js:13
-ki @ index-BIMfIGjj.js:13
-Promise.then
-bi @ index-BIMfIGjj.js:13
-To @ index-BIMfIGjj.js:13
-U.scheduler @ index-BIMfIGjj.js:13
-trigger @ index-BIMfIGjj.js:9
-ko @ index-BIMfIGjj.js:9
-notify @ index-BIMfIGjj.js:9
-trigger @ index-BIMfIGjj.js:9
-set value @ index-BIMfIGjj.js:9
-o @ index-BIMfIGjj.js:71
-onClick @ index-BIMfIGjj.js:71
-Gs @ index-BIMfIGjj.js:13
-it @ index-BIMfIGjj.js:13
-s @ index-BIMfIGjj.js:17
-index-BIMfIGjj.js:37 🔍 AI请求调试信息:
-index-BIMfIGjj.js:37 URL: /sf-chain/ai-logs
-index-BIMfIGjj.js:37 Authorization Token: suifeng666
-index-BIMfIGjj.js:37 请求头: {Content-Type: 'application/json', Authorization: 'suifeng666'}
-index-BIMfIGjj.js:37 📤 发送请求: {url: '/sf-chain/ai-logs', method: 'GET', headers: {…}}
+PS D:\SF-Chain> .\dev-start-config-center.bat
+No running process found on port 19100.
+Skipping npm install.
+Building frontend with vite...
+vite v5.4.19 building for production...
+✓ 58 modules transformed.
+dist/index.html                   0.58 kB │ gzip:  0.39 kB
+dist/assets/index-D5S_N1gC.css   17.72 kB │ gzip:  4.13 kB
+dist/assets/index-D5Ll73U_.js   136.63 kB │ gzip: 51.34 kB
+✓ built in 687ms
+Frontend deployed to static dir:
+  D:\SF-Chain\sf-chain-legacy-starter\src\main\resources\static
+  JS : index-D5Ll73U_.js
+  CSS: index-D5S_N1gC.css
+Starting backend (spring-boot:run) ...
+[INFO] Scanning for projects...
+[INFO] Inspecting build with total of 1 modules
+[INFO] Installing Central Publishing features
+[INFO]
+[INFO] ---------------------< io.github.twj666:sf-chain >----------------------
+[INFO] Building io.github.twj666:sf-chain 1.0.11
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] >>> spring-boot:2.7.14:run (default-cli) > test-compile @ sf-chain >>>
+[INFO]
+[INFO] --- resources:3.2.0:resources (default-resources) @ sf-chain ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] Copying 0 resource
+[INFO] Copying 15 resources
+[INFO]
+[INFO] --- compiler:3.10.1:compile (default-compile) @ sf-chain ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- resources:3.2.0:testResources (default-testResources) @ sf-chain ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] skip non existing resourceDirectory D:\SF-Chain\sf-chain-legacy-starter\src\test\resources
+[INFO]
+[INFO] --- compiler:3.10.1:testCompile (default-testCompile) @ sf-chain ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] <<< spring-boot:2.7.14:run (default-cli) < test-compile @ sf-chain <<<
+[INFO]
+[INFO]
+[INFO] --- spring-boot:2.7.14:run (default-cli) @ sf-chain ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.040 s
+[INFO] Finished at: 2026-02-09T20:12:38+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:2.7.14:run (default-cli) on project sf-chain: Unable to find a suitable main class, please add a 'mainClass' property -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+PS D:\SF-Chain>

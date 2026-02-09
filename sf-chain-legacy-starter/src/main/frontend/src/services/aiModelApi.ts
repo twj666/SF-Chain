@@ -1,47 +1,112 @@
-import { API_CONFIG } from './apiConfig'
-import { apiJsonRequest } from './apiUtils'
+﻿import { controlPlaneApi, type TenantModelConfig } from './controlPlaneApi'
+import { getScopeContext } from './scopeContext'
 import type { ModelConfigData, ApiResponse, ModelsResponse, TestConnectionResponse } from '@/types/system'
 
+function requireScope() {
+  const scope = getScopeContext()
+  if (!scope) {
+    throw new Error('请先在左侧选择租户和应用')
+  }
+  return scope
+}
+
+function mapToModelConfig(item: TenantModelConfig): ModelConfigData {
+  const cfg = item.config || {}
+  return {
+    modelName: String(item.modelName),
+    provider: String(item.provider || 'other'),
+    baseUrl: String(item.baseUrl || ''),
+    apiKey: String(cfg.apiKey || ''),
+    defaultMaxTokens: typeof cfg.defaultMaxTokens === 'number' ? cfg.defaultMaxTokens : undefined,
+    defaultTemperature: typeof cfg.defaultTemperature === 'number' ? cfg.defaultTemperature : undefined,
+    supportStream: typeof cfg.supportStream === 'boolean' ? cfg.supportStream : true,
+    supportJsonOutput: typeof cfg.supportJsonOutput === 'boolean' ? cfg.supportJsonOutput : true,
+    supportThinking: typeof cfg.supportThinking === 'boolean' ? cfg.supportThinking : false,
+    additionalHeaders: typeof cfg.additionalHeaders === 'object' && cfg.additionalHeaders !== null
+      ? (cfg.additionalHeaders as Record<string, string>)
+      : undefined,
+    description: typeof cfg.description === 'string' ? cfg.description : undefined,
+    enabled: Boolean(item.active)
+  }
+}
+
+function toModelsResponse(items: TenantModelConfig[]): ModelsResponse {
+  const models: Record<string, ModelConfigData> = {}
+  const groupedByProvider: Record<string, ModelConfigData[]> = {}
+
+  for (const item of items) {
+    const model = mapToModelConfig(item)
+    models[model.modelName] = model
+
+    const provider = model.provider || 'other'
+    if (!groupedByProvider[provider]) {
+      groupedByProvider[provider] = []
+    }
+    groupedByProvider[provider].push(model)
+  }
+
+  return {
+    models,
+    groupedByProvider,
+    total: Object.keys(models).length
+  }
+}
+
 export const aiModelApi = {
-  // 获取所有模型配置
   async getAllModels(): Promise<ModelsResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/list`, {
-      method: 'GET',
-      requireAuth: true
-    })
+    const scope = requireScope()
+    const items = await controlPlaneApi.listModelConfigs(scope.tenantId, scope.appId)
+    return toModelsResponse(items)
   },
 
-  // 获取单个模型配置
   async getModel(modelName: string): Promise<ModelConfigData> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/${encodeURIComponent(modelName)}`, {
-      method: 'GET',
-      requireAuth: true
-    })
+    const all = await this.getAllModels()
+    const model = all.models[modelName]
+    if (!model) {
+      throw new Error(`模型不存在: ${modelName}`)
+    }
+    return model
   },
 
-  // 保存模型配置（创建或更新）
   async saveModel(modelName: string, config: ModelConfigData): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/save`, {
-      method: 'POST',
-      body: JSON.stringify({ ...config, modelName }),
-      requireAuth: true
+    const scope = requireScope()
+    await controlPlaneApi.upsertModelConfig(scope.tenantId, scope.appId, {
+      modelName,
+      provider: config.provider || 'other',
+      baseUrl: config.baseUrl,
+      active: config.enabled ?? true,
+      config: {
+        apiKey: config.apiKey,
+        defaultMaxTokens: config.defaultMaxTokens,
+        defaultTemperature: config.defaultTemperature,
+        supportStream: config.supportStream,
+        supportJsonOutput: config.supportJsonOutput,
+        supportThinking: config.supportThinking,
+        additionalHeaders: config.additionalHeaders,
+        description: config.description
+      }
     })
+
+    return {
+      success: true,
+      message: '模型配置保存成功'
+    }
   },
 
-  // 删除模型配置
   async deleteModel(modelName: string): Promise<ApiResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/${encodeURIComponent(modelName)}`, {
-      method: 'DELETE',
-      requireAuth: true
+    const existing = await this.getModel(modelName)
+    return this.saveModel(modelName, {
+      ...existing,
+      enabled: false
     })
   },
 
-  // 测试模型连接 - 改为POST请求
   async testModel(modelName: string): Promise<TestConnectionResponse> {
-    return apiJsonRequest(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_MODELS}/test`, {
-      method: 'POST',
-      body: JSON.stringify({ modelName }),
-      requireAuth: true
-    })
+    await this.getModel(modelName)
+    return {
+      success: true,
+      message: '控制面暂不提供在线连通性测试，配置已校验并存在',
+      modelName
+    }
   }
 }
