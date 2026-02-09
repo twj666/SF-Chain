@@ -44,4 +44,14 @@ public class SfChainIngestionProperties {
      * 持久化目录（jsonl）
      */
     private String filePersistenceDir = ".sf-chain/ingestion-logs";
+
+    /**
+     * 文件保留天数
+     */
+    private int retentionDays = 7;
+
+    /**
+     * 查询最大返回条数
+     */
+    private int maxQueryLimit = 500;
 }

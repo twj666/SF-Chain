@@ -3,6 +3,7 @@ package com.suifeng.sfchain.controller;
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
 import com.suifeng.sfchain.config.SfChainLoggingProperties;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
+import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionRecord;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadItem;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -114,5 +116,67 @@ class AICallLogIngestionControllerTest {
         ResponseEntity<Map<String, Object>> second = controller.ingestBatch("center-key", request);
         assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(second.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    @Test
+    void shouldQueryPersistedRecords() {
+        SfChainLoggingProperties logProps = new SfChainLoggingProperties();
+        SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
+        ingestionProps.setApiKey("center-key");
+        MemoryStore store = new MemoryStore();
+        store.saveBatch("t-1", "a-1", buildRequest().getItems());
+        AICallLogIngestionController controller = new AICallLogIngestionController(
+                new AICallLogManager(logProps),
+                ingestionProps,
+                new MinuteWindowQuotaService(ingestionProps),
+                store
+        );
+
+        ResponseEntity<?> response = controller.queryRecords("center-key", "t-1", "a-1", 10);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void shouldPurgeExpiredRecords() {
+        SfChainLoggingProperties logProps = new SfChainLoggingProperties();
+        SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
+        ingestionProps.setApiKey("center-key");
+        AICallLogIngestionStore store = new AICallLogIngestionStore() {
+            @Override
+            public void saveBatch(String tenantId, String appId, List<AICallLogUploadItem> items) {
+            }
+
+            @Override
+            public int purgeExpired() {
+                return 2;
+            }
+        };
+        AICallLogIngestionController controller = new AICallLogIngestionController(
+                new AICallLogManager(logProps),
+                ingestionProps,
+                new MinuteWindowQuotaService(ingestionProps),
+                store
+        );
+
+        ResponseEntity<?> response = controller.purgeExpired("center-key");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    private static class MemoryStore implements AICallLogIngestionStore {
+        private final List<AICallLogIngestionRecord> records = new ArrayList<>();
+
+        @Override
+        public void saveBatch(String tenantId, String appId, List<AICallLogUploadItem> items) {
+            for (AICallLogUploadItem item : items) {
+                records.add(new AICallLogIngestionRecord(tenantId, appId, LocalDateTime.now(), item));
+            }
+        }
+
+        @Override
+        public List<AICallLogIngestionRecord> query(String tenantId, String appId, int limit) {
+            return records;
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.suifeng.sfchain.controller;
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
 import com.suifeng.sfchain.core.logging.AICallLog;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
+import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionRecord;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadItem;
@@ -65,6 +66,30 @@ public class AICallLogIngestionController {
                 "tenantId", request.getTenantId(),
                 "appId", request.getAppId()
         ));
+    }
+
+    @GetMapping("/records")
+    public ResponseEntity<?> queryRecords(
+            @RequestHeader(value = "X-SF-API-KEY", required = false) String apiKey,
+            @RequestParam String tenantId,
+            @RequestParam String appId,
+            @RequestParam(defaultValue = "100") int limit) {
+        if (!isApiKeyValid(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "invalid api key"));
+        }
+        int safeLimit = Math.min(Math.max(limit, 1), Math.max(ingestionProperties.getMaxQueryLimit(), 1));
+        List<AICallLogIngestionRecord> records = ingestionStore.query(tenantId, appId, safeLimit);
+        return ResponseEntity.ok(Map.of("tenantId", tenantId, "appId", appId, "count", records.size(), "records", records));
+    }
+
+    @DeleteMapping("/records/expired")
+    public ResponseEntity<?> purgeExpired(
+            @RequestHeader(value = "X-SF-API-KEY", required = false) String apiKey) {
+        if (!isApiKeyValid(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "invalid api key"));
+        }
+        int deleted = ingestionStore.purgeExpired();
+        return ResponseEntity.ok(Map.of("deleted", deleted));
     }
 
     private boolean isApiKeyValid(String apiKey) {
