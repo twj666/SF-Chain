@@ -183,6 +183,25 @@ class AICallLogIngestionControllerTest {
     }
 
     @Test
+    void shouldAcceptVersionInSupportedVersionList() {
+        SfChainLoggingProperties logProps = new SfChainLoggingProperties();
+        SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
+        ingestionProps.setApiKey("center-key");
+        ingestionProps.setSupportedContractVersion("v1");
+        ingestionProps.setSupportedContractVersions(List.of("v2"));
+        AICallLogIngestionController controller = new AICallLogIngestionController(
+                new AICallLogManager(logProps),
+                ingestionProps,
+                new MinuteWindowQuotaService(ingestionProps),
+                AICallLogIngestionStore.NO_OP
+        );
+
+        ResponseEntity<Map<String, Object>> response = controller.ingestBatch("center-key", "v2", buildRequest());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
     void shouldPurgeExpiredRecords() {
         SfChainLoggingProperties logProps = new SfChainLoggingProperties();
         SfChainIngestionProperties ingestionProps = new SfChainIngestionProperties();
@@ -227,6 +246,9 @@ class AICallLogIngestionControllerTest {
         @Override
         public AICallLogIngestionPage queryPage(String tenantId, String appId, int cursor, int limit) {
             int from = Math.max(cursor, 0);
+            if (from >= records.size()) {
+                return new AICallLogIngestionPage(List.of(), null, false);
+            }
             int to = Math.min(from + limit, records.size());
             List<AICallLogIngestionRecord> page = records.subList(from, to);
             boolean hasMore = to < records.size();

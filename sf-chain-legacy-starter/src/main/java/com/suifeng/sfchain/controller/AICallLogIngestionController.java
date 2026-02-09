@@ -15,9 +15,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 配置中心AI调用日志接入接口
@@ -145,8 +147,28 @@ public class AICallLogIngestionController {
     }
 
     private boolean isContractVersionSupported(String version) {
-        String supported = ingestionProperties.getSupportedContractVersion();
-        return !isBlank(supported) && supported.equals(version);
+        Set<String> supported = resolveSupportedVersions();
+        return supported.contains(version);
+    }
+
+    private Set<String> resolveSupportedVersions() {
+        Set<String> versions = new HashSet<>();
+        String single = ingestionProperties.getSupportedContractVersion();
+        if (!isBlank(single)) {
+            versions.add(single.trim());
+        }
+        List<String> multiple = ingestionProperties.getSupportedContractVersions();
+        if (multiple != null) {
+            for (String item : multiple) {
+                if (!isBlank(item)) {
+                    versions.add(item.trim());
+                }
+            }
+        }
+        if (versions.isEmpty()) {
+            versions.add("v1");
+        }
+        return versions;
     }
 
     private static AICallLog toAICallLog(AICallLogUploadItem item) {

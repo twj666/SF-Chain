@@ -79,6 +79,8 @@ class FileAICallLogIngestionStoreTest {
     void shouldQueryByCursor() {
         SfChainIngestionProperties properties = new SfChainIngestionProperties();
         properties.setFilePersistenceDir(tempDir.toString());
+        properties.setIndexEnabled(true);
+        properties.setIndexStride(1);
         FileAICallLogIngestionStore store = new FileAICallLogIngestionStore(new ObjectMapper(), properties);
 
         store.saveBatch("tenant-a", "app-a", List.of(sampleItem("call-1"), sampleItem("call-2"), sampleItem("call-3")));
@@ -87,6 +89,7 @@ class FileAICallLogIngestionStoreTest {
         assertThat(page.getRecords()).hasSize(2);
         assertThat(page.isHasMore()).isTrue();
         assertThat(page.getNextCursor()).isEqualTo(2);
+        assertThat(Files.exists(tempDir.resolve("tenant-a__app-a.jsonl.idx.json"))).isTrue();
     }
 
     private static AICallLogUploadItem sampleItem(String callId) {

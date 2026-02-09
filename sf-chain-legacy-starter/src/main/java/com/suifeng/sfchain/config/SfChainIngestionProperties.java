@@ -3,6 +3,9 @@ package com.suifeng.sfchain.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 配置中心日志接入配置
  */
@@ -59,4 +62,19 @@ public class SfChainIngestionProperties {
      * 接入契约版本
      */
     private String supportedContractVersion = "v1";
+
+    /**
+     * 接入契约版本白名单
+     */
+    private List<String> supportedContractVersions = new ArrayList<>();
+
+    /**
+     * 是否启用行偏移索引
+     */
+    private boolean indexEnabled = true;
+
+    /**
+     * 索引步长（每N行一个偏移）
+     */
+    private int indexStride = 200;
 }
