@@ -176,6 +176,9 @@ public class RemoteConfigClient {
         if (statusCode == 404) {
             return Optional.empty();
         }
+        if (statusCode == 400 || statusCode == 422) {
+            throw new InvalidReconcileCursorException("finalize对账游标无效, status=" + statusCode);
+        }
         if (statusCode < 200 || statusCode >= 300) {
             throw new IllegalStateException("finalize对账拉取失败, status=" + statusCode);
         }

@@ -494,6 +494,66 @@ class RemoteConfigSyncServiceTest {
         assertThat(metrics.getFinalizeReconcileAttempts()).isEqualTo(2);
     }
 
+    @Test
+    void shouldResetCursorWhenReconcileCursorInvalid() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://localhost");
+        serverProperties.setApiKey("token");
+
+        StubRemoteConfigClient client = new StubRemoteConfigClient(objectMapper, serverProperties);
+        SfChainConfigSyncProperties syncProperties = new SfChainConfigSyncProperties();
+        syncProperties.setGovernanceLeaseEnabled(false);
+        syncProperties.setGovernanceFinalizeReconcileEnabled(true);
+        syncProperties.setGovernanceFinalizeReconcileMaxPages(3);
+        syncProperties.setIngestionGovernanceEnabled(false);
+        syncProperties.setGovernanceFeedbackEnabled(false);
+        syncProperties.setGovernanceEventEnabled(false);
+        syncProperties.setGovernanceFinalizeEnabled(false);
+
+        RemoteConfigSnapshot notModified = new RemoteConfigSnapshot();
+        notModified.setVersion("v-invalid-cursor-1");
+        notModified.setNotModified(true);
+        client.snapshot = notModified;
+
+        GovernanceFinalizeReconcileSnapshot init = new GovernanceFinalizeReconcileSnapshot();
+        init.setNextCursor("bad-cursor");
+        init.setHasMore(false);
+        client.reconcileSnapshotByCursor.put("", init);
+        RemoteConfigSyncService firstService = new RemoteConfigSyncService(
+                client,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                null
+        );
+        firstService.start();
+        firstService.stop();
+
+        GovernanceFinalizeReconcileSnapshot afterReset = new GovernanceFinalizeReconcileSnapshot();
+        afterReset.setNextCursor("good-cursor");
+        afterReset.setHasMore(false);
+        client.reconcileSnapshotByCursor.put("", afterReset);
+        client.invalidReconcileCursors.add("bad-cursor");
+
+        RemoteConfigSyncService syncService = new RemoteConfigSyncService(
+                client,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                null
+        );
+        syncService.start();
+        syncService.stop();
+
+        assertThat(client.reconcileCursorRequests).contains("bad-cursor", "");
+        GovernanceSyncMetricsSnapshot metrics = syncService.metrics();
+        assertThat(metrics.getFinalizeReconcileInvalidCursorCount()).isEqualTo(1);
+        assertThat(metrics.getFinalizeReconcileCursorResetCount()).isEqualTo(1);
+    }
+
     private static class StubRemoteConfigClient extends RemoteConfigClient {
 
         private RemoteConfigSnapshot snapshot;
@@ -506,6 +566,7 @@ class RemoteConfigSyncServiceTest {
         private String leaseAcquireToken;
         private final java.util.Map<String, GovernanceFinalizeReconcileSnapshot> reconcileSnapshotByCursor = new java.util.HashMap<>();
         private final java.util.List<String> reconcileCursorRequests = new java.util.ArrayList<>();
+        private final java.util.Set<String> invalidReconcileCursors = new java.util.HashSet<>();
 
         StubRemoteConfigClient(ObjectMapper objectMapper, SfChainServerProperties serverProperties) {
             super(objectMapper, serverProperties);
@@ -546,6 +607,9 @@ class RemoteConfigSyncServiceTest {
         public Optional<GovernanceFinalizeReconcileSnapshot> fetchFinalizeReconciliation(String cursor) {
             String normalized = cursor == null ? "" : cursor;
             reconcileCursorRequests.add(normalized);
+            if (invalidReconcileCursors.contains(normalized)) {
+                throw new InvalidReconcileCursorException("invalid cursor: " + normalized);
+            }
             if (!reconcileSnapshotByCursor.isEmpty()) {
                 return Optional.ofNullable(reconcileSnapshotByCursor.get(normalized));
             }

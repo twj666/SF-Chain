@@ -18,6 +18,8 @@ public class GovernanceSyncMetricsSnapshot {
     long finalizeReconcileAttempts;
     long finalizeReconcileSuccess;
     long finalizeReconcileFailure;
+    long finalizeReconcileInvalidCursorCount;
+    long finalizeReconcileCursorResetCount;
     long finalizeRetryAttempts;
     long finalizeRetrySuccess;
     long finalizeRetryFailure;

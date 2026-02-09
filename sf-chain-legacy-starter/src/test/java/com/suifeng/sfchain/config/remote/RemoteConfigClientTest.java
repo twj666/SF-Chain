@@ -173,6 +173,25 @@ class RemoteConfigClientTest {
         assertThat(third.get()).isNotEqualTo(first.get());
     }
 
+    @Test
+    void shouldThrowInvalidReconcileCursorExceptionWhenServerRejectsCursor() throws Exception {
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/v1/config/governance/finalize/reconcile", exchange -> {
+            exchange.sendResponseHeaders(400, 0);
+            exchange.getResponseBody().close();
+        });
+        server.start();
+
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort());
+        serverProperties.setApiKey("center-key");
+        RemoteConfigClient client = new RemoteConfigClient(new ObjectMapper(), serverProperties);
+
+        assertThatThrownBy(() -> client.fetchFinalizeReconciliation("bad-cursor"))
+                .isInstanceOf(InvalidReconcileCursorException.class)
+                .hasMessageContaining("游标无效");
+    }
+
     private static String sign(String secret, long ts, String body) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");

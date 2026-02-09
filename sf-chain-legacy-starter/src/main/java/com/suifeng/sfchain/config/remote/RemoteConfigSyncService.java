@@ -49,6 +49,8 @@ public class RemoteConfigSyncService {
     private final AtomicLong finalizeReconcileAttempts = new AtomicLong();
     private final AtomicLong finalizeReconcileSuccess = new AtomicLong();
     private final AtomicLong finalizeReconcileFailure = new AtomicLong();
+    private final AtomicLong finalizeReconcileInvalidCursorCount = new AtomicLong();
+    private final AtomicLong finalizeReconcileCursorResetCount = new AtomicLong();
     private final AtomicLong finalizeRetryAttempts = new AtomicLong();
     private final AtomicLong finalizeRetrySuccess = new AtomicLong();
     private final AtomicLong finalizeRetryFailure = new AtomicLong();
@@ -321,6 +323,7 @@ public class RemoteConfigSyncService {
         }
         int maxPages = Math.max(syncProperties.getGovernanceFinalizeReconcileMaxPages(), 1);
         String cursor = reconcileCursor;
+        boolean cursorResetAttempted = false;
         for (int page = 0; page < maxPages; page++) {
             finalizeReconcileAttempts.incrementAndGet();
             try {
@@ -349,6 +352,18 @@ public class RemoteConfigSyncService {
                     break;
                 }
                 cursor = nextCursor;
+                cursorResetAttempted = false;
+            } catch (InvalidReconcileCursorException ex) {
+                finalizeReconcileFailure.incrementAndGet();
+                finalizeReconcileInvalidCursorCount.incrementAndGet();
+                if (cursorResetAttempted) {
+                    log.warn("治理finalize对账游标重置后仍无效: {}", ex.getMessage());
+                    break;
+                }
+                reconcileCursor = null;
+                cursor = null;
+                finalizeReconcileCursorResetCount.incrementAndGet();
+                cursorResetAttempted = true;
             } catch (Exception ex) {
                 finalizeReconcileFailure.incrementAndGet();
                 log.warn("治理finalize对账拉取失败: {}", ex.getMessage());
@@ -456,6 +471,8 @@ public class RemoteConfigSyncService {
                 .finalizeReconcileAttempts(finalizeReconcileAttempts.get())
                 .finalizeReconcileSuccess(finalizeReconcileSuccess.get())
                 .finalizeReconcileFailure(finalizeReconcileFailure.get())
+                .finalizeReconcileInvalidCursorCount(finalizeReconcileInvalidCursorCount.get())
+                .finalizeReconcileCursorResetCount(finalizeReconcileCursorResetCount.get())
                 .finalizeRetryAttempts(finalizeRetryAttempts.get())
                 .finalizeRetrySuccess(finalizeRetrySuccess.get())
                 .finalizeRetryFailure(finalizeRetryFailure.get())

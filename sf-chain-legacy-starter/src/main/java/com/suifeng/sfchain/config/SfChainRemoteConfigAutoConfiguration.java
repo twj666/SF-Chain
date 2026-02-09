@@ -1,6 +1,7 @@
 package com.suifeng.sfchain.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.suifeng.sfchain.config.remote.GovernanceSyncMetricsBinder;
 import com.suifeng.sfchain.config.remote.IngestionGovernanceSyncApplier;
 import com.suifeng.sfchain.config.remote.RemoteConfigClient;
 import com.suifeng.sfchain.config.remote.RemoteConfigSyncService;
@@ -9,6 +10,7 @@ import com.suifeng.sfchain.core.openai.OpenAIModelFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -49,5 +51,12 @@ public class SfChainRemoteConfigAutoConfiguration {
                 objectMapper,
                 governanceSyncApplierProvider.getIfAvailable()
         );
+    }
+
+    @Bean
+    @ConditionalOnClass(name = "io.micrometer.core.instrument.MeterRegistry")
+    @ConditionalOnMissingBean
+    public GovernanceSyncMetricsBinder governanceSyncMetricsBinder(RemoteConfigSyncService syncService) {
+        return new GovernanceSyncMetricsBinder(syncService);
     }
 }
