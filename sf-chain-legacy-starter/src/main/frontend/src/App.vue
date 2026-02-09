@@ -16,7 +16,9 @@
                 :class="['tab-item', { active: outerTab === 'scope' }]"
                 @click="outerTab = 'scope'"
               >
-                <div class="tab-icon"><i class="fa-solid fa-building"></i></div>
+                <div class="tab-icon">
+                  <div class="icon-svg" v-html="outerIcons.scope"></div>
+                </div>
                 <div class="tab-content">
                   <div class="tab-title">租户 / 应用</div>
                   <div class="tab-description">作用域选择与概览</div>
@@ -28,7 +30,9 @@
                 :class="['tab-item', { active: outerTab === 'tenant' }]"
                 @click="outerTab = 'tenant'"
               >
-                <div class="tab-icon"><i class="fa-solid fa-key"></i></div>
+                <div class="tab-icon">
+                  <div class="icon-svg" v-html="outerIcons.tenant"></div>
+                </div>
                 <div class="tab-content">
                   <div class="tab-title">租户与密钥</div>
                   <div class="tab-description">租户、应用、API Key</div>
@@ -40,7 +44,9 @@
                 :class="['tab-item', { active: outerTab === 'database' }]"
                 @click="outerTab = 'database'"
               >
-                <div class="tab-icon"><i class="fa-solid fa-database"></i></div>
+                <div class="tab-icon">
+                  <div class="icon-svg" v-html="outerIcons.database"></div>
+                </div>
                 <div class="tab-content">
                   <div class="tab-title">持久化管理</div>
                   <div class="tab-description">数据库初始化与检测</div>
@@ -221,7 +227,6 @@ import DatabaseBootstrapPanel from '@/components/DatabaseBootstrapPanel.vue'
 import { controlPlaneApi, type AppView, type TenantView } from '@/services/controlPlaneApi'
 import { getAuthToken } from '@/services/apiUtils'
 import { clearScopeContext, getScopeContext, setScopeContext } from '@/services/scopeContext'
-import { systemApi } from '@/services/systemApi'
 import type { SystemOverview } from '@/types/system'
 import { toast } from '@/utils/toast'
 
@@ -252,6 +257,11 @@ const tabs = [
 const page = ref<Page>('portal')
 const activeTab = ref('api')
 const outerTab = ref<OuterTab>('scope')
+const outerIcons = {
+  scope: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9L12 4L21 9L12 14L3 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 15L12 20L21 15" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  tenant: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 118 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>`,
+  database: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" stroke-width="2"/><path d="M4 6V18C4 19.66 7.58 21 12 21C16.42 21 20 19.66 20 18V6" stroke="currentColor" stroke-width="2"/><path d="M4 12C4 13.66 7.58 15 12 15C16.42 15 20 13.66 20 12" stroke="currentColor" stroke-width="2"/></svg>`
+}
 
 const tenants = ref<TenantView[]>([])
 const apps = ref<AppView[]>([])
@@ -282,9 +292,38 @@ const formatTime = (timestamp: number) => {
 }
 
 async function fetchSystemOverview() {
+  if (!selectedTenantId.value || !selectedAppId.value) {
+    systemOverview.value = {
+      totalModels: 0,
+      enabledModels: 0,
+      configuredOperations: 0,
+      totalOperations: 0,
+      enabledOperations: 0,
+      lastUpdate: Date.now()
+    }
+    return
+  }
+
   try {
-    const data = await systemApi.getSystemOverview()
-    systemOverview.value = data
+    const [models, operations] = await Promise.all([
+      controlPlaneApi.listModelConfigs(selectedTenantId.value, selectedAppId.value),
+      controlPlaneApi.listOperationConfigs(selectedTenantId.value, selectedAppId.value)
+    ])
+
+    const totalModels = models.length
+    const enabledModels = models.filter(item => item.active).length
+    const totalOperations = operations.length
+    const enabledOperations = operations.filter(item => item.active).length
+    const configuredOperations = operations.filter(item => !!item.modelName && item.modelName.trim().length > 0).length
+
+    systemOverview.value = {
+      totalModels,
+      enabledModels,
+      configuredOperations,
+      totalOperations,
+      enabledOperations,
+      lastUpdate: Date.now()
+    }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : '获取系统概览失败'
     console.error('Failed to fetch system overview:', errorMessage)
@@ -501,7 +540,6 @@ onMounted(async () => {
   justify-content: center;
 }
 
-.tab-icon i,
 .icon-svg {
   width: 24px;
   height: 24px;
@@ -512,13 +550,11 @@ onMounted(async () => {
   justify-content: center;
 }
 
-.tab-item:hover .tab-icon i,
 .tab-item:hover .icon-svg {
   color: #667eea;
   transform: scale(1.08);
 }
 
-.tab-item.active .tab-icon i,
 .tab-item.active .icon-svg {
   color: #667eea;
 }

@@ -96,6 +96,14 @@ public class ControlPlaneController {
         return controlPlaneService.upsertModelConfig(tenantId, appId, request);
     }
 
+    @PostMapping("${sf-chain.path.api-prefix:/sf-chain}/control/tenants/{tenantId}/apps/{appId}/models/{modelName}/test")
+    public Map<String, Object> testModelConfig(
+            @PathVariable String tenantId,
+            @PathVariable String appId,
+            @PathVariable String modelName) {
+        return controlPlaneService.testModelConfig(tenantId, appId, modelName);
+    }
+
     @GetMapping("${sf-chain.path.api-prefix:/sf-chain}/control/tenants/{tenantId}/apps/{appId}/operations")
     public List<Map<String, Object>> listOperationConfigs(@PathVariable String tenantId, @PathVariable String appId) {
         return controlPlaneService.listOperationConfigs(tenantId, appId);

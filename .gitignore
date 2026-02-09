@@ -35,3 +35,4 @@ build/
 # Accidental root frontend workspace artifacts
 /src/main/frontend/node_modules/
 /src/main/frontend/dist/
+/data/

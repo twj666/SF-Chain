@@ -1,5 +1,6 @@
 package com.suifeng.sfchain.configcenter.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.suifeng.sfchain.configcenter.dto.ApiKeyDtos;
 import com.suifeng.sfchain.configcenter.dto.AppDtos;
 import com.suifeng.sfchain.configcenter.dto.ConfigDtos;
@@ -23,6 +24,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -45,6 +51,7 @@ public class ControlPlaneService {
     private final ApiKeyRepository apiKeyRepository;
     private final TenantModelConfigRepository tenantModelConfigRepository;
     private final TenantOperationConfigRepository tenantOperationConfigRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public TenantDtos.TenantView createTenant(TenantDtos.CreateTenantRequest request) {
@@ -193,6 +200,70 @@ public class ControlPlaneService {
                         "config", item.getConfigJson() == null ? Map.of() : item.getConfigJson(),
                         "updatedAt", item.getUpdatedAt()))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> testModelConfig(String tenantId, String appId, String modelName) {
+        assertTenantActive(tenantId);
+        assertAppActive(tenantId, appId);
+
+        TenantModelConfigEntity model = tenantModelConfigRepository
+                .findByTenantIdAndAppIdAndModelName(tenantId, appId, modelName)
+                .orElseThrow(() -> new IllegalArgumentException("model not found: " + modelName));
+        if (!model.isActive()) {
+            throw new IllegalStateException("model disabled: " + modelName);
+        }
+
+        String baseUrl = normalizeRequired(model.getBaseUrl(), "baseUrl");
+        String endpoint = normalizeChatCompletionsEndpoint(baseUrl);
+        Map<String, Object> config = model.getConfigJson() == null ? Map.of() : model.getConfigJson();
+        String apiKey = normalizeRequired(toString(config.get("apiKey")), "apiKey");
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("model", model.getModelName());
+        payload.put("messages", List.of(Map.of("role", "user", "content", "Reply with OK only.")));
+        payload.put("max_tokens", 8);
+
+        long start = System.currentTimeMillis();
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(endpoint))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(payload)))
+                    .build();
+
+            HttpResponse<String> response = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(10))
+                    .build()
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+
+            int statusCode = response.statusCode();
+            long durationMs = System.currentTimeMillis() - start;
+            boolean success = statusCode >= 200 && statusCode < 300;
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("success", success);
+            result.put("modelName", model.getModelName());
+            result.put("provider", model.getProvider());
+            result.put("statusCode", statusCode);
+            result.put("durationMs", durationMs);
+            result.put("endpoint", endpoint);
+            result.put("message", success ? "模型测试成功" : "模型测试失败");
+            result.put("responsePreview", abbreviate(response.body(), 500));
+            return result;
+        } catch (Exception ex) {
+            long durationMs = System.currentTimeMillis() - start;
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("success", false);
+            result.put("modelName", model.getModelName());
+            result.put("provider", model.getProvider());
+            result.put("durationMs", durationMs);
+            result.put("endpoint", endpoint);
+            result.put("message", "模型测试失败: " + ex.getMessage());
+            return result;
+        }
     }
 
     @Transactional
@@ -527,6 +598,34 @@ public class ControlPlaneService {
         }
         String value = raw.trim();
         return value.isEmpty() ? null : value;
+    }
+
+    private static String toString(Object value) {
+        if (value == null) {
+            return null;
+        }
+        return String.valueOf(value);
+    }
+
+    private static String normalizeChatCompletionsEndpoint(String baseUrl) {
+        String value = baseUrl.trim();
+        if (value.endsWith("/chat/completions")) {
+            return value;
+        }
+        if (value.endsWith("/")) {
+            return value + "chat/completions";
+        }
+        if (value.endsWith("/v1") || value.endsWith("/v1/")) {
+            return value + (value.endsWith("/") ? "chat/completions" : "/chat/completions");
+        }
+        return value;
+    }
+
+    private static String abbreviate(String text, int maxLen) {
+        if (text == null || text.length() <= maxLen) {
+            return text;
+        }
+        return text.substring(0, maxLen) + "...";
     }
 
     private static String generateApiKey() {

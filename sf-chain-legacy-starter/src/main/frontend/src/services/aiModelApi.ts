@@ -12,20 +12,15 @@ function requireScope() {
 
 function mapToModelConfig(item: TenantModelConfig): ModelConfigData {
   const cfg = item.config || {}
+  const rawItem = item as unknown as { description?: unknown }
   return {
     modelName: String(item.modelName),
     provider: String(item.provider || 'other'),
     baseUrl: String(item.baseUrl || ''),
     apiKey: String(cfg.apiKey || ''),
-    defaultMaxTokens: typeof cfg.defaultMaxTokens === 'number' ? cfg.defaultMaxTokens : undefined,
-    defaultTemperature: typeof cfg.defaultTemperature === 'number' ? cfg.defaultTemperature : undefined,
-    supportStream: typeof cfg.supportStream === 'boolean' ? cfg.supportStream : true,
-    supportJsonOutput: typeof cfg.supportJsonOutput === 'boolean' ? cfg.supportJsonOutput : true,
-    supportThinking: typeof cfg.supportThinking === 'boolean' ? cfg.supportThinking : false,
-    additionalHeaders: typeof cfg.additionalHeaders === 'object' && cfg.additionalHeaders !== null
-      ? (cfg.additionalHeaders as Record<string, string>)
-      : undefined,
-    description: typeof cfg.description === 'string' ? cfg.description : undefined,
+    description: typeof cfg.description === 'string'
+      ? cfg.description
+      : (typeof rawItem.description === 'string' ? rawItem.description : undefined),
     enabled: Boolean(item.active)
   }
 }
@@ -77,12 +72,6 @@ export const aiModelApi = {
       active: config.enabled ?? true,
       config: {
         apiKey: config.apiKey,
-        defaultMaxTokens: config.defaultMaxTokens,
-        defaultTemperature: config.defaultTemperature,
-        supportStream: config.supportStream,
-        supportJsonOutput: config.supportJsonOutput,
-        supportThinking: config.supportThinking,
-        additionalHeaders: config.additionalHeaders,
         description: config.description
       }
     })
@@ -102,11 +91,12 @@ export const aiModelApi = {
   },
 
   async testModel(modelName: string): Promise<TestConnectionResponse> {
-    await this.getModel(modelName)
+    const scope = requireScope()
+    const result = await controlPlaneApi.testModelConfig(scope.tenantId, scope.appId, modelName)
     return {
-      success: true,
-      message: '控制面暂不提供在线连通性测试，配置已校验并存在',
-      modelName
+      success: !!result.success,
+      message: result.message || (result.success ? '模型连接测试成功' : '模型连接测试失败'),
+      modelName: result.modelName || modelName
     }
   }
 }

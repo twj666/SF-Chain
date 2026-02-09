@@ -47,6 +47,87 @@ a:hover {
   color: #764ba2;
 }
 
+/* shared ui tokens for outer panels and control forms */
+.soft-card {
+  border: 1px solid #e6ebf4;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  border: 1px solid #d7e1f1;
+  border-radius: 10px;
+  padding: 0.62rem 0.74rem;
+  background: #fff;
+  color: #1f2937;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #93b0ef;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+}
+
+.btn {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.58rem 0.88rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.24);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #f2f5fb;
+  border-color: #d8e0ef;
+  color: #334155;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e9eef8;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pill-ok {
+  color: #0f766e;
+  background: #d1fae5;
+}
+
+.pill-off {
+  color: #9f1239;
+  background: #ffe4e6;
+}
+
 @media (min-width: 1024px) {
   #app {
     width: 100%;

@@ -151,6 +151,13 @@ export const controlPlaneApi = {
     })
   },
 
+  async testModelConfig(tenantId: string, appId: string, modelName: string): Promise<{ success: boolean; message: string; modelName: string }> {
+    return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/models/${encodeURIComponent(modelName)}/test`, {
+      method: 'POST',
+      requireAuth: true
+    })
+  },
+
   async listOperationConfigs(tenantId: string, appId: string): Promise<TenantOperationConfig[]> {
     return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/operations`, {
       method: 'GET',

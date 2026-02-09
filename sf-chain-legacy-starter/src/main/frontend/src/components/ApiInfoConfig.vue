@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="api-config-content">
     <!-- 页面头部 - 紧贴左上角 -->
     <div class="content-header">
@@ -100,9 +100,7 @@
         <div class="table-header">
           <div class="header-cell model-cell">模型信息</div>
           <div class="header-cell base-url-cell">Base URL</div>
-          <div class="header-cell params-cell">Token/温度</div>
           <div class="header-cell description-cell">描述</div>
-          <div class="header-cell status-cell">状态</div>
           <div class="header-cell actions-cell">操作</div>
         </div>
 
@@ -111,7 +109,6 @@
             v-for="(model, modelName) in filteredModels"
             :key="modelName"
             class="model-row"
-            :class="{ 'disabled': !model.enabled }"
           >
             <!-- 模型信息 -->
             <div class="model-cell">
@@ -149,24 +146,10 @@
               </span>
             </div>
 
-            <!-- Token/温度 -->
-            <div class="params-cell">
-              <span class="params-text">
-                {{ model.defaultMaxTokens || 'N/A' }} / {{ model.defaultTemperature || 'N/A' }}
-              </span>
-            </div>
-
             <!-- 描述 -->
             <div class="description-cell">
               <span class="description-text" :title="model.description">
                 {{ model.description || '-' }}
-              </span>
-            </div>
-
-            <!-- 状态 -->
-            <div class="status-cell">
-              <span class="status-badge" :class="{ 'enabled': model.enabled, 'disabled': !model.enabled }">
-                {{ model.enabled ? '启用' : '禁用' }}
               </span>
             </div>
 
@@ -277,32 +260,6 @@
                 />
               </div>
 
-              <!-- 参数设置行 -->
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="maxTokens">Token数</label>
-                  <input
-                    id="maxTokens"
-                    v-model.number="modelForm.defaultMaxTokens"
-                    type="number"
-                    placeholder="4096"
-                    class="form-input"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="temperature">温度</label>
-                  <input
-                    id="temperature"
-                    v-model.number="modelForm.defaultTemperature"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="2"
-                    placeholder="0.7"
-                    class="form-input"
-                  />
-                </div>
-              </div>
             </div>
 
             <!-- 右列 -->
@@ -332,14 +289,6 @@
                     </svg>
                   </button>
                 </div>
-              </div>
-
-              <div class="form-group">
-                <label for="enabled">状态</label>
-                <select id="enabled" v-model="modelForm.enabled" class="form-input">
-                  <option :value="true">启用</option>
-                  <option :value="false">禁用</option>
-                </select>
               </div>
 
               <div class="form-group">
@@ -387,7 +336,6 @@ import {
   getProviderName, 
   getProviderIcon, 
   getProviderOrder,
-  getAllProviders,
   getProvidersByCategory,
   getCategoryName,
   getProviderDefaultConfig
@@ -410,11 +358,6 @@ const modelForm = reactive<ModelConfigData>({
   modelName: '',
   baseUrl: '',
   apiKey: '',
-  defaultMaxTokens: 4096,
-  defaultTemperature: 0.7,
-  supportStream: true,
-  supportJsonOutput: true,
-  supportThinking: false,
   description: '',
   provider: 'openai',
   enabled: true
@@ -505,22 +448,12 @@ const selectProvider = (provider: string) => {
 
 // 提供商变更时的处理
 const onProviderChange = () => {
-  const defaultConfig = getProviderDefaultConfig(modelForm.provider)
+  const defaultConfig = getProviderDefaultConfig(modelForm.provider || 'other')
   if (defaultConfig) {
     // 只在字段为空时应用默认值，避免覆盖用户已输入的内容
     if (!modelForm.baseUrl) {
       modelForm.baseUrl = defaultConfig.baseUrl || ''
     }
-    if (!modelForm.defaultMaxTokens) {
-      modelForm.defaultMaxTokens = defaultConfig.maxTokens || 4096
-    }
-    if (!modelForm.defaultTemperature) {
-      modelForm.defaultTemperature = defaultConfig.temperature || 0.7
-    }
-    // 应用支持特性的默认值
-    modelForm.supportStream = defaultConfig.supportStream ?? true
-    modelForm.supportJsonOutput = defaultConfig.supportJsonOutput ?? true
-    modelForm.supportThinking = defaultConfig.supportThinking ?? false
   }
 }
 
@@ -555,11 +488,6 @@ const resetForm = () => {
     modelName: '',
     baseUrl: '',
     apiKey: '',
-    defaultMaxTokens: 4096,
-    defaultTemperature: 0.7,
-    supportStream: true,
-    supportJsonOutput: true,
-    supportThinking: false,
     description: '',
     provider: 'openai',
     enabled: true
