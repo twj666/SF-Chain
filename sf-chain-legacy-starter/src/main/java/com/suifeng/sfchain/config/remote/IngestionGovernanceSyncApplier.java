@@ -31,6 +31,27 @@ public class IngestionGovernanceSyncApplier {
     private volatile String activeReleaseId;
     private volatile int activeReleasePriority;
 
+    public synchronized ApplierState snapshotState() {
+        ApplierState state = new ApplierState();
+        state.setFailedReleaseId(failedReleaseId);
+        state.setRetryBlockedUntilEpochMs(retryBlockedUntilEpochMs);
+        state.setRollbackCooldownUntilEpochMs(rollbackCooldownUntilEpochMs);
+        state.setActiveReleaseId(activeReleaseId);
+        state.setActiveReleasePriority(activeReleasePriority);
+        return state;
+    }
+
+    public synchronized void restoreState(ApplierState state) {
+        if (state == null) {
+            return;
+        }
+        failedReleaseId = state.getFailedReleaseId();
+        retryBlockedUntilEpochMs = state.getRetryBlockedUntilEpochMs();
+        rollbackCooldownUntilEpochMs = state.getRollbackCooldownUntilEpochMs();
+        activeReleaseId = state.getActiveReleaseId();
+        activeReleasePriority = state.getActiveReleasePriority();
+    }
+
     public synchronized GovernanceSyncApplyResult apply(RemoteIngestionGovernanceSnapshot snapshot) {
         GovernanceSyncApplyResult result = new GovernanceSyncApplyResult();
         if (snapshot == null) {
@@ -314,5 +335,14 @@ public class IngestionGovernanceSyncApplier {
                 activeReleasePriority = 0;
             }
         }
+    }
+
+    @lombok.Data
+    public static class ApplierState {
+        private String failedReleaseId;
+        private long retryBlockedUntilEpochMs;
+        private long rollbackCooldownUntilEpochMs;
+        private String activeReleaseId;
+        private int activeReleasePriority;
     }
 }

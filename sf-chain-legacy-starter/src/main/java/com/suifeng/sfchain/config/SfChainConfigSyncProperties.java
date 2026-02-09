@@ -49,4 +49,9 @@ public class SfChainConfigSyncProperties {
      * 是否上报治理终态回调
      */
     private boolean governanceFinalizeEnabled = true;
+
+    /**
+     * 治理同步运行时状态文件
+     */
+    private String governanceStateFile = ".sf-chain/governance-sync-state.json";
 }

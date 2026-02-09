@@ -182,6 +182,61 @@ class RemoteConfigSyncServiceTest {
         assertThat(client.finalizePushCount).isEqualTo(1);
     }
 
+    @Test
+    void shouldRetryFinalizeWhenAckNotReceived() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SfChainServerProperties serverProperties = new SfChainServerProperties();
+        serverProperties.setBaseUrl("http://localhost");
+        serverProperties.setApiKey("token");
+
+        StubRemoteConfigClient client = new StubRemoteConfigClient(objectMapper, serverProperties);
+        client.finalizeAck = false;
+        SfChainConfigSyncProperties syncProperties = new SfChainConfigSyncProperties();
+        syncProperties.setGovernanceFeedbackEnabled(false);
+        syncProperties.setGovernanceEventEnabled(false);
+        syncProperties.setGovernanceFinalizeEnabled(true);
+        syncProperties.setIngestionGovernanceEnabled(true);
+
+        SfChainIngestionProperties ingestionProperties = new SfChainIngestionProperties();
+        ingestionProperties.setSupportedContractVersion("v1");
+        ingestionProperties.setRequireCurrentVersionOverlap(false);
+        ContractAllowlistGuardService guardService = new ContractAllowlistGuardService(ingestionProperties);
+        IngestionGovernanceSyncApplier applier = new IngestionGovernanceSyncApplier(
+                ingestionProperties,
+                guardService,
+                null,
+                new IngestionContractHealthTracker(),
+                "default"
+        );
+        RemoteConfigSyncService syncService = new RemoteConfigSyncService(
+                client,
+                syncProperties,
+                new OpenAIModelFactory(),
+                new AIOperationRegistry(),
+                objectMapper,
+                applier
+        );
+
+        RemoteGovernanceRolloutPlan rollout = new RemoteGovernanceRolloutPlan();
+        rollout.setReleaseId("release-retry");
+        rollout.setStage("FULL");
+        RemoteConfigSnapshot snapshot = new RemoteConfigSnapshot();
+        snapshot.setVersion("v-retry-1");
+        RemoteIngestionGovernanceSnapshot governance = new RemoteIngestionGovernanceSnapshot();
+        governance.setContractAllowlist(List.of("v2", "v1"));
+        governance.setRollout(rollout);
+        snapshot.setIngestionGovernance(governance);
+        client.snapshot = snapshot;
+
+        syncService.syncOnce(true);
+
+        client.finalizeAck = true;
+        snapshot.setVersion("v-retry-2");
+        syncService.syncOnce(false);
+
+        assertThat(client.finalizePushCount).isGreaterThanOrEqualTo(2);
+    }
+
     private static class StubRemoteConfigClient extends RemoteConfigClient {
 
         private RemoteConfigSnapshot snapshot;
@@ -189,6 +244,7 @@ class RemoteConfigSyncServiceTest {
         private GovernanceSyncApplyResult lastFeedbackResult;
         private int eventPushCount;
         private int finalizePushCount;
+        private boolean finalizeAck = true;
 
         StubRemoteConfigClient(ObjectMapper objectMapper, SfChainServerProperties serverProperties) {
             super(objectMapper, serverProperties);
@@ -211,8 +267,9 @@ class RemoteConfigSyncServiceTest {
         }
 
         @Override
-        public void pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult result) {
+        public boolean pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult result) {
             this.finalizePushCount++;
+            return finalizeAck;
         }
     }
 }

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -33,7 +34,9 @@ public class RemoteConfigSyncService {
     private final AIOperationRegistry operationRegistry;
     private final ObjectMapper objectMapper;
     private final IngestionGovernanceSyncApplier governanceSyncApplier;
+    private final GovernanceSyncStateStore stateStore;
     private final ConcurrentMap<String, GovernanceReleaseStatus> finalizedReleaseStates = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, GovernanceFinalizeTask> pendingFinalizations = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private volatile String currentVersion;
 
@@ -50,10 +53,12 @@ public class RemoteConfigSyncService {
         this.operationRegistry = operationRegistry;
         this.objectMapper = objectMapper;
         this.governanceSyncApplier = governanceSyncApplier;
+        this.stateStore = new GovernanceSyncStateStore(objectMapper, syncProperties.getGovernanceStateFile());
     }
 
     @PostConstruct
     public void start() {
+        loadRuntimeState();
         loadCachedSnapshot();
         syncOnce(true);
 
@@ -74,6 +79,7 @@ public class RemoteConfigSyncService {
 
     void syncOnce(boolean startup) {
         try {
+            flushPendingFinalizations();
             Optional<RemoteConfigSnapshot> snapshotOpt = remoteConfigClient.fetchSnapshot(currentVersion);
             if (snapshotOpt.isEmpty()) {
                 return;
@@ -88,6 +94,8 @@ public class RemoteConfigSyncService {
             pushGovernanceFeedback(snapshot.getVersion(), governanceResult);
             pushGovernanceEvent(snapshot.getVersion(), governanceResult);
             pushGovernanceFinalize(snapshot.getVersion(), governanceResult);
+            flushPendingFinalizations();
+            persistRuntimeState();
             log.info("远程配置同步成功, version={}", currentVersion);
         } catch (Exception e) {
             if (!syncProperties.isFailOpen()) {
@@ -98,6 +106,7 @@ public class RemoteConfigSyncService {
             } else {
                 log.warn("定时远程配置同步失败: {}", e.getMessage());
             }
+            persistRuntimeState();
         }
     }
 
@@ -195,8 +204,15 @@ public class RemoteConfigSyncService {
             return;
         }
         finalizedReleaseStates.put(normalizedReleaseId, status);
+        GovernanceFinalizeTask task = new GovernanceFinalizeTask();
+        task.setSnapshotVersion(snapshotVersion);
+        task.setResult(governanceResult);
+        pendingFinalizations.put(buildFinalizeTaskKey(normalizedReleaseId, status), task);
         try {
-            remoteConfigClient.pushGovernanceFinalize(snapshotVersion, governanceResult);
+            boolean acknowledged = remoteConfigClient.pushGovernanceFinalize(snapshotVersion, governanceResult);
+            if (acknowledged) {
+                pendingFinalizations.remove(buildFinalizeTaskKey(normalizedReleaseId, status));
+            }
         } catch (Exception ex) {
             log.warn("治理终态回调失败: {}", ex.getMessage());
         }
@@ -206,5 +222,53 @@ public class RemoteConfigSyncService {
         return status == GovernanceReleaseStatus.SUCCEEDED
                 || status == GovernanceReleaseStatus.FAILED
                 || status == GovernanceReleaseStatus.ROLLED_BACK;
+    }
+
+    private void flushPendingFinalizations() {
+        if (!syncProperties.isGovernanceFinalizeEnabled() || pendingFinalizations.isEmpty()) {
+            return;
+        }
+        for (String key : pendingFinalizations.keySet()) {
+            GovernanceFinalizeTask task = pendingFinalizations.get(key);
+            if (task == null || task.getResult() == null) {
+                continue;
+            }
+            try {
+                boolean acknowledged = remoteConfigClient.pushGovernanceFinalize(task.getSnapshotVersion(), task.getResult());
+                if (acknowledged) {
+                    pendingFinalizations.remove(key);
+                }
+            } catch (Exception ex) {
+                log.warn("重试治理终态回调失败: {}", ex.getMessage());
+            }
+        }
+    }
+
+    private void loadRuntimeState() {
+        stateStore.load().ifPresent(state -> {
+            if (governanceSyncApplier != null) {
+                governanceSyncApplier.restoreState(state.getApplierState());
+            }
+            if (state.getFinalizedStates() != null) {
+                finalizedReleaseStates.putAll(state.getFinalizedStates());
+            }
+            if (state.getPendingFinalizations() != null) {
+                pendingFinalizations.putAll(state.getPendingFinalizations());
+            }
+        });
+    }
+
+    private void persistRuntimeState() {
+        GovernanceSyncRuntimeState state = new GovernanceSyncRuntimeState();
+        if (governanceSyncApplier != null) {
+            state.setApplierState(governanceSyncApplier.snapshotState());
+        }
+        state.setFinalizedStates(new LinkedHashMap<>(finalizedReleaseStates));
+        state.setPendingFinalizations(new LinkedHashMap<>(pendingFinalizations));
+        stateStore.save(state);
+    }
+
+    private static String buildFinalizeTaskKey(String releaseId, GovernanceReleaseStatus status) {
+        return releaseId + "|" + status.name();
     }
 }

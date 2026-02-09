@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 /**
  * 远程配置中心HTTP客户端
@@ -80,10 +81,25 @@ public class RemoteConfigClient {
         postJson(requestUrl, toGovernancePayload(snapshotVersion, result), "治理事件上报失败");
     }
 
-    public void pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult result)
+    public boolean pushGovernanceFinalize(String snapshotVersion, GovernanceSyncApplyResult result)
             throws IOException, InterruptedException {
         String requestUrl = trimTrailingSlash(serverProperties.getBaseUrl()) + "/v1/config/governance/finalize";
-        postJson(requestUrl, toGovernancePayload(snapshotVersion, result), "治理终态回调失败");
+        HttpResponse<String> response =
+                postJson(requestUrl, toGovernancePayload(snapshotVersion, result), "治理终态回调失败");
+        String body = response.body();
+        if (body == null || body.isBlank()) {
+            return true;
+        }
+        try {
+            Map<?, ?> parsed = objectMapper.readValue(body, Map.class);
+            Object acknowledged = parsed.get("acknowledged");
+            if (acknowledged instanceof Boolean) {
+                return (Boolean) acknowledged;
+            }
+        } catch (Exception ignore) {
+            return true;
+        }
+        return true;
     }
 
     private String buildSnapshotUrl(String currentVersion) {
@@ -117,6 +133,7 @@ public class RemoteConfigClient {
         payload.put("reasonCode", result.getReasonCode());
         payload.put("nextRetryAtEpochMs", result.getNextRetryAtEpochMs());
         payload.put("eventTimeEpochMs", result.getEventTimeEpochMs());
+        payload.put("idempotencyKey", buildIdempotencyKey(result));
         payload.put("valid", result.isValid());
         payload.put("applied", result.isApplied());
         payload.put("targeted", result.isTargeted());
@@ -130,7 +147,7 @@ public class RemoteConfigClient {
         return payload;
     }
 
-    private void postJson(String requestUrl, Map<String, Object> payload, String failurePrefix)
+    private HttpResponse<String> postJson(String requestUrl, Map<String, Object> payload, String failurePrefix)
             throws IOException, InterruptedException {
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(serverProperties.getConnectTimeoutMs()))
@@ -149,6 +166,16 @@ public class RemoteConfigClient {
         if (statusCode < 200 || statusCode >= 300) {
             throw new IllegalStateException(failurePrefix + ", status=" + statusCode);
         }
+        return response;
+    }
+
+    private String buildIdempotencyKey(GovernanceSyncApplyResult result) {
+        StringJoiner joiner = new StringJoiner("|");
+        joiner.add(serverProperties.getTenantId() == null ? "" : serverProperties.getTenantId());
+        joiner.add(serverProperties.getAppId() == null ? "" : serverProperties.getAppId());
+        joiner.add(result.getReleaseId() == null ? "" : result.getReleaseId());
+        joiner.add(result.getStatus() == null ? "" : result.getStatus().name());
+        return joiner.toString();
     }
 
     private static RemoteConfigSnapshot notModifiedSnapshot(String version) {
