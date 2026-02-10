@@ -32,7 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
-# Accidental root frontend workspace artifacts
-/src/main/frontend/node_modules/
-/src/main/frontend/dist/
+# Config-center frontend artifacts
+/sf-chain-config-center-frontend/node_modules/
+/sf-chain-config-center-frontend/dist/
+/sf-chain-config-center-frontend/.vite/
 /data/

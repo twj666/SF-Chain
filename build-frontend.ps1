@@ -19,10 +19,10 @@ function Assert-Command {
 }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$FrontendDir = Join-Path $ScriptDir "src\main\frontend"
-$StaticDir = Join-Path $ScriptDir "src\main\resources\static"
+$FrontendDir = Join-Path $ScriptDir "sf-chain-config-center-frontend"
+$StaticDir = Join-Path $ScriptDir "sf-chain-legacy-starter\src\main\resources\static"
 $DistDir = Join-Path $FrontendDir "dist"
-$RepoRoot = Split-Path -Parent $ScriptDir
+$RepoRoot = $ScriptDir
 
 Write-Step "Validate environment"
 Assert-Command "npm"

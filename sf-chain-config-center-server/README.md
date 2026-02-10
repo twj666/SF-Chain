@@ -30,7 +30,7 @@ export SF_CHAIN_DB_DRIVER='com.mysql.cj.jdbc.Driver'
 该服务 UI 静态资源来自 `sf-chain-legacy-starter`，首次部署前执行：
 
 ```bash
-cd /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter
+cd /Users/suifeng/Code/SF-Chain
 ./build-frontend.sh
 ```
 

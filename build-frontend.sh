@@ -7,14 +7,14 @@ echo "🚀 开始构建SF-Chain前端..."
 
 # 定义路径
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-FRONTEND_DIR="$SCRIPT_DIR/src/main/frontend"
-STATIC_DIR="$SCRIPT_DIR/src/main/resources/static"
+FRONTEND_DIR="$(cd "$SCRIPT_DIR/sf-chain-config-center-frontend" && pwd)"
+STATIC_DIR="$SCRIPT_DIR/sf-chain-legacy-starter/src/main/resources/static"
 DIST_DIR="$FRONTEND_DIR/dist"
 
 # 检查前端目录是否存在
 if [ ! -d "$FRONTEND_DIR" ]; then
     echo "❌ 前端目录不存在: $FRONTEND_DIR"
-    echo "请先将sf-chain-ui移动到sf-chain/src/main/frontend目录下"
+    echo "请确保前端工程目录存在: ./sf-chain-config-center-frontend"
     exit 1
 fi
 
