@@ -1,6 +1,7 @@
 package com.suifeng.sfchain.config.remote;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.suifeng.sfchain.annotation.AIOp;
 import com.suifeng.sfchain.config.SfChainConfigSyncProperties;
 import com.suifeng.sfchain.core.AIOperationRegistry;
@@ -17,9 +18,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -61,6 +65,7 @@ public class RemoteConfigSyncService {
     private final AtomicLong finalizeRetryFailure = new AtomicLong();
     private volatile String currentVersion;
     private volatile String reconcileCursor;
+    private volatile RemoteConfigSnapshot lastAppliedSnapshot;
 
     public RemoteConfigSyncService(
             RemoteConfigClient remoteConfigClient,
@@ -91,7 +96,15 @@ public class RemoteConfigSyncService {
         loadRuntimeState();
         loadCachedSnapshot();
         syncOperationCatalogAtStartup();
-        syncOnce(true);
+        if (syncProperties.isStartupCheckEnabled()) {
+            log.info("启动阶段远程配置严格检查已开启, maxAttempts={}, retryIntervalMs={}",
+                    Math.max(syncProperties.getStartupMaxAttempts(), 1),
+                    Math.max(syncProperties.getStartupRetryIntervalMs(), 200L));
+            runStartupSyncWithRetry();
+        } else {
+            log.info("启动阶段远程配置严格检查已关闭, 失败时按 fail-open={} 处理", syncProperties.isFailOpen());
+            syncOnce(true);
+        }
 
         int interval = Math.max(syncProperties.getIntervalSeconds(), 5);
         scheduler.scheduleWithFixedDelay(
@@ -141,11 +154,14 @@ public class RemoteConfigSyncService {
                     compactRuntimeState();
                     persistRuntimeState();
                 }
+                log.debug("远程配置未变更, version={}", currentVersion);
                 return;
             }
+            logSnapshotDiff(lastAppliedSnapshot, snapshot);
             GovernanceSyncApplyResult governanceResult = applySnapshot(snapshot, leaseAcquired);
             persistSnapshot(snapshot);
             currentVersion = snapshot.getVersion();
+            lastAppliedSnapshot = snapshot;
             if (leaseAcquired) {
                 pushGovernanceFeedback(snapshot.getVersion(), governanceResult);
                 pushGovernanceEvent(snapshot.getVersion(), governanceResult);
@@ -154,9 +170,11 @@ public class RemoteConfigSyncService {
             }
             compactRuntimeState();
             persistRuntimeState();
-            log.info("远程配置同步成功, version={}", currentVersion);
         } catch (Exception e) {
             syncFailureCount.incrementAndGet();
+            if (startup && syncProperties.isStartupCheckEnabled()) {
+                throw new IllegalStateException("启动阶段远程配置同步失败", e);
+            }
             if (!syncProperties.isFailOpen()) {
                 throw new IllegalStateException("远程配置同步失败且 fail-open=false", e);
             }
@@ -267,6 +285,7 @@ public class RemoteConfigSyncService {
             if (snapshot != null) {
                 applySnapshot(snapshot, false);
                 currentVersion = snapshot.getVersion();
+                lastAppliedSnapshot = snapshot;
                 log.info("已加载本地配置快照, version={}", currentVersion);
             }
         } catch (Exception e) {
@@ -556,6 +575,184 @@ public class RemoteConfigSyncService {
         int threshold = Math.max(syncProperties.getGovernanceFinalizeReconcileInvalidCursorWarnThreshold(), 1);
         if (invalidCount % threshold == 0) {
             log.warn("治理finalize对账无效游标累计达到阈值: count={}, threshold={}", invalidCount, threshold);
+        }
+    }
+
+    private void runStartupSyncWithRetry() {
+        int maxAttempts = Math.max(syncProperties.getStartupMaxAttempts(), 1);
+        long retryIntervalMs = Math.max(syncProperties.getStartupRetryIntervalMs(), 200L);
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                syncOnce(true);
+                if (attempt > 1) {
+                    log.info("启动阶段远程配置同步重试成功, attempt={}/{}", attempt, maxAttempts);
+                }
+                return;
+            } catch (Exception ex) {
+                if (attempt >= maxAttempts) {
+                    throw new IllegalStateException(
+                            "启动阶段远程配置同步失败且已达到最大重试次数, attempts=" + maxAttempts, ex);
+                }
+                log.warn("启动阶段远程配置同步失败, attempt={}/{}, {}ms后重试, err={}",
+                        attempt, maxAttempts, retryIntervalMs, ex.getMessage());
+                try {
+                    Thread.sleep(retryIntervalMs);
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("启动阶段远程配置同步重试被中断", interruptedException);
+                }
+            }
+        }
+    }
+
+    private void logSnapshotDiff(RemoteConfigSnapshot previous, RemoteConfigSnapshot current) {
+        if (current == null) {
+            return;
+        }
+        if (previous == null) {
+            log.info("远程配置首轮加载: version={}, models={}, mappings={}, operationConfigs={}",
+                    current.getVersion(),
+                    sizeOf(current.getModels()),
+                    sizeOf(current.getOperationModelMapping()),
+                    sizeOf(current.getOperationConfigs()));
+            return;
+        }
+        DiffResult modelDiff = diffKeyed(previous.getModels(), current.getModels());
+        DiffResult mappingDiff = diffKeyed(previous.getOperationModelMapping(), current.getOperationModelMapping());
+        DiffResult configDiff = diffKeyed(previous.getOperationConfigs(), current.getOperationConfigs());
+        List<String> operationConfigFieldDiffs = diffOperationConfigFields(
+                previous.getOperationConfigs(), current.getOperationConfigs());
+        log.info("远程配置变更: {} -> {} | models(+{} -{} ~{}) mappings(+{} -{} ~{}) operationConfigs(+{} -{} ~{})",
+                previous.getVersion(),
+                current.getVersion(),
+                modelDiff.added, modelDiff.removed, modelDiff.changed,
+                mappingDiff.added, mappingDiff.removed, mappingDiff.changed,
+                configDiff.added, configDiff.removed, configDiff.changed);
+        if (!modelDiff.sampleChanges.isEmpty()) {
+            log.info("模型变更详情: {}", modelDiff.sampleChanges);
+        }
+        if (!mappingDiff.sampleChanges.isEmpty()) {
+            log.info("映射变更详情: {}", mappingDiff.sampleChanges);
+        }
+        if (!configDiff.sampleChanges.isEmpty()) {
+            log.info("操作配置Key变更详情: {}", configDiff.sampleChanges);
+        }
+        if (!operationConfigFieldDiffs.isEmpty()) {
+            log.info("操作配置字段变更详情: {}", operationConfigFieldDiffs);
+        }
+    }
+
+    private static int sizeOf(Map<?, ?> map) {
+        return map == null ? 0 : map.size();
+    }
+
+    private DiffResult diffKeyed(Map<?, ?> previous, Map<?, ?> current) {
+        Map<?, ?> before = previous == null ? Map.of() : previous;
+        Map<?, ?> after = current == null ? Map.of() : current;
+        Set<Object> beforeKeys = new HashSet<>(before.keySet());
+        Set<Object> afterKeys = new HashSet<>(after.keySet());
+
+        int added = 0;
+        int removed = 0;
+        int changed = 0;
+        List<String> sampleChanges = new ArrayList<>();
+
+        for (Object key : afterKeys) {
+            if (!beforeKeys.contains(key)) {
+                added++;
+                if (sampleChanges.size() < 8) {
+                    sampleChanges.add("+" + key);
+                }
+            }
+        }
+        for (Object key : beforeKeys) {
+            if (!afterKeys.contains(key)) {
+                removed++;
+                if (sampleChanges.size() < 8) {
+                    sampleChanges.add("-" + key);
+                }
+            }
+        }
+        for (Object key : beforeKeys) {
+            if (!afterKeys.contains(key)) {
+                continue;
+            }
+            Object beforeValue = before.get(key);
+            Object afterValue = after.get(key);
+            if (!areEquivalent(beforeValue, afterValue)) {
+                changed++;
+                if (sampleChanges.size() < 8) {
+                    sampleChanges.add("~" + key);
+                }
+            }
+        }
+        return new DiffResult(added, removed, changed, sampleChanges);
+    }
+
+    private boolean areEquivalent(Object beforeValue, Object afterValue) {
+        if (beforeValue == afterValue) {
+            return true;
+        }
+        if (beforeValue == null || afterValue == null) {
+            return false;
+        }
+        JsonNode left = objectMapper.valueToTree(beforeValue);
+        JsonNode right = objectMapper.valueToTree(afterValue);
+        return left.equals(right);
+    }
+
+    private List<String> diffOperationConfigFields(
+            Map<String, AIOperationRegistry.OperationConfig> previous,
+            Map<String, AIOperationRegistry.OperationConfig> current) {
+        Map<String, AIOperationRegistry.OperationConfig> before = previous == null ? Map.of() : previous;
+        Map<String, AIOperationRegistry.OperationConfig> after = current == null ? Map.of() : current;
+        List<String> details = new ArrayList<>();
+        for (String operationType : before.keySet()) {
+            if (!after.containsKey(operationType)) {
+                continue;
+            }
+            AIOperationRegistry.OperationConfig beforeConfig = before.get(operationType);
+            AIOperationRegistry.OperationConfig afterConfig = after.get(operationType);
+            if (areEquivalent(beforeConfig, afterConfig)) {
+                continue;
+            }
+            JsonNode beforeNode = objectMapper.valueToTree(beforeConfig);
+            JsonNode afterNode = objectMapper.valueToTree(afterConfig);
+            Set<String> fields = new java.util.TreeSet<>();
+            beforeNode.fieldNames().forEachRemaining(fields::add);
+            afterNode.fieldNames().forEachRemaining(fields::add);
+            List<String> changedFields = new ArrayList<>();
+            for (String field : fields) {
+                JsonNode beforeField = beforeNode.get(field);
+                JsonNode afterField = afterNode.get(field);
+                if (beforeField == null && afterField == null) {
+                    continue;
+                }
+                if (beforeField == null || afterField == null || !beforeField.equals(afterField)) {
+                    changedFields.add(field + ":" + String.valueOf(beforeField) + "->" + String.valueOf(afterField));
+                }
+            }
+            if (!changedFields.isEmpty()) {
+                details.add(operationType + "{" + String.join(", ", changedFields) + "}");
+                if (details.size() >= 8) {
+                    break;
+                }
+            }
+        }
+        return details;
+    }
+
+    private static class DiffResult {
+        private final int added;
+        private final int removed;
+        private final int changed;
+        private final List<String> sampleChanges;
+
+        private DiffResult(int added, int removed, int changed, List<String> sampleChanges) {
+            this.added = added;
+            this.removed = removed;
+            this.changed = changed;
+            this.sampleChanges = sampleChanges;
         }
     }
 }

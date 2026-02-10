@@ -15,6 +15,7 @@ import com.suifeng.sfchain.configcenter.repository.AppRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantModelConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantOperationConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantRepository;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ControlPlaneService {
 
@@ -65,7 +67,9 @@ public class ControlPlaneService {
         entity.setName(name);
         entity.setDescription(normalizeOptional(request.getDescription()));
         entity.setActive(true);
-        return toTenantView(tenantRepository.save(entity));
+        TenantEntity saved = tenantRepository.save(entity);
+        log.info("配置中心: 创建租户成功 tenantId={}, name={}", saved.getTenantId(), saved.getName());
+        return toTenantView(saved);
     }
 
     @Transactional(readOnly = true)
@@ -78,7 +82,9 @@ public class ControlPlaneService {
         TenantEntity entity = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("tenant not found: " + tenantId));
         entity.setActive(active);
-        return toTenantView(tenantRepository.save(entity));
+        TenantEntity saved = tenantRepository.save(entity);
+        log.info("配置中心: 更新租户状态 tenantId={}, active={}", saved.getTenantId(), saved.isActive());
+        return toTenantView(saved);
     }
 
     @Transactional
@@ -95,7 +101,10 @@ public class ControlPlaneService {
         entity.setAppName(appName);
         entity.setDescription(normalizeOptional(request.getDescription()));
         entity.setActive(true);
-        return toAppView(appRepository.save(entity));
+        AppEntity saved = appRepository.save(entity);
+        log.info("配置中心: 创建应用成功 tenantId={}, appId={}, appName={}",
+                saved.getTenantId(), saved.getAppId(), saved.getAppName());
+        return toAppView(saved);
     }
 
     @Transactional(readOnly = true)
@@ -110,7 +119,10 @@ public class ControlPlaneService {
         AppEntity app = appRepository.findByTenantIdAndAppId(tenantId, appId)
                 .orElseThrow(() -> new IllegalArgumentException("app not found: " + appId));
         app.setActive(active);
-        return toAppView(appRepository.save(app));
+        AppEntity saved = appRepository.save(app);
+        log.info("配置中心: 更新应用状态 tenantId={}, appId={}, active={}",
+                saved.getTenantId(), saved.getAppId(), saved.isActive());
+        return toAppView(saved);
     }
 
     @Transactional
@@ -141,6 +153,8 @@ public class ControlPlaneService {
         response.setApiKey(plainKey);
         response.setKeyPrefix(saved.getKeyPrefix());
         response.setCreatedAt(saved.getCreatedAt());
+        log.info("配置中心: 创建API Key成功 tenantId={}, appId={}, keyId={}, keyName={}, keyPrefix={}",
+                saved.getTenantId(), saved.getAppId(), saved.getId(), saved.getKeyName(), saved.getKeyPrefix());
         return response;
     }
 
@@ -157,7 +171,10 @@ public class ControlPlaneService {
         ApiKeyEntity entity = apiKeyRepository.findById(keyId)
                 .orElseThrow(() -> new IllegalArgumentException("api key not found: " + keyId));
         entity.setActive(false);
-        return toApiKeyView(apiKeyRepository.save(entity));
+        ApiKeyEntity saved = apiKeyRepository.save(entity);
+        log.info("配置中心: 吊销API Key tenantId={}, appId={}, keyId={}",
+                saved.getTenantId(), saved.getAppId(), saved.getId());
+        return toApiKeyView(saved);
     }
 
     @Transactional
@@ -184,6 +201,8 @@ public class ControlPlaneService {
         entity.setConfigJson(request.getConfig() == null ? Map.of() : request.getConfig());
 
         tenantModelConfigRepository.save(entity);
+        log.info("配置中心: 模型配置已更新 tenantId={}, appId={}, modelName={}, provider={}, active={}",
+                tenantId, appId, modelName, provider, request.isActive());
         return request;
     }
 
@@ -288,6 +307,8 @@ public class ControlPlaneService {
         entity.setConfigJson(request.getConfig() == null ? Map.of() : request.getConfig());
 
         tenantOperationConfigRepository.save(entity);
+        log.info("配置中心: 操作配置已更新 tenantId={}, appId={}, operationType={}, modelName={}, active={}",
+                tenantId, appId, operationType, entity.getModelName(), request.isActive());
         return request;
     }
 
@@ -347,6 +368,8 @@ public class ControlPlaneService {
         response.setExisted(existed);
         response.setIgnored(ignored);
         response.setSyncedAt(LocalDateTime.now());
+        log.info("配置中心: 操作目录同步 tenantId={}, appId={}, received={}, created={}, existed={}, ignored={}",
+                normalizedTenantId, normalizedAppId, response.getReceived(), created, existed, ignored);
         return response;
     }
 
@@ -386,7 +409,9 @@ public class ControlPlaneService {
         String tenantId = normalizeRequired(request.getTenantId(), "tenantId");
         String appId = normalizeRequired(request.getAppId(), "appId");
         String apiKey = normalizeRequired(request.getApiKey(), "apiKey");
-        return buildSnapshotResponse(tenantId, appId, apiKey);
+        ConfigDtos.ConfigSnapshotResponse response = buildSnapshotResponse(tenantId, appId, apiKey);
+        logSnapshotIssued(response);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -403,6 +428,7 @@ public class ControlPlaneService {
         if (StringUtils.hasText(normalizedCurrentVersion) && normalizedCurrentVersion.equals(response.getVersion())) {
             return Optional.empty();
         }
+        logSnapshotIssued(response);
         return Optional.of(response);
     }
 
@@ -424,6 +450,16 @@ public class ControlPlaneService {
         response.setOperationModelMapping(toOperationModelMapping(operations));
         response.setOperations(operations);
         return response;
+    }
+
+    private void logSnapshotIssued(ConfigDtos.ConfigSnapshotResponse response) {
+        log.info("配置中心: 下发快照 tenantId={}, appId={}, version={}, models={}, mappings={}, operationConfigs={}",
+                response.getTenantId(),
+                response.getAppId(),
+                response.getVersion(),
+                response.getModels().size(),
+                response.getOperationModelMapping().size(),
+                response.getOperationConfigs().size());
     }
 
     private static Map<String, Object> toModelMap(List<Map<String, Object>> models) {

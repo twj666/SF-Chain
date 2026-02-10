@@ -11,6 +11,7 @@
 
 ```bash
 export SF_CHAIN_AUTH_TOKEN='your-token'
+export SF_CHAIN_INGESTION_API_KEY='your-ingestion-key'
 export SF_CHAIN_DB_TYPE='postgresql' # 可选: mysql / postgresql
 export SF_CHAIN_DB_URL='jdbc:postgresql://127.0.0.1:5432/sf_chain'
 export SF_CHAIN_DB_USERNAME='postgres'
@@ -40,7 +41,7 @@ cd /Users/suifeng/Code/SF-Chain
 
 ```bash
 cd /Users/suifeng/Code/SF-Chain
-mvn -pl sf-chain-config-center-server -am spring-boot:run \
+mvn -pl sf-chain-config-center-server spring-boot:run \
   -Dspring-boot.run.profiles=local
 ```
 
@@ -52,14 +53,14 @@ mvn -pl sf-chain-config-center-server -am spring-boot:run \
 
 ```bash
 cd /Users/suifeng/Code/SF-Chain
-mvn -pl sf-chain-config-center-server -am spring-boot:run
+mvn -pl sf-chain-config-center-server spring-boot:run
 ```
 
 或打包后运行：
 
 ```bash
 cd /Users/suifeng/Code/SF-Chain
-mvn -pl sf-chain-config-center-server -am package -DskipTests
+mvn -pl sf-chain-config-center-server package -DskipTests
 java -jar sf-chain-config-center-server/target/sf-chain-config-center-server-1.0.11.jar
 ```
 
@@ -80,3 +81,5 @@ Header `Authorization` 值使用 `SF_CHAIN_AUTH_TOKEN`。
 - `POST /sf-chain/control/tenants/{tenantId}/api-keys`：申请密钥（返回明文，仅一次）
 - `PATCH /sf-chain/control/api-keys/{keyId}/revoke`：吊销密钥
 - `POST /v1/auth/token/validate`：校验 API Key（供客户端调用）
+- `POST /v1/config/snapshot` / `GET /v1/config/snapshot`：配置快照接口（供租户同步）
+- `POST /v1/logs/ai-calls/batch`：租户日志上报入口（Header: `X-SF-API-KEY`）

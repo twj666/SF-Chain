@@ -1,80 +1,65 @@
-# SF-Chain 🚀
+# SF-Chain
 
-<div align="center">
-  <img src="https://twj666.oss-cn-hangzhou.aliyuncs.com/SF_CHAIN.png" alt="SF-Chain Logo" width="200" />
-  <h3>AI大模型调度框架</h3>
-  <p><em>一个框架连接所有AI大模型，让开发者专注于业务逻辑</em></p>
-</div>
+SF-Chain 是一个面向 Spring Boot 的 AI 调度框架，当前采用“配置中心 + 轻量客户端”架构：
 
-## ✨ 当前特性
+- 配置中心独立部署：`sf-chain-config-center-server`
+- 租户应用仅引入轻量依赖：`sf-chain-spring-boot-starter-lite`
 
-- 🔄 **统一接口** - 使用相同的API调用不同的AI模型
-- 🔌 **Spring Boot集成** - 自动配置，零代码即可接入
-- 🧩 **多模型支持** - 内置支持DeepSeek、OpenAI GPT、通义千问等主流模型
-- ⚙️ **参数调优** - 灵活调整温度、最大token等参数
-- 🛡️ **类型安全** - Java强类型设计，在编译时捕获潜在错误
-- 🚨 **异常处理** - 统一的异常处理机制，提供清晰的错误信息
-- 🧬 **简单扩展** - 通过实现接口快速添加自定义操作
+## 模块说明
 
----
+- `sf-chain-core`：运行时核心能力（`@AIOp`、`BaseAIOperation`、`AIService`、模型/操作注册、日志基础能力）
+- `sf-chain-config-client`：远程配置拉取与同步能力
+- `sf-chain-spring-boot-starter-lite`：租户侧 starter（组合 core + config-client + 日志上报客户端）
+- `sf-chain-config-center-server`：配置中心服务端（租户/应用/API Key/模型/操作配置管理与日志接入）
 
-## 🚀 快速开始
-### 1️⃣ 添加依赖
-在您的 pom.xml 中添加SF-Chain依赖：
+## 租户侧接入（推荐）
 
-```
+### 1. Maven 依赖
+
+```xml
 <dependency>
-    <groupId>com.suifeng</groupId>
-    <artifactId>sf-chain</artifactId>
-    <version>1.0.0</version>
+  <groupId>io.github.twj666</groupId>
+  <artifactId>sf-chain-spring-boot-starter-lite</artifactId>
+  <version>1.0.11</version>
 </dependency>
 ```
-### 2️⃣ 配置文件
-在 application.yml 中添加配置：
 
-```
-# ===========================================
-# SF-Chain AI框架配置
-# ===========================================
+### 2. 最小配置
+
+```yaml
 sf-chain:
-  # 授权配置
-  auth-token: "suifeng666" # 访问秘钥
-  authEnabled: true
-  persistence:
-    database-type: mysql # 支持: mysql, postgresql
+  enabled: true
+  config-sync:
+    enabled: true
+    interval-seconds: 30
+    startup-check-enabled: true
+    startup-max-attempts: 3
+    startup-retry-interval-ms: 2000
+  server:
+    base-url: http://127.0.0.1:19090
+    api-key: ${SF_CHAIN_SERVER_API_KEY}
+    tenant-id: default
+    app-id: your-app
+  logging:
+    upload-enabled: true
 ```
 
----
-## 🎥 开箱即用
-- 直接启动springboot项目，即可在前端进行访问
-<img width="3780" height="1870" alt="image" src="https://github.com/user-attachments/assets/b8b51d96-9e7a-4681-8ff7-5608c8fff836" />
-<img width="3728" height="1562" alt="image" src="https://github.com/user-attachments/assets/76a611dc-4b0b-4a07-bbc0-a7ebfae36710" />
-<img width="3710" height="1550" alt="image" src="https://github.com/user-attachments/assets/417e5d85-c2b6-42f7-af52-97f64b5cb8a9" />
-<img width="3034" height="1592" alt="image" src="https://github.com/user-attachments/assets/828e76c9-3218-44ce-82dd-6e44d9b6f6c9" />
-  
+`startup-check-enabled=true` 时，应用启动会先完成远程配置同步（失败按重试策略，超限后启动失败）。
 
----
+`startup-check-enabled=false` 时，应用不会因为首轮同步失败而中断，后续按定时任务继续同步。
 
-## 🤝 贡献指南
+## 配置中心部署
 
-我们欢迎各种形式的贡献，包括但不限于：
+配置中心详细说明见：
 
-- 🐛 提交bug报告和功能请求
-- 💻 提交代码改进和新功能
-- 📝 改进文档和示例
-- 🧪 添加新的模型实现
+- `/Users/suifeng/Code/SF-Chain/sf-chain-config-center-server/README.md`
 
-## 📄 许可证
+## 迁移说明
 
-SF-Chain使用Apache License 2.0许可证开源。
+历史 `legacy` 模块已移除。迁移指引见：
 
-## 📬 联系方式
+- `/Users/suifeng/Code/SF-Chain/docs/migration-to-config-center.md`
 
-- 📮 GitHub Issues: [https://github.com/twj666/SF-Chain/issues](https://github.com/twj666/SF-Chain/issues)
-- 📧 Email: suifeng@example.com
+## 许可证
 
----
-
-<p align="center">
-  <em>SF-Chain - 让AI大模型调用变得简单而强大 ✨</em>
-</p>
+Apache License 2.0

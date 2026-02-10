@@ -27,6 +27,21 @@ public class SfChainConfigSyncProperties {
     private boolean failOpen = true;
 
     /**
+     * 启动时是否要求远程同步成功（支持重试）
+     */
+    private boolean startupCheckEnabled = true;
+
+    /**
+     * 启动阶段同步最大重试次数
+     */
+    private int startupMaxAttempts = 3;
+
+    /**
+     * 启动阶段同步重试间隔（毫秒）
+     */
+    private long startupRetryIntervalMs = 2000;
+
+    /**
      * 本地快照缓存文件
      */
     private String cacheFile = ".sf-chain/config-snapshot.json";

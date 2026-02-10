@@ -1,7 +1,6 @@
 package com.suifeng.sfchain.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.suifeng.sfchain.config.remote.GovernanceSyncMetricsBinder;
 import com.suifeng.sfchain.config.remote.GovernanceSyncApplier;
 import com.suifeng.sfchain.config.remote.RemoteConfigClient;
 import com.suifeng.sfchain.config.remote.RemoteConfigSyncService;
@@ -56,7 +55,7 @@ public class SfChainRemoteConfigAutoConfiguration {
     @Bean
     @ConditionalOnClass(name = "io.micrometer.core.instrument.MeterRegistry")
     @ConditionalOnMissingBean
-    public GovernanceSyncMetricsBinder governanceSyncMetricsBinder(RemoteConfigSyncService syncService) {
-        return new GovernanceSyncMetricsBinder(syncService);
+    public Object governanceSyncMetricsBinder(RemoteConfigSyncService syncService) {
+        return new com.suifeng.sfchain.config.remote.GovernanceSyncMetricsBinder(syncService);
     }
 }

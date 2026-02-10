@@ -1,383 +1,5 @@
-/bin/sh /Users/suifeng/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/maven/lib/maven3/bin/mvn -Didea.version=2025.2.6 -Dmaven.ext.class.path=/Users/suifeng/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/maven/lib/maven-event-listener.jar -Djansi.passthrough=true -Dstyle.color=always -Dmaven.repo.local=/Users/suifeng/.m2/repository install -f pom.xml
-[INFO] Scanning for projects...
-[INFO] Inspecting build with total of 6 modules
-[INFO] Installing Central Publishing features
-[INFO] ------------------------------------------------------------------------
-[INFO] Reactor Build Order:
-[INFO]
-[INFO] SF-Chain Core                                                      [jar]
-[INFO] SF-Chain Config Client                                             [jar]
-[INFO] SF-Chain Starter Lite                                              [jar]
-[INFO] io.github.twj666:sf-chain-legacy-starter                           [jar]
-[INFO] SF-Chain Parent                                                    [pom]
-[INFO] sf-chain-config-center-server                                      [jar]
-[INFO]
-[INFO] -------------------< io.github.twj666:sf-chain-core >-------------------
-[INFO] Building SF-Chain Core 1.0.11                                      [1/6]
-[INFO]   from sf-chain-core/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO]
-[INFO] --- resources:3.2.0:resources (default-resources) @ sf-chain-core ---
-[INFO] Using 'UTF-8' encoding to copy filtered resources.
-[INFO] Using 'UTF-8' encoding to copy filtered properties files.
-[INFO] Copying 0 resource
-[INFO] Copying 1 resource
-[INFO]
-[INFO] --- compiler:3.10.1:compile (default-compile) @ sf-chain-core ---
-[INFO] Changes detected - recompiling the module!
-[INFO] Compiling 46 source files to /Users/suifeng/Code/SF-Chain/sf-chain-core/target/classes
-[INFO] /Users/suifeng/Code/SF-Chain/sf-chain-core/src/main/java/com/suifeng/sfchain/core/BaseAIOperation.java: /Users/suifeng/Code/SF-Chain/sf-chain-core/src/main/java/com/suifeng/sfchain/core/BaseAIOperation.java使用了未经检查或不安全的操作。
-[INFO] /Users/suifeng/Code/SF-Chain/sf-chain-core/src/main/java/com/suifeng/sfchain/core/BaseAIOperation.java: 有关详细信息, 请使用 -Xlint:unchecked 重新编译。
-[INFO]
-[INFO] --- resources:3.2.0:testResources (default-testResources) @ sf-chain-core ---
-[INFO] Using 'UTF-8' encoding to copy filtered resources.
-[INFO] Using 'UTF-8' encoding to copy filtered properties files.
-[INFO] skip non existing resourceDirectory /Users/suifeng/Code/SF-Chain/sf-chain-core/src/test/resources
-[INFO]
-[INFO] --- compiler:3.10.1:testCompile (default-testCompile) @ sf-chain-core ---
-[INFO] No sources to compile
-[INFO]
-[INFO] --- surefire:2.22.2:test (default-test) @ sf-chain-core ---
-[INFO] No tests to run.
-[INFO]
-[INFO] --- jar:3.2.2:jar (default-jar) @ sf-chain-core ---
-[INFO] Building jar: /Users/suifeng/Code/SF-Chain/sf-chain-core/target/sf-chain-core-1.0.11.jar
-[INFO]
-[INFO] --- install:2.5.2:install (default-install) @ sf-chain-core ---
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-core/target/sf-chain-core-1.0.11.jar to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-core/1.0.11/sf-chain-core-1.0.11.jar
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-core/pom.xml to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-core/1.0.11/sf-chain-core-1.0.11.pom
-[INFO]
-[INFO] --------------< io.github.twj666:sf-chain-config-client >---------------
-[INFO] Building SF-Chain Config Client 1.0.11                             [2/6]
-[INFO]   from sf-chain-config-client/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO]
-[INFO] --- resources:3.2.0:resources (default-resources) @ sf-chain-config-client ---
-[INFO] Using 'UTF-8' encoding to copy filtered resources.
-[INFO] Using 'UTF-8' encoding to copy filtered properties files.
-[INFO] Copying 0 resource
-[INFO] Copying 1 resource
-[INFO]
-[INFO] --- compiler:3.10.1:compile (default-compile) @ sf-chain-config-client ---
-[INFO] Changes detected - recompiling the module!
-[INFO] Compiling 22 source files to /Users/suifeng/Code/SF-Chain/sf-chain-config-client/target/classes
-[INFO]
-[INFO] --- resources:3.2.0:testResources (default-testResources) @ sf-chain-config-client ---
-[INFO] Using 'UTF-8' encoding to copy filtered resources.
-[INFO] Using 'UTF-8' encoding to copy filtered properties files.
-[INFO] skip non existing resourceDirectory /Users/suifeng/Code/SF-Chain/sf-chain-config-client/src/test/resources
-[INFO]
-[INFO] --- compiler:3.10.1:testCompile (default-testCompile) @ sf-chain-config-client ---
-[INFO] No sources to compile
-[INFO]
-[INFO] --- surefire:2.22.2:test (default-test) @ sf-chain-config-client ---
-[INFO] No tests to run.
-[INFO]
-[INFO] --- jar:3.2.2:jar (default-jar) @ sf-chain-config-client ---
-[INFO] Building jar: /Users/suifeng/Code/SF-Chain/sf-chain-config-client/target/sf-chain-config-client-1.0.11.jar
-[INFO]
-[INFO] --- install:2.5.2:install (default-install) @ sf-chain-config-client ---
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-config-client/target/sf-chain-config-client-1.0.11.jar to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-config-client/1.0.11/sf-chain-config-client-1.0.11.jar
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-config-client/pom.xml to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-config-client/1.0.11/sf-chain-config-client-1.0.11.pom
-[INFO]
-[INFO] ---------< io.github.twj666:sf-chain-spring-boot-starter-lite >---------
-[INFO] Building SF-Chain Starter Lite 1.0.11                              [3/6]
-[INFO]   from sf-chain-spring-boot-starter-lite/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO]
-[INFO] --- enforcer:3.5.0:enforce (ban-heavy-dependencies) @ sf-chain-spring-boot-starter-lite ---
-[INFO] Rule 0: org.apache.maven.enforcer.rules.dependency.BannedDependencies passed
-[INFO]
-[INFO] --- resources:3.2.0:resources (default-resources) @ sf-chain-spring-boot-starter-lite ---
-[INFO] Using 'UTF-8' encoding to copy filtered resources.
-[INFO] Using 'UTF-8' encoding to copy filtered properties files.
-[INFO] Copying 0 resource
-[INFO] Copying 1 resource
-[INFO]
-[INFO] --- compiler:3.10.1:compile (default-compile) @ sf-chain-spring-boot-starter-lite ---
-[INFO] Changes detected - recompiling the module!
-[INFO] Compiling 2 source files to /Users/suifeng/Code/SF-Chain/sf-chain-spring-boot-starter-lite/target/classes
-[INFO]
-[INFO] --- resources:3.2.0:testResources (default-testResources) @ sf-chain-spring-boot-starter-lite ---
-[INFO] Using 'UTF-8' encoding to copy filtered resources.
-[INFO] Using 'UTF-8' encoding to copy filtered properties files.
-[INFO] skip non existing resourceDirectory /Users/suifeng/Code/SF-Chain/sf-chain-spring-boot-starter-lite/src/test/resources
-[INFO]
-[INFO] --- compiler:3.10.1:testCompile (default-testCompile) @ sf-chain-spring-boot-starter-lite ---
-[INFO] Changes detected - recompiling the module!
-[INFO]
-[INFO] --- surefire:2.22.2:test (default-test) @ sf-chain-spring-boot-starter-lite ---
-[INFO]
-[INFO] --- jar:3.2.2:jar (default-jar) @ sf-chain-spring-boot-starter-lite ---
-[INFO] Building jar: /Users/suifeng/Code/SF-Chain/sf-chain-spring-boot-starter-lite/target/sf-chain-spring-boot-starter-lite-1.0.11.jar
-[INFO]
-[INFO] --- install:2.5.2:install (default-install) @ sf-chain-spring-boot-starter-lite ---
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-spring-boot-starter-lite/target/sf-chain-spring-boot-starter-lite-1.0.11.jar to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-spring-boot-starter-lite/1.0.11/sf-chain-spring-boot-starter-lite-1.0.11.jar
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-spring-boot-starter-lite/pom.xml to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-spring-boot-starter-lite/1.0.11/sf-chain-spring-boot-starter-lite-1.0.11.pom
-[INFO]
-[INFO] --------------< io.github.twj666:sf-chain-legacy-starter >--------------
-[INFO] Building io.github.twj666:sf-chain-legacy-starter 1.0.11           [4/6]
-[INFO]   from sf-chain-legacy-starter/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO]
-[INFO] --- resources:3.2.0:resources (default-resources) @ sf-chain-legacy-starter ---
-[INFO] Using 'UTF-8' encoding to copy filtered resources.
-[INFO] Using 'UTF-8' encoding to copy filtered properties files.
-[INFO] Copying 0 resource
-[INFO] Copying 15 resources
-[INFO]
-[INFO] --- compiler:3.10.1:compile (default-compile) @ sf-chain-legacy-starter ---
-[INFO] Changes detected - recompiling the module!
-[INFO] Compiling 35 source files to /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/classes
-[INFO]
-[INFO] --- resources:3.2.0:testResources (default-testResources) @ sf-chain-legacy-starter ---
-[INFO] Using 'UTF-8' encoding to copy filtered resources.
-[INFO] Using 'UTF-8' encoding to copy filtered properties files.
-[INFO] skip non existing resourceDirectory /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/src/test/resources
-[INFO]
-[INFO] --- compiler:3.10.1:testCompile (default-testCompile) @ sf-chain-legacy-starter ---
-[INFO] Changes detected - recompiling the module!
-[INFO] Compiling 16 source files to /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/test-classes
-[INFO] /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/src/test/java/com/suifeng/sfchain/controller/AICallLogIngestionContractE2ETest.java: /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/src/test/java/com/suifeng/sfchain/controller/AICallLogIngestionContractE2ETest.java使用或覆盖了已过时的 API。
-[INFO] /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/src/test/java/com/suifeng/sfchain/controller/AICallLogIngestionContractE2ETest.java: 有关详细信息, 请使用 -Xlint:deprecation 重新编译。
-[INFO]
-[INFO] --- surefire:2.22.2:test (default-test) @ sf-chain-legacy-starter ---
-[INFO]
-[INFO] -------------------------------------------------------
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running com.suifeng.sfchain.core.logging.ingestion.FileAICallLogIngestionStoreTest
-[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.238 s - in com.suifeng.sfchain.core.logging.ingestion.FileAICallLogIngestionStoreTest
-[INFO] Running com.suifeng.sfchain.core.logging.ingestion.ContractAllowlistGuardServiceTest
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.suifeng.sfchain.core.logging.ingestion.ContractAllowlistGuardServiceTest
-[INFO] Running com.suifeng.sfchain.core.logging.ingestion.IngestionIndexMaintenanceServiceTest
-14:31:52.735 [main] DEBUG com.suifeng.sfchain.core.logging.ingestion.IngestionIndexMaintenanceService - 后台索引维护完成, rebuilt=3
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.suifeng.sfchain.core.logging.ingestion.IngestionIndexMaintenanceServiceTest
-[INFO] Running com.suifeng.sfchain.core.logging.AICallLogManagerUploadTest
-14:31:52.738 [main] DEBUG com.suifeng.sfchain.core.logging.AICallLogManager - 添加AI调用日志: call-1
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.suifeng.sfchain.core.logging.AICallLogManagerUploadTest
-[INFO] Running com.suifeng.sfchain.core.logging.upload.AsyncAICallLogUploaderTest
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.996 s - in com.suifeng.sfchain.core.logging.upload.AsyncAICallLogUploaderTest
-[INFO] Running com.suifeng.sfchain.core.logging.upload.HttpAICallLogUploadClientTest
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.124 s - in com.suifeng.sfchain.core.logging.upload.HttpAICallLogUploadClientTest
-[INFO] Running com.suifeng.sfchain.config.SfChainAutoConfigurationTest
-14:31:53.983 [main] DEBUG org.springframework.core.env.PropertySourcesPropertyResolver - Found key 'sf-chain.features.static-ui' in PropertySource 'configurationProperties' with value of type String
-14:31:53.984 [main] DEBUG org.springframework.context.annotation.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@60afd40d
-14:31:53.986 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
-14:31:54.005 [main] DEBUG org.springframework.core.env.PropertySourcesPropertyResolver - Found key 'sf-chain.features.static-ui' in PropertySource 'configurationProperties' with value of type String
-14:31:54.020 [main] DEBUG org.springframework.core.env.PropertySourcesPropertyResolver - Found key 'sf-chain.features.static-ui' in PropertySource 'configurationProperties' with value of type String
-14:31:54.044 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerProcessor'
-14:31:54.045 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerFactory'
-14:31:54.046 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
-14:31:54.046 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
-14:31:54.048 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalPersistenceAnnotationProcessor'
-14:31:54.048 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessor'
-14:31:54.048 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.internalConfigurationPropertiesBinder'
-14:31:54.048 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.internalConfigurationPropertiesBinderFactory'
-14:31:54.052 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'openAIAutoConfiguration'
-14:31:54.056 [main] DEBUG org.springframework.core.LocalVariableTableParameterNameDiscoverer - Cannot find '.class' file for class [class com.suifeng.sfchain.config.OpenAIAutoConfiguration$$EnhancerBySpringCGLIB$$9bcba6fe] - unable to determine constructor/method parameter names
-14:31:54.058 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'ai.openai-models-com.suifeng.sfchain.config.OpenAIModelsConfig'
-14:31:54.063 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.properties.BoundConfigurationProperties'
-14:31:54.100 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.openai-com.suifeng.sfchain.config.SfChainOpenAIProperties'
-14:31:54.101 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'openAIAutoConfiguration' via constructor to bean named 'ai.openai-models-com.suifeng.sfchain.config.OpenAIModelsConfig'
-14:31:54.101 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'openAIAutoConfiguration' via constructor to bean named 'sf-chain.openai-com.suifeng.sfchain.config.SfChainOpenAIProperties'
-14:31:54.102 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sfChainAutoConfiguration'
-14:31:54.102 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sfChainStaticUiAutoConfiguration'
-14:31:54.103 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'objectMapper'
-14:31:54.107 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'openAIModelFactory'
-14:31:54.117 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiModels'
-14:31:54.118 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'aiModels' via factory method to bean named 'openAIModelFactory'
-14:31:54.118 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.properties.EnableConfigurationPropertiesRegistrar.methodValidationExcludeFilter'
-14:31:54.119 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiOperationRegistry'
-14:31:54.119 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI操作注册表
-14:31:54.121 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'modelRegistry'
-14:31:54.121 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'modelRegistry' via factory method to bean named 'openAIModelFactory'
-14:31:54.121 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain 模型注册表
-14:31:54.122 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiService'
-14:31:54.122 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI服务
-14:31:54.124 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'chatContextService'
-14:31:54.124 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain 聊天上下文服务
-14:31:54.125 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiCallLogManager'
-14:31:54.125 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.logging-com.suifeng.sfchain.config.SfChainLoggingProperties'
-14:31:54.127 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'aiCallLogManager' via factory method to bean named 'sf-chain.logging-com.suifeng.sfchain.config.SfChainLoggingProperties'
-14:31:54.127 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI调用日志管理器
-14:31:54.128 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiCallLogAspect'
-14:31:54.128 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'aiCallLogAspect' via factory method to bean named 'aiCallLogManager'
-14:31:54.128 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI调用日志切面
-14:31:54.130 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'jsonRepairOperation'
-14:31:54.134 [main] INFO com.suifeng.sfchain.core.AIOperationRegistry - 注册AI操作: JSON_REPAIR_OP -> JSONRepairOperation
-14:31:54.134 [main] INFO com.suifeng.sfchain.core.BaseAIOperation - 初始化AI操作: JSON_REPAIR_OP [JSONRepairOperation] -> 输入类型: String, 输出类型: JSONObject
-14:31:54.134 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'modelValidationOperation'
-14:31:54.135 [main] INFO com.suifeng.sfchain.core.AIOperationRegistry - 注册AI操作: MODEL_VALIDATION_OP -> ModelValidationOperation
-14:31:54.135 [main] INFO com.suifeng.sfchain.core.BaseAIOperation - 初始化AI操作: MODEL_VALIDATION_OP [ModelValidationOperation] -> 输入类型: ValidationRequest, 输出类型: ValidationResult
-14:31:54.135 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.features-com.suifeng.sfchain.config.SfChainFeaturesProperties'
-14:31:54.136 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'com.suifeng.sfchain.config.WebConfig'
-14:31:54.137 [main] DEBUG org.springframework.core.LocalVariableTableParameterNameDiscoverer - Cannot find '.class' file for class [class com.suifeng.sfchain.config.WebConfig$$EnhancerBySpringCGLIB$$8a25b01f] - unable to determine constructor/method parameter names
-14:31:54.137 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.path-com.suifeng.sfchain.config.SfChainPathProperties'
-14:31:54.138 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'com.suifeng.sfchain.config.WebConfig' via constructor to bean named 'sf-chain.path-com.suifeng.sfchain.config.SfChainPathProperties'
-14:31:54.138 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'com.suifeng.sfchain.controller.IndexController'
-14:31:54.138 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'com.suifeng.sfchain.controller.IndexController' via constructor to bean named 'sf-chain.path-com.suifeng.sfchain.config.SfChainPathProperties'
-14:31:54.138 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'com.suifeng.sfchain.controller.RootController'
-14:31:54.148 [main] DEBUG org.springframework.context.annotation.AnnotationConfigApplicationContext - Closing org.springframework.context.annotation.AnnotationConfigApplicationContext@60afd40d, started on Tue Feb 10 14:31:53 CST 2026
-14:31:54.152 [main] DEBUG org.springframework.core.env.PropertySourcesPropertyResolver - Found key 'sf-chain.features.management-api' in PropertySource 'configurationProperties' with value of type String
-14:31:54.152 [main] DEBUG org.springframework.core.env.PropertySourcesPropertyResolver - Found key 'sf-chain.features.management-api' in PropertySource 'configurationProperties' with value of type String
-14:31:54.153 [main] DEBUG org.springframework.context.annotation.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@61af1510
-14:31:54.153 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
-14:31:54.154 [main] DEBUG org.springframework.core.env.PropertySourcesPropertyResolver - Found key 'sf-chain.features.management-api' in PropertySource 'configurationProperties' with value of type String
-14:31:54.160 [main] DEBUG org.springframework.core.env.PropertySourcesPropertyResolver - Found key 'sf-chain.features.management-api' in PropertySource 'configurationProperties' with value of type String
-14:31:54.160 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerProcessor'
-14:31:54.161 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerFactory'
-14:31:54.161 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
-14:31:54.161 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
-14:31:54.161 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalPersistenceAnnotationProcessor'
-14:31:54.161 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessor'
-14:31:54.161 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.internalConfigurationPropertiesBinder'
-14:31:54.161 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.internalConfigurationPropertiesBinderFactory'
-14:31:54.161 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'openAIAutoConfiguration'
-14:31:54.161 [main] DEBUG org.springframework.core.LocalVariableTableParameterNameDiscoverer - Cannot find '.class' file for class [class com.suifeng.sfchain.config.OpenAIAutoConfiguration$$EnhancerBySpringCGLIB$$9bcba6fe] - unable to determine constructor/method parameter names
-14:31:54.161 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'ai.openai-models-com.suifeng.sfchain.config.OpenAIModelsConfig'
-14:31:54.162 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.properties.BoundConfigurationProperties'
-14:31:54.163 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.openai-com.suifeng.sfchain.config.SfChainOpenAIProperties'
-14:31:54.163 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'openAIAutoConfiguration' via constructor to bean named 'ai.openai-models-com.suifeng.sfchain.config.OpenAIModelsConfig'
-14:31:54.163 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'openAIAutoConfiguration' via constructor to bean named 'sf-chain.openai-com.suifeng.sfchain.config.SfChainOpenAIProperties'
-14:31:54.163 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sfChainAutoConfiguration'
-14:31:54.163 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sfChainManagementAutoConfiguration'
-14:31:54.164 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'objectMapper'
-14:31:54.164 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'openAIModelFactory'
-14:31:54.164 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiModels'
-14:31:54.164 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'aiModels' via factory method to bean named 'openAIModelFactory'
-14:31:54.164 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.properties.EnableConfigurationPropertiesRegistrar.methodValidationExcludeFilter'
-14:31:54.164 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiOperationRegistry'
-14:31:54.164 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI操作注册表
-14:31:54.164 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'modelRegistry'
-14:31:54.164 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'modelRegistry' via factory method to bean named 'openAIModelFactory'
-14:31:54.164 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain 模型注册表
-14:31:54.165 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiService'
-14:31:54.165 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI服务
-14:31:54.165 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'chatContextService'
-14:31:54.165 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain 聊天上下文服务
-14:31:54.165 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiCallLogManager'
-14:31:54.165 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.logging-com.suifeng.sfchain.config.SfChainLoggingProperties'
-14:31:54.166 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'aiCallLogManager' via factory method to bean named 'sf-chain.logging-com.suifeng.sfchain.config.SfChainLoggingProperties'
-14:31:54.166 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI调用日志管理器
-14:31:54.167 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiCallLogAspect'
-14:31:54.167 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'aiCallLogAspect' via factory method to bean named 'aiCallLogManager'
-14:31:54.167 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI调用日志切面
-14:31:54.167 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'jsonRepairOperation'
-14:31:54.167 [main] INFO com.suifeng.sfchain.core.AIOperationRegistry - 注册AI操作: JSON_REPAIR_OP -> JSONRepairOperation
-14:31:54.167 [main] INFO com.suifeng.sfchain.core.BaseAIOperation - 初始化AI操作: JSON_REPAIR_OP [JSONRepairOperation] -> 输入类型: String, 输出类型: JSONObject
-14:31:54.167 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'modelValidationOperation'
-14:31:54.168 [main] INFO com.suifeng.sfchain.core.AIOperationRegistry - 注册AI操作: MODEL_VALIDATION_OP -> ModelValidationOperation
-14:31:54.168 [main] INFO com.suifeng.sfchain.core.BaseAIOperation - 初始化AI操作: MODEL_VALIDATION_OP [ModelValidationOperation] -> 输入类型: ValidationRequest, 输出类型: ValidationResult
-14:31:54.168 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.features-com.suifeng.sfchain.config.SfChainFeaturesProperties'
-14:31:54.168 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'com.suifeng.sfchain.config.AuthorizationInterceptor'
-14:31:54.169 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'com.suifeng.sfchain.controller.SfChainConfigController'
-14:31:54.169 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.path-com.suifeng.sfchain.config.SfChainPathProperties'
-14:31:54.170 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'com.suifeng.sfchain.controller.AICallLogController'
-14:31:54.171 [main] DEBUG org.springframework.context.annotation.AnnotationConfigApplicationContext - Closing org.springframework.context.annotation.AnnotationConfigApplicationContext@61af1510, started on Tue Feb 10 14:31:54 CST 2026
-14:31:54.175 [main] DEBUG org.springframework.context.annotation.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@7efe7b87
-14:31:54.176 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalConfigurationAnnotationProcessor'
-14:31:54.178 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerProcessor'
-14:31:54.178 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.event.internalEventListenerFactory'
-14:31:54.179 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalAutowiredAnnotationProcessor'
-14:31:54.179 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalCommonAnnotationProcessor'
-14:31:54.179 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.context.annotation.internalPersistenceAnnotationProcessor'
-14:31:54.179 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.properties.ConfigurationPropertiesBindingPostProcessor'
-14:31:54.179 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.internalConfigurationPropertiesBinder'
-14:31:54.179 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.internalConfigurationPropertiesBinderFactory'
-14:31:54.179 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'openAIAutoConfiguration'
-14:31:54.179 [main] DEBUG org.springframework.core.LocalVariableTableParameterNameDiscoverer - Cannot find '.class' file for class [class com.suifeng.sfchain.config.OpenAIAutoConfiguration$$EnhancerBySpringCGLIB$$9bcba6fe] - unable to determine constructor/method parameter names
-14:31:54.179 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'ai.openai-models-com.suifeng.sfchain.config.OpenAIModelsConfig'
-14:31:54.180 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.properties.BoundConfigurationProperties'
-14:31:54.181 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.openai-com.suifeng.sfchain.config.SfChainOpenAIProperties'
-14:31:54.181 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'openAIAutoConfiguration' via constructor to bean named 'ai.openai-models-com.suifeng.sfchain.config.OpenAIModelsConfig'
-14:31:54.181 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'openAIAutoConfiguration' via constructor to bean named 'sf-chain.openai-com.suifeng.sfchain.config.SfChainOpenAIProperties'
-14:31:54.181 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sfChainAutoConfiguration'
-14:31:54.181 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'objectMapper'
-14:31:54.181 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'openAIModelFactory'
-14:31:54.182 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiModels'
-14:31:54.182 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'aiModels' via factory method to bean named 'openAIModelFactory'
-14:31:54.182 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'org.springframework.boot.context.properties.EnableConfigurationPropertiesRegistrar.methodValidationExcludeFilter'
-14:31:54.182 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiOperationRegistry'
-14:31:54.182 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI操作注册表
-14:31:54.182 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'modelRegistry'
-14:31:54.182 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'modelRegistry' via factory method to bean named 'openAIModelFactory'
-14:31:54.182 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain 模型注册表
-14:31:54.182 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiService'
-14:31:54.182 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI服务
-14:31:54.183 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'chatContextService'
-14:31:54.183 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain 聊天上下文服务
-14:31:54.183 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiCallLogManager'
-14:31:54.183 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.logging-com.suifeng.sfchain.config.SfChainLoggingProperties'
-14:31:54.184 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'aiCallLogManager' via factory method to bean named 'sf-chain.logging-com.suifeng.sfchain.config.SfChainLoggingProperties'
-14:31:54.184 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI调用日志管理器
-14:31:54.184 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'aiCallLogAspect'
-14:31:54.184 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Autowiring by type from bean name 'aiCallLogAspect' via factory method to bean named 'aiCallLogManager'
-14:31:54.184 [main] INFO com.suifeng.sfchain.config.SfChainAutoConfiguration - 初始化SF-Chain AI调用日志切面
-14:31:54.184 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'jsonRepairOperation'
-14:31:54.184 [main] INFO com.suifeng.sfchain.core.AIOperationRegistry - 注册AI操作: JSON_REPAIR_OP -> JSONRepairOperation
-14:31:54.184 [main] INFO com.suifeng.sfchain.core.BaseAIOperation - 初始化AI操作: JSON_REPAIR_OP [JSONRepairOperation] -> 输入类型: String, 输出类型: JSONObject
-14:31:54.184 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'modelValidationOperation'
-14:31:54.185 [main] INFO com.suifeng.sfchain.core.AIOperationRegistry - 注册AI操作: MODEL_VALIDATION_OP -> ModelValidationOperation
-14:31:54.185 [main] INFO com.suifeng.sfchain.core.BaseAIOperation - 初始化AI操作: MODEL_VALIDATION_OP [ModelValidationOperation] -> 输入类型: ValidationRequest, 输出类型: ValidationResult
-14:31:54.185 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'sf-chain.features-com.suifeng.sfchain.config.SfChainFeaturesProperties'
-14:31:54.186 [main] DEBUG org.springframework.context.annotation.AnnotationConfigApplicationContext - Closing org.springframework.context.annotation.AnnotationConfigApplicationContext@7efe7b87, started on Tue Feb 10 14:31:54 CST 2026
-[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.31 s - in com.suifeng.sfchain.config.SfChainAutoConfigurationTest
-[INFO] Running com.suifeng.sfchain.config.remote.RemoteConfigClientTest
-14:31:54.217 [main] DEBUG com.suifeng.sfchain.config.remote.RemoteConfigClient - 治理租约释放幂等跳过, status=409
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.04 s - in com.suifeng.sfchain.config.remote.RemoteConfigClientTest
-[INFO] Running com.suifeng.sfchain.config.remote.RemoteConfigSyncServiceTest
-14:31:54.235 [main] DEBUG com.suifeng.sfchain.config.remote.GovernanceLeaseManager - 远程治理租约释放失败: null
-14:31:54.241 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步成功, version=v-retry-1
-14:31:54.241 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步成功, version=v-retry-2
-14:31:54.242 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - Skip operation catalog sync: no available AIOp operations
-14:31:54.243 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步已启动, interval=30s
-14:31:54.245 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - Skip operation catalog sync: no available AIOp operations
-14:31:54.246 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步已启动, interval=30s
-14:31:54.250 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步成功, version=v-terminal-1
-14:31:54.251 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步成功, version=v-terminal-2
-14:31:54.252 [main] INFO com.suifeng.sfchain.core.openai.OpenAIModelFactory - 注册模型配置: remote-model (test)
-14:31:54.256 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 已加载本地配置快照, version=v-terminal-2
-14:31:54.256 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - Skip operation catalog sync: no available AIOp operations
-14:31:54.256 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步已启动, interval=30s
-14:31:54.257 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 已加载本地配置快照, version=v-terminal-2
-14:31:54.257 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - Skip operation catalog sync: no available AIOp operations
-14:31:54.257 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步已启动, interval=30s
-14:31:54.259 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步成功, version=v2
-14:31:54.261 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 已加载本地配置快照, version=v2
-14:31:54.261 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - Skip operation catalog sync: no available AIOp operations
-14:31:54.262 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步已启动, interval=30s
-14:31:54.262 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 已加载本地配置快照, version=v2
-14:31:54.262 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - Skip operation catalog sync: no available AIOp operations
-14:31:54.262 [main] WARN com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 治理finalize对账游标无效，按FAIL_FAST策略中断本轮对账: invalid cursor: bad-fast-cursor
-14:31:54.263 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步已启动, interval=30s
-14:31:54.266 [main] INFO com.suifeng.sfchain.config.remote.RemoteConfigSyncService - 远程配置同步成功, version=v-reconcile-1
-[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.038 s - in com.suifeng.sfchain.config.remote.RemoteConfigSyncServiceTest
-[INFO] Running com.suifeng.sfchain.config.remote.GovernanceLeaseManagerTest
-14:31:54.269 [main] DEBUG com.suifeng.sfchain.config.remote.GovernanceLeaseManager - 治理租约获取失败: null
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.suifeng.sfchain.config.remote.GovernanceLeaseManagerTest
-[INFO] Running com.suifeng.sfchain.config.remote.IngestionGovernanceSyncApplierTest
-[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.suifeng.sfchain.config.remote.IngestionGovernanceSyncApplierTest
-[INFO] Running com.suifeng.sfchain.config.remote.GovernanceSyncMetricsBinderTest
-14:31:54.280 [main] DEBUG io.micrometer.core.util.internal.logging.InternalLoggerFactory - Using SLF4J as the default logging framework
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s - in com.suifeng.sfchain.config.remote.GovernanceSyncMetricsBinderTest
-[INFO] Running com.suifeng.sfchain.config.remote.GovernanceSyncStateStoreTest
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.suifeng.sfchain.config.remote.GovernanceSyncStateStoreTest
-[INFO] Running com.suifeng.sfchain.controller.AICallLogGovernanceControllerTest
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s - in com.suifeng.sfchain.controller.AICallLogGovernanceControllerTest
-[INFO] Running com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest
-14:31:54.293 [main] DEBUG org.springframework.test.context.BootstrapUtils - Instantiating CacheAwareContextLoaderDelegate from class [org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate]
-14:31:54.294 [main] DEBUG org.springframework.test.context.BootstrapUtils - Instantiating BootstrapContext using constructor [public org.springframework.test.context.support.DefaultBootstrapContext(java.lang.Class,org.springframework.test.context.CacheAwareContextLoaderDelegate)]
-14:31:54.296 [main] DEBUG org.springframework.test.context.BootstrapUtils - Instantiating TestContextBootstrapper for test class [com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest] from class [org.springframework.boot.test.context.SpringBootTestContextBootstrapper]
-14:31:54.299 [main] DEBUG org.springframework.test.context.support.AbstractContextLoader - Did not detect default resource location for test class [com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest]: class path resource [com/suifeng/sfchain/controller/AICallLogIngestionContractE2ETest-context.xml] does not exist
-14:31:54.299 [main] DEBUG org.springframework.test.context.support.AbstractContextLoader - Did not detect default resource location for test class [com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest]: class path resource [com/suifeng/sfchain/controller/AICallLogIngestionContractE2ETestContext.groovy] does not exist
-14:31:54.299 [main] INFO org.springframework.test.context.support.AbstractContextLoader - Could not detect default resource locations for test class [com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest]: no resource found for suffixes {-context.xml, Context.groovy}.
-14:31:54.307 [main] DEBUG org.springframework.test.context.support.ActiveProfilesUtils - Could not find an 'annotation declaring class' for annotation type [org.springframework.test.context.ActiveProfiles] and class [com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest]
-14:31:54.314 [main] DEBUG org.springframework.boot.test.context.SpringBootTestContextBootstrapper - @TestExecutionListeners is not present for class [com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest]: using defaults.
-14:31:54.314 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper - Loaded default TestExecutionListener class names from location [META-INF/spring.factories]: [org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener, org.springframework.boot.test.mock.mockito.ResetMocksTestExecutionListener, org.springframework.boot.test.autoconfigure.restdocs.RestDocsTestExecutionListener, org.springframework.boot.test.autoconfigure.web.client.MockRestServiceServerResetTestExecutionListener, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrintOnlyOnFailureTestExecutionListener, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverTestExecutionListener, org.springframework.boot.test.autoconfigure.webservices.client.MockWebServiceServerTestExecutionListener, org.springframework.test.context.web.ServletTestExecutionListener, org.springframework.test.context.support.DirtiesContextBeforeModesTestExecutionListener, org.springframework.test.context.event.ApplicationEventsTestExecutionListener, org.springframework.test.context.support.DependencyInjectionTestExecutionListener, org.springframework.test.context.support.DirtiesContextTestExecutionListener, org.springframework.test.context.transaction.TransactionalTestExecutionListener, org.springframework.test.context.jdbc.SqlScriptsTestExecutionListener, org.springframework.test.context.event.EventPublishingTestExecutionListener]
-14:31:54.319 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper - Using TestExecutionListeners: [org.springframework.test.context.web.ServletTestExecutionListener@1caa9eb6, org.springframework.test.context.support.DirtiesContextBeforeModesTestExecutionListener@1f53481b, org.springframework.test.context.event.ApplicationEventsTestExecutionListener@2fcd7d3f, org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener@27e7c77f, org.springframework.boot.test.autoconfigure.SpringBootDependencyInjectionTestExecutionListener@6f70a21b, org.springframework.test.context.support.DirtiesContextTestExecutionListener@6ae62c7e, org.springframework.test.context.transaction.TransactionalTestExecutionListener@2e869098, org.springframework.test.context.jdbc.SqlScriptsTestExecutionListener@37c36608, org.springframework.test.context.event.EventPublishingTestExecutionListener@5d497a91, org.springframework.boot.test.mock.mockito.ResetMocksTestExecutionListener@617389a, org.springframework.boot.test.autoconfigure.restdocs.RestDocsTestExecutionListener@1c8f6a90, org.springframework.boot.test.autoconfigure.web.client.MockRestServiceServerResetTestExecutionListener@3050ac2f, org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrintOnlyOnFailureTestExecutionListener@265bd546, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverTestExecutionListener@1937eaff, org.springframework.boot.test.autoconfigure.webservices.client.MockWebServiceServerTestExecutionListener@7e0bc8a3]
-14:31:54.320 [main] DEBUG org.springframework.test.context.support.AbstractDirtiesContextTestExecutionListener - Before test class: context [DefaultTestContext@2dd0f797 testClass = AICallLogIngestionContractE2ETest, testInstance = [null], testMethod = [null], testException = [null], mergedContextConfiguration = [WebMergedContextConfiguration@67064bdc testClass = AICallLogIngestionContractE2ETest, locations = '{}', classes = '{class com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest$TestConfig}', contextInitializerClasses = '[class com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest$PropertyInitializer]', activeProfiles = '{}', propertySourceLocations = '{}', propertySourceProperties = '{org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true, server.port=0}', contextCustomizers = set[org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@1cc680e, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@2cae9b8, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@4dba773d, org.springframework.boot.test.web.reactive.server.WebTestClientContextCustomizer@eac3a26, org.springframework.boot.test.autoconfigure.actuate.metrics.MetricsExportContextCustomizerFactory$DisableMetricExportContextCustomizer@5ea4300e, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizerFactory$Customizer@1b956cfa, org.springframework.boot.test.context.SpringBootTestArgs@1, org.springframework.boot.test.context.SpringBootTestWebEnvironment@2d127a61], resourceBasePath = 'src/main/webapp', contextLoader = 'org.springframework.boot.test.context.SpringBootContextLoader', parent = [null]], attributes = map['org.springframework.test.context.web.ServletTestExecutionListener.activateListener' -> false]], class annotated with @DirtiesContext [false] with mode [null].
-14:31:54.321 [main] DEBUG org.springframework.test.context.support.DependencyInjectionTestExecutionListener - Performing dependency injection for test context [[DefaultTestContext@2dd0f797 testClass = AICallLogIngestionContractE2ETest, testInstance = com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest@6fa13e6, testMethod = [null], testException = [null], mergedContextConfiguration = [WebMergedContextConfiguration@67064bdc testClass = AICallLogIngestionContractE2ETest, locations = '{}', classes = '{class com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest$TestConfig}', contextInitializerClasses = '[class com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest$PropertyInitializer]', activeProfiles = '{}', propertySourceLocations = '{}', propertySourceProperties = '{org.springframework.boot.test.context.SpringBootTestContextBootstrapper=true, server.port=0}', contextCustomizers = set[org.springframework.boot.test.context.filter.ExcludeFilterContextCustomizer@1cc680e, org.springframework.boot.test.json.DuplicateJsonObjectContextCustomizerFactory$DuplicateJsonObjectContextCustomizer@2cae9b8, org.springframework.boot.test.mock.mockito.MockitoContextCustomizer@0, org.springframework.boot.test.web.client.TestRestTemplateContextCustomizer@4dba773d, org.springframework.boot.test.web.reactive.server.WebTestClientContextCustomizer@eac3a26, org.springframework.boot.test.autoconfigure.actuate.metrics.MetricsExportContextCustomizerFactory$DisableMetricExportContextCustomizer@5ea4300e, org.springframework.boot.test.autoconfigure.properties.PropertyMappingContextCustomizer@0, org.springframework.boot.test.autoconfigure.web.servlet.WebDriverContextCustomizerFactory$Customizer@1b956cfa, org.springframework.boot.test.context.SpringBootTestArgs@1, org.springframework.boot.test.context.SpringBootTestWebEnvironment@2d127a61], resourceBasePath = 'src/main/webapp', contextLoader = 'org.springframework.boot.test.context.SpringBootContextLoader', parent = [null]], attributes = map['org.springframework.test.context.web.ServletTestExecutionListener.activateListener' -> false, 'org.springframework.test.context.event.ApplicationEventsTestExecutionListener.recordApplicationEvents' -> false]]].
+/Users/suifeng/Library/Java/JavaVirtualMachines/ms-17.0.16/Contents/Home/bin/java -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:63158,suspend=y,server=n -javaagent:/Users/suifeng/Library/Caches/JetBrains/IntelliJIdea2025.2/captureAgent/debugger-agent.jar=file:///var/folders/yn/c4kt9q791pvdb48ct21_z0240000gn/T/capture9754642495886138006.props -agentpath:/private/var/folders/yn/c4kt9q791pvdb48ct21_z0240000gn/T/idea_libasyncProfiler_dylib_temp_folder/libasyncProfiler.dylib=version,jfr,event=wall,interval=10ms,cstack=no,file=/Users/suifeng/IdeaSnapshots/ProjectManagementApplication_2026_02_10_161454.jfr,log=/private/var/folders/yn/c4kt9q791pvdb48ct21_z0240000gn/T/ProjectManagementApplication_2026_02_10_161454.jfr.log.txt,logLevel=DEBUG -XX:TieredStopAtLevel=1 -Dspring.output.ansi.enabled=always -Dcom.sun.management.jmxremote -Dspring.jmx.enabled=true -Dspring.liveBeansView.mbeanDomain -Dspring.application.admin.enabled=true -Dmanagement.endpoints.jmx.exposure.include=* -Dkotlinx.coroutines.debug.enable.creation.stack.trace=false -Ddebugger.agent.enable.coroutines=true -Dkotlinx.coroutines.debug.enable.flows.stack.trace=true -Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true -Dfile.encoding=UTF-8 -classpath /Users/suifeng/Code/ai-poet/poet-agent/target/classes:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-web/2.7.18/spring-boot-starter-web-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter/2.7.18/spring-boot-starter-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot/2.7.18/spring-boot-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-logging/2.7.18/spring-boot-starter-logging-2.7.18.jar:/Users/suifeng/.m2/repository/ch/qos/logback/logback-classic/1.2.12/logback-classic-1.2.12.jar:/Users/suifeng/.m2/repository/ch/qos/logback/logback-core/1.2.12/logback-core-1.2.12.jar:/Users/suifeng/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.17.2/log4j-to-slf4j-2.17.2.jar:/Users/suifeng/.m2/repository/org/slf4j/jul-to-slf4j/1.7.36/jul-to-slf4j-1.7.36.jar:/Users/suifeng/.m2/repository/jakarta/annotation/jakarta.annotation-api/1.3.5/jakarta.annotation-api-1.3.5.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-json/2.7.18/spring-boot-starter-json-2.7.18.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/module/jackson-module-parameter-names/2.13.5/jackson-module-parameter-names-2.13.5.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-tomcat/2.7.18/spring-boot-starter-tomcat-2.7.18.jar:/Users/suifeng/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/9.0.83/tomcat-embed-core-9.0.83.jar:/Users/suifeng/.m2/repository/org/apache/tomcat/embed/tomcat-embed-websocket/9.0.83/tomcat-embed-websocket-9.0.83.jar:/Users/suifeng/.m2/repository/org/springframework/spring-web/5.3.31/spring-web-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-beans/5.3.31/spring-beans-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-webmvc/5.3.31/spring-webmvc-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-aop/5.3.31/spring-aop-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-context/5.3.31/spring-context-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-expression/5.3.31/spring-expression-5.3.31.jar:/Users/suifeng/.m2/repository/com/huaweicloud/esdk-obs-java/3.24.12/esdk-obs-java-3.24.12.jar:/Users/suifeng/.m2/repository/com/squareup/okhttp3/okhttp/4.9.3/okhttp-4.9.3.jar:/Users/suifeng/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar:/Users/suifeng/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar:/Users/suifeng/.m2/repository/org/jetbrains/annotations/13.0/annotations-13.0.jar:/Users/suifeng/.m2/repository/com/squareup/okio/okio/3.8.0/okio-3.8.0.jar:/Users/suifeng/.m2/repository/com/squareup/okio/okio-jvm/3.8.0/okio-jvm-3.8.0.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.5/jackson-core-2.13.5.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.5/jackson-annotations-2.13.5.jar:/Users/suifeng/.m2/repository/org/apache/logging/log4j/log4j-core/2.17.2/log4j-core-2.17.2.jar:/Users/suifeng/.m2/repository/org/apache/logging/log4j/log4j-api/2.17.2/log4j-api-2.17.2.jar:/Users/suifeng/.m2/repository/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar:/Users/suifeng/.m2/repository/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar:/Users/suifeng/.m2/repository/com/huaweicloud/sdk/huaweicloud-sdk-core/3.1.148/huaweicloud-sdk-core-3.1.148.jar:/Users/suifeng/.m2/repository/org/yaml/snakeyaml/1.30/snakeyaml-1.30.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.13.5/jackson-datatype-jsr310-2.13.5.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.13.5/jackson-datatype-jdk8-2.13.5.jar:/Users/suifeng/.m2/repository/org/openeuler/bgmprovider/1.1.2/bgmprovider-1.1.2.jar:/Users/suifeng/.m2/repository/org/openeuler/jca/1.1.2/jca-1.1.2.jar:/Users/suifeng/.m2/repository/org/bouncycastle/bcprov-jdk18on/1.75/bcprov-jdk18on-1.75.jar:/Users/suifeng/.m2/repository/org/openeuler/jsse/1.1.2/jsse-1.1.2.jar:/Users/suifeng/.m2/repository/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar:/Users/suifeng/.m2/repository/cn/hutool/hutool-all/5.1.2/hutool-all-5.1.2.jar:/Users/suifeng/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-data-jpa/2.7.18/spring-boot-starter-data-jpa-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-aop/2.7.18/spring-boot-starter-aop-2.7.18.jar:/Users/suifeng/.m2/repository/org/aspectj/aspectjweaver/1.9.7/aspectjweaver-1.9.7.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-jdbc/2.7.18/spring-boot-starter-jdbc-2.7.18.jar:/Users/suifeng/.m2/repository/com/zaxxer/HikariCP/4.0.3/HikariCP-4.0.3.jar:/Users/suifeng/.m2/repository/org/springframework/spring-jdbc/5.3.31/spring-jdbc-5.3.31.jar:/Users/suifeng/.m2/repository/jakarta/transaction/jakarta.transaction-api/1.3.3/jakarta.transaction-api-1.3.3.jar:/Users/suifeng/.m2/repository/jakarta/persistence/jakarta.persistence-api/2.2.3/jakarta.persistence-api-2.2.3.jar:/Users/suifeng/.m2/repository/org/hibernate/hibernate-core/5.6.15.Final/hibernate-core-5.6.15.Final.jar:/Users/suifeng/.m2/repository/org/jboss/logging/jboss-logging/3.4.3.Final/jboss-logging-3.4.3.Final.jar:/Users/suifeng/.m2/repository/net/bytebuddy/byte-buddy/1.12.23/byte-buddy-1.12.23.jar:/Users/suifeng/.m2/repository/antlr/antlr/2.7.7/antlr-2.7.7.jar:/Users/suifeng/.m2/repository/org/jboss/jandex/2.4.2.Final/jandex-2.4.2.Final.jar:/Users/suifeng/.m2/repository/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar:/Users/suifeng/.m2/repository/org/hibernate/common/hibernate-commons-annotations/5.1.2.Final/hibernate-commons-annotations-5.1.2.Final.jar:/Users/suifeng/.m2/repository/org/glassfish/jaxb/jaxb-runtime/2.3.9/jaxb-runtime-2.3.9.jar:/Users/suifeng/.m2/repository/org/glassfish/jaxb/txw2/2.3.9/txw2-2.3.9.jar:/Users/suifeng/.m2/repository/com/sun/istack/istack-commons-runtime/3.0.12/istack-commons-runtime-3.0.12.jar:/Users/suifeng/.m2/repository/org/springframework/data/spring-data-jpa/2.7.18/spring-data-jpa-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/data/spring-data-commons/2.7.18/spring-data-commons-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/spring-orm/5.3.31/spring-orm-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-tx/5.3.31/spring-tx-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-aspects/5.3.31/spring-aspects-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-validation/2.7.18/spring-boot-starter-validation-2.7.18.jar:/Users/suifeng/.m2/repository/org/apache/tomcat/embed/tomcat-embed-el/9.0.83/tomcat-embed-el-9.0.83.jar:/Users/suifeng/.m2/repository/org/hibernate/validator/hibernate-validator/6.2.5.Final/hibernate-validator-6.2.5.Final.jar:/Users/suifeng/.m2/repository/jakarta/validation/jakarta.validation-api/2.0.2/jakarta.validation-api-2.0.2.jar:/Users/suifeng/.m2/repository/org/postgresql/postgresql/42.3.8/postgresql-42.3.8.jar:/Users/suifeng/.m2/repository/org/checkerframework/checker-qual/3.5.0/checker-qual-3.5.0.jar:/Users/suifeng/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/2.3.3/jakarta.xml.bind-api-2.3.3.jar:/Users/suifeng/.m2/repository/jakarta/activation/jakarta.activation-api/1.2.2/jakarta.activation-api-1.2.2.jar:/Users/suifeng/.m2/repository/org/springframework/spring-core/5.3.31/spring-core-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-jcl/5.3.31/spring-jcl-5.3.31.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.5/jackson-databind-2.13.5.jar:/Users/suifeng/.m2/repository/com/vladmihalcea/hibernate-types-55/2.16.3/hibernate-types-55-2.16.3.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.13.5/jackson-module-jaxb-annotations-2.13.5.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-data-redis/2.7.18/spring-boot-starter-data-redis-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/data/spring-data-redis/2.7.18/spring-data-redis-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/data/spring-data-keyvalue/2.7.18/spring-data-keyvalue-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/spring-oxm/5.3.31/spring-oxm-5.3.31.jar:/Users/suifeng/.m2/repository/io/lettuce/lettuce-core/6.1.10.RELEASE/lettuce-core-6.1.10.RELEASE.jar:/Users/suifeng/.m2/repository/io/netty/netty-common/4.1.101.Final/netty-common-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-handler/4.1.101.Final/netty-handler-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-resolver/4.1.101.Final/netty-resolver-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-buffer/4.1.101.Final/netty-buffer-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.101.Final/netty-transport-native-unix-common-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-codec/4.1.101.Final/netty-codec-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-transport/4.1.101.Final/netty-transport-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/projectreactor/reactor-core/3.4.34/reactor-core-3.4.34.jar:/Users/suifeng/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar:/Users/suifeng/.m2/repository/org/apache/commons/commons-pool2/2.11.1/commons-pool2-2.11.1.jar:/Users/suifeng/.m2/repository/com/github/spullara/mustache/java/compiler/0.9.10/compiler-0.9.10.jar:/Users/suifeng/.m2/repository/cn/hutool/hutool-core/5.8.25/hutool-core-5.8.25.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-mail/2.7.18/spring-boot-starter-mail-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/spring-context-support/5.3.31/spring-context-support-5.3.31.jar:/Users/suifeng/.m2/repository/com/sun/mail/jakarta.mail/1.6.7/jakarta.mail-1.6.7.jar:/Users/suifeng/.m2/repository/com/sun/activation/jakarta.activation/1.2.2/jakarta.activation-1.2.2.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-spring-boot-starter/1.35.0.RC/sa-token-spring-boot-starter-1.35.0.RC.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-servlet/1.35.0.RC/sa-token-servlet-1.35.0.RC.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-spring-boot-autoconfig/1.35.0.RC/sa-token-spring-boot-autoconfig-1.35.0.RC.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-redis-jackson/1.35.0.RC/sa-token-redis-jackson-1.35.0.RC.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-core/1.35.0.RC/sa-token-core-1.35.0.RC.jar:/Users/suifeng/.m2/repository/commons-codec/commons-codec/1.15/commons-codec-1.15.jar:/Users/suifeng/.m2/repository/io/github/twj666/sf-chain-spring-boot-starter-lite/1.0.11/sf-chain-spring-boot-starter-lite-1.0.11.jar:/Users/suifeng/.m2/repository/io/github/twj666/sf-chain-core/1.0.11/sf-chain-core-1.0.11.jar:/Users/suifeng/.m2/repository/com/alibaba/fastjson2/fastjson2/2.0.40/fastjson2-2.0.40.jar:/Users/suifeng/.m2/repository/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar:/Users/suifeng/.m2/repository/io/github/twj666/sf-chain-config-client/1.0.11/sf-chain-config-client-1.0.11.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/2.7.18/spring-boot-autoconfigure-2.7.18.jar:/Applications/IntelliJ IDEA.app/Contents/lib/idea_rt.jar com.example.ProjectManagementApplication
+已连接到地址为 ''127.0.0.1:63158'，传输: '套接字'' 的目标虚拟机
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -385,118 +7,120 @@
  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
   '  |____| .__|_| |_|_| |_\__, | / / / /
  =========|_|==============|___/=/_/_/_/
- :: Spring Boot ::               (v2.7.14)
+ :: Spring Boot ::               (v2.7.18)
 
-2026-02-10 14:31:54.380  INFO 19928 --- [           main] .s.s.c.AICallLogIngestionContractE2ETest : Starting AICallLogIngestionContractE2ETest using Java 17.0.16 on suifengdeMac-mini.local with PID 19928 (started by suifeng in /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter)
-2026-02-10 14:31:54.381  INFO 19928 --- [           main] .s.s.c.AICallLogIngestionContractE2ETest : No active profile set, falling back to 1 default profile: "default"
-2026-02-10 14:31:54.671  INFO 19928 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 0 (http)
-2026-02-10 14:31:54.674  INFO 19928 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2026-02-10 14:31:54.674  INFO 19928 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.78]
-2026-02-10 14:31:54.700  INFO 19928 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2026-02-10 14:31:54.700  INFO 19928 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 313 ms
-2026-02-10 14:31:54.837  INFO 19928 --- [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
-2026-02-10 14:31:54.872  INFO 19928 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain AI操作注册表
-2026-02-10 14:31:54.872  INFO 19928 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain 模型注册表
-2026-02-10 14:31:54.873  INFO 19928 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain AI服务
-2026-02-10 14:31:54.874  INFO 19928 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain 聊天上下文服务
-2026-02-10 14:31:54.874  INFO 19928 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain AI调用日志切面
-2026-02-10 14:31:54.875  INFO 19928 --- [           main] c.s.sfchain.core.AIOperationRegistry     : 注册AI操作: JSON_REPAIR_OP -> JSONRepairOperation
-2026-02-10 14:31:54.875  INFO 19928 --- [           main] c.suifeng.sfchain.core.BaseAIOperation   : 初始化AI操作: JSON_REPAIR_OP [JSONRepairOperation] -> 输入类型: String, 输出类型: JSONObject
-2026-02-10 14:31:54.886  INFO 19928 --- [           main] c.s.sfchain.core.AIOperationRegistry     : 注册AI操作: MODEL_VALIDATION_OP -> ModelValidationOperation
-2026-02-10 14:31:54.886  INFO 19928 --- [           main] c.suifeng.sfchain.core.BaseAIOperation   : 初始化AI操作: MODEL_VALIDATION_OP [ModelValidationOperation] -> 输入类型: ValidationRequest, 输出类型: ValidationResult
-2026-02-10 14:31:54.939  INFO 19928 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 52581 (http) with context path ''
-2026-02-10 14:31:54.942  INFO 19928 --- [           main] .s.s.c.AICallLogIngestionContractE2ETest : Started AICallLogIngestionContractE2ETest in 0.613 seconds (JVM running for 2.651)
-2026-02-10 14:31:55.116  INFO 19928 --- [o-auto-1-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-02-10 14:31:55.117  INFO 19928 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2026-02-10 14:31:55.117  INFO 19928 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.866 s - in com.suifeng.sfchain.controller.AICallLogIngestionContractE2ETest
-[INFO] Running com.suifeng.sfchain.controller.AICallLogIngestionControllerTest
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s - in com.suifeng.sfchain.controller.AICallLogIngestionControllerTest
-[INFO]
-[INFO] Results:
-[INFO]
-[INFO] Tests run: 56, Failures: 0, Errors: 0, Skipped: 0
-[INFO]
-[INFO]
-[INFO] --- jar:3.2.2:jar (default-jar) @ sf-chain-legacy-starter ---
-[INFO] Building jar: /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11.jar
-[INFO]
-[INFO] --- source:3.2.1:jar-no-fork (attach-sources) @ sf-chain-legacy-starter ---
-[INFO] Building jar: /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11-sources.jar
-[INFO]
-[INFO] --- javadoc:3.4.1:jar (attach-javadocs) @ sf-chain-legacy-starter ---
-[INFO] The goal 'org.apache.maven.plugins:maven-javadoc-plugin:3.4.1:javadoc' has not been previously called for the module: 'io.github.twj666:sf-chain-spring-boot-starter-lite:jar:1.0.11'. Trying to invoke it...
-/bin/sh: /Users/suifeng/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/maven/lib/maven3/bin/mvn: Permission denied
-[ERROR] Error occurred during initialization of VM, trying to use an empty MAVEN_OPTS...
-/bin/sh: /Users/suifeng/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/maven/lib/maven3/bin/mvn: Permission denied
-[ERROR] MavenInvocationException: Error occurred during initialization of VM, try to reduce the Java heap size for the MAVEN_OPTS environment variable using -Xms:<size> and -Xmx:<size>.
-[WARNING] Creating fake javadoc directory to prevent repeated invocations: /Users/suifeng/Code/SF-Chain/sf-chain-spring-boot-starter-lite/target/apidocs
-[ERROR] Error fetching link: /Users/suifeng/Code/SF-Chain/sf-chain-spring-boot-starter-lite/target/apidocs. Ignored it.
-[INFO] No previous run data found, generating javadoc.
-[INFO] Building jar: /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11-javadoc.jar
-[INFO]
-[INFO] --- gpg:3.0.1:sign (sign-artifacts) @ sf-chain-legacy-starter ---
-[INFO]
-[INFO] --- install:2.5.2:install (default-install) @ sf-chain-legacy-starter ---
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11.jar to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-legacy-starter/1.0.11/sf-chain-legacy-starter-1.0.11.jar
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/pom.xml to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-legacy-starter/1.0.11/sf-chain-legacy-starter-1.0.11.pom
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11-sources.jar to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-legacy-starter/1.0.11/sf-chain-legacy-starter-1.0.11-sources.jar
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11-javadoc.jar to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-legacy-starter/1.0.11/sf-chain-legacy-starter-1.0.11-javadoc.jar
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11.jar.asc to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-legacy-starter/1.0.11/sf-chain-legacy-starter-1.0.11.jar.asc
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11.pom.asc to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-legacy-starter/1.0.11/sf-chain-legacy-starter-1.0.11.pom.asc
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11-sources.jar.asc to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-legacy-starter/1.0.11/sf-chain-legacy-starter-1.0.11-sources.jar.asc
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-legacy-starter/target/sf-chain-legacy-starter-1.0.11-javadoc.jar.asc to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-legacy-starter/1.0.11/sf-chain-legacy-starter-1.0.11-javadoc.jar.asc
-[INFO]
-[INFO] ---------------------< io.github.twj666:SF-Chain >----------------------
-[INFO] Building SF-Chain Parent 1.0.11                                    [5/6]
-[INFO]   from pom.xml
-[INFO] --------------------------------[ pom ]---------------------------------
-[INFO]
-[INFO] --- install:3.1.2:install (default-install) @ SF-Chain ---
-[INFO] Installing /Users/suifeng/Code/SF-Chain/pom.xml to /Users/suifeng/.m2/repository/io/github/twj666/SF-Chain/1.0.11/SF-Chain-1.0.11.pom
-[INFO]
-[INFO] -----------< io.github.twj666:sf-chain-config-center-server >-----------
-[INFO] Building sf-chain-config-center-server 1.0.11                      [6/6]
-[INFO]   from sf-chain-config-center-server/pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO]
-[INFO] --- resources:3.3.1:resources (default-resources) @ sf-chain-config-center-server ---
-[INFO] Copying 4 resources from src/main/resources to target/classes
-[INFO]
-[INFO] --- compiler:3.11.0:compile (default-compile) @ sf-chain-config-center-server ---
-[INFO] Changes detected - recompiling the module! :source
-[INFO] Compiling 23 source files with javac [debug target 17] to target/classes
-[INFO]
-[INFO] --- resources:3.3.1:testResources (default-testResources) @ sf-chain-config-center-server ---
-[INFO] skip non existing resourceDirectory /Users/suifeng/Code/SF-Chain/sf-chain-config-center-server/src/test/resources
-[INFO]
-[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ sf-chain-config-center-server ---
-[INFO] No sources to compile
-[INFO]
-[INFO] --- surefire:3.2.5:test (default-test) @ sf-chain-config-center-server ---
-[INFO] No tests to run.
-[INFO]
-[INFO] --- jar:3.4.1:jar (default-jar) @ sf-chain-config-center-server ---
-[INFO] Building jar: /Users/suifeng/Code/SF-Chain/sf-chain-config-center-server/target/sf-chain-config-center-server-1.0.11.jar
-[INFO]
-[INFO] --- spring-boot:2.7.14:repackage (default) @ sf-chain-config-center-server ---
-[INFO] Replacing main artifact with repackaged archive
-[INFO]
-[INFO] --- install:3.1.2:install (default-install) @ sf-chain-config-center-server ---
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-config-center-server/pom.xml to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-config-center-server/1.0.11/sf-chain-config-center-server-1.0.11.pom
-[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-config-center-server/target/sf-chain-config-center-server-1.0.11.jar to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-config-center-server/1.0.11/sf-chain-config-center-server-1.0.11.jar
-[INFO] ------------------------------------------------------------------------
-[INFO] Reactor Summary for SF-Chain Parent 1.0.11:
-[INFO]
-[INFO] SF-Chain Core ...................................... SUCCESS [  1.612 s]
-[INFO] SF-Chain Config Client ............................. SUCCESS [  0.399 s]
-[INFO] SF-Chain Starter Lite .............................. SUCCESS [  0.228 s]
-[INFO] io.github.twj666:sf-chain-legacy-starter ........... SUCCESS [  7.226 s]
-[INFO] SF-Chain Parent .................................... SUCCESS [  0.020 s]
-[INFO] sf-chain-config-center-server ...................... SUCCESS [  0.892 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  10.540 s
-[INFO] Finished at: 2026-02-10T14:31:59+08:00
-[INFO] ------------------------------------------------------------------------
+2026-02-10 16:14:54.876  INFO 22346 --- [           main] c.example.ProjectManagementApplication   : Starting ProjectManagementApplication using Java 17.0.16 on suifengdeMac-mini.local with PID 22346 (/Users/suifeng/Code/ai-poet/poet-agent/target/classes started by suifeng in /Users/suifeng/Code/ai-poet)
+2026-02-10 16:14:54.877  INFO 22346 --- [           main] c.example.ProjectManagementApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-02-10 16:14:55.128  INFO 22346 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-02-10 16:14:55.128  INFO 22346 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-02-10 16:14:55.182  INFO 22346 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 51 ms. Found 7 JPA repository interfaces.
+2026-02-10 16:14:55.238 ERROR 22346 --- [           main] o.s.boot.SpringApplication               : Application run failed
+
+java.lang.IllegalStateException: Error processing condition on com.suifeng.sfchain.config.SfChainRemoteConfigAutoConfiguration.remoteConfigSyncService
+	at org.springframework.boot.autoconfigure.condition.SpringBootCondition.matches(SpringBootCondition.java:60) ~[spring-boot-autoconfigure-2.7.18.jar:2.7.18]
+	at org.springframework.context.annotation.ConditionEvaluator.shouldSkip(ConditionEvaluator.java:108) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader.loadBeanDefinitionsForBeanMethod(ConfigurationClassBeanDefinitionReader.java:193) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader.loadBeanDefinitionsForConfigurationClass(ConfigurationClassBeanDefinitionReader.java:153) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader.loadBeanDefinitions(ConfigurationClassBeanDefinitionReader.java:129) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.context.annotation.ConfigurationClassPostProcessor.processConfigBeanDefinitions(ConfigurationClassPostProcessor.java:343) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.context.annotation.ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(ConfigurationClassPostProcessor.java:247) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.context.support.PostProcessorRegistrationDelegate.invokeBeanDefinitionRegistryPostProcessors(PostProcessorRegistrationDelegate.java:311) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.context.support.PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(PostProcessorRegistrationDelegate.java:112) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.context.support.AbstractApplicationContext.invokeBeanFactoryPostProcessors(AbstractApplicationContext.java:756) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:572) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:147) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:732) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:409) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:308) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1300) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1289) ~[spring-boot-2.7.18.jar:2.7.18]
+	at com.example.ProjectManagementApplication.main(ProjectManagementApplication.java:13) ~[classes/:na]
+Caused by: java.lang.IllegalStateException: Failed to introspect Class [com.suifeng.sfchain.config.SfChainRemoteConfigAutoConfiguration] from ClassLoader [jdk.internal.loader.ClassLoaders$AppClassLoader@1dbd16a6]
+	at org.springframework.util.ReflectionUtils.getDeclaredMethods(ReflectionUtils.java:485) ~[spring-core-5.3.31.jar:5.3.31]
+	at org.springframework.util.ReflectionUtils.doWithMethods(ReflectionUtils.java:361) ~[spring-core-5.3.31.jar:5.3.31]
+	at org.springframework.util.ReflectionUtils.getUniqueDeclaredMethods(ReflectionUtils.java:418) ~[spring-core-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.lambda$getTypeForFactoryMethod$2(AbstractAutowireCapableBeanFactory.java:765) ~[spring-beans-5.3.31.jar:5.3.31]
+	at java.base/java.util.concurrent.ConcurrentHashMap.computeIfAbsent(ConcurrentHashMap.java:1740) ~[na:na]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.getTypeForFactoryMethod(AbstractAutowireCapableBeanFactory.java:764) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.determineTargetType(AbstractAutowireCapableBeanFactory.java:703) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.predictBeanType(AbstractAutowireCapableBeanFactory.java:674) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.isFactoryBean(AbstractBeanFactory.java:1684) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doGetBeanNamesForType(DefaultListableBeanFactory.java:570) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBeanNamesForType(DefaultListableBeanFactory.java:542) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.boot.autoconfigure.condition.OnBeanCondition.collectBeanNamesForType(OnBeanCondition.java:246) ~[spring-boot-autoconfigure-2.7.18.jar:2.7.18]
+	at org.springframework.boot.autoconfigure.condition.OnBeanCondition.getBeanNamesForType(OnBeanCondition.java:239) ~[spring-boot-autoconfigure-2.7.18.jar:2.7.18]
+	at org.springframework.boot.autoconfigure.condition.OnBeanCondition.getBeanNamesForType(OnBeanCondition.java:229) ~[spring-boot-autoconfigure-2.7.18.jar:2.7.18]
+	at org.springframework.boot.autoconfigure.condition.OnBeanCondition.getMatchingBeans(OnBeanCondition.java:182) ~[spring-boot-autoconfigure-2.7.18.jar:2.7.18]
+	at org.springframework.boot.autoconfigure.condition.OnBeanCondition.getMatchOutcome(OnBeanCondition.java:157) ~[spring-boot-autoconfigure-2.7.18.jar:2.7.18]
+	at org.springframework.boot.autoconfigure.condition.SpringBootCondition.matches(SpringBootCondition.java:47) ~[spring-boot-autoconfigure-2.7.18.jar:2.7.18]
+	... 17 common frames omitted
+Caused by: java.lang.NoClassDefFoundError: io/micrometer/core/instrument/binder/MeterBinder
+	at java.base/java.lang.ClassLoader.defineClass1(Native Method) ~[na:na]
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1017) ~[na:na]
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:150) ~[na:na]
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:862) ~[na:na]
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassOnClassPathOrNull(BuiltinClassLoader.java:760) ~[na:na]
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClassOrNull(BuiltinClassLoader.java:681) ~[na:na]
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:639) ~[na:na]
+	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188) ~[na:na]
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[na:na]
+	at java.base/java.lang.Class.getDeclaredMethods0(Native Method) ~[na:na]
+	at java.base/java.lang.Class.privateGetDeclaredMethods(Class.java:3402) ~[na:na]
+	at java.base/java.lang.Class.getDeclaredMethods(Class.java:2504) ~[na:na]
+	at org.springframework.util.ReflectionUtils.getDeclaredMethods(ReflectionUtils.java:467) ~[spring-core-5.3.31.jar:5.3.31]
+	... 33 common frames omitted
+Caused by: java.lang.ClassNotFoundException: io.micrometer.core.instrument.binder.MeterBinder
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641) ~[na:na]
+	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188) ~[na:na]
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[na:na]
+	... 46 common frames omitted
+
+2026-02-10 16:14:55.243  WARN 22346 --- [           main] o.s.boot.SpringApplication               : Unable to close ApplicationContext
+
+java.lang.IllegalStateException: Failed to introspect Class [com.suifeng.sfchain.config.SfChainRemoteConfigAutoConfiguration] from ClassLoader [jdk.internal.loader.ClassLoaders$AppClassLoader@1dbd16a6]
+	at org.springframework.util.ReflectionUtils.getDeclaredMethods(ReflectionUtils.java:485) ~[spring-core-5.3.31.jar:5.3.31]
+	at org.springframework.util.ReflectionUtils.doWithMethods(ReflectionUtils.java:361) ~[spring-core-5.3.31.jar:5.3.31]
+	at org.springframework.util.ReflectionUtils.getUniqueDeclaredMethods(ReflectionUtils.java:418) ~[spring-core-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.lambda$getTypeForFactoryMethod$2(AbstractAutowireCapableBeanFactory.java:765) ~[spring-beans-5.3.31.jar:5.3.31]
+	at java.base/java.util.concurrent.ConcurrentHashMap.computeIfAbsent(ConcurrentHashMap.java:1740) ~[na:na]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.getTypeForFactoryMethod(AbstractAutowireCapableBeanFactory.java:764) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.determineTargetType(AbstractAutowireCapableBeanFactory.java:703) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.predictBeanType(AbstractAutowireCapableBeanFactory.java:674) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.isFactoryBean(AbstractBeanFactory.java:1684) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doGetBeanNamesForType(DefaultListableBeanFactory.java:570) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBeanNamesForType(DefaultListableBeanFactory.java:542) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBeansOfType(DefaultListableBeanFactory.java:669) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBeansOfType(DefaultListableBeanFactory.java:661) ~[spring-beans-5.3.31.jar:5.3.31]
+	at org.springframework.context.support.AbstractApplicationContext.getBeansOfType(AbstractApplicationContext.java:1314) ~[spring-context-5.3.31.jar:5.3.31]
+	at org.springframework.boot.SpringApplication.getExitCodeFromMappedException(SpringApplication.java:861) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.getExitCodeFromException(SpringApplication.java:849) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.handleExitCode(SpringApplication.java:836) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.handleRunFailure(SpringApplication.java:776) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1300) ~[spring-boot-2.7.18.jar:2.7.18]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1289) ~[spring-boot-2.7.18.jar:2.7.18]
+	at com.example.ProjectManagementApplication.main(ProjectManagementApplication.java:13) ~[classes/:na]
+Caused by: java.lang.NoClassDefFoundError: io/micrometer/core/instrument/binder/MeterBinder
+	at java.base/java.lang.ClassLoader.defineClass1(Native Method) ~[na:na]
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1017) ~[na:na]
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:150) ~[na:na]
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:862) ~[na:na]
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassOnClassPathOrNull(BuiltinClassLoader.java:760) ~[na:na]
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClassOrNull(BuiltinClassLoader.java:681) ~[na:na]
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:639) ~[na:na]
+	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188) ~[na:na]
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[na:na]
+	at java.base/java.lang.Class.getDeclaredMethods0(Native Method) ~[na:na]
+	at java.base/java.lang.Class.privateGetDeclaredMethods(Class.java:3402) ~[na:na]
+	at java.base/java.lang.Class.getDeclaredMethods(Class.java:2504) ~[na:na]
+	at org.springframework.util.ReflectionUtils.getDeclaredMethods(ReflectionUtils.java:467) ~[spring-core-5.3.31.jar:5.3.31]
+	... 21 common frames omitted
+Caused by: java.lang.ClassNotFoundException: io.micrometer.core.instrument.binder.MeterBinder
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641) ~[na:na]
+	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188) ~[na:na]
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[na:na]
+	... 34 common frames omitted
+
+已与地址为 ''127.0.0.1:63158'，传输: '套接字'' 的目标虚拟机断开连接
+
+进程已结束，退出代码为 1
