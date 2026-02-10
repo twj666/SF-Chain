@@ -1,33 +1,39 @@
-package com.suifeng.sfchain.controller;
+package com.suifeng.sfchain.configcenter.controller;
 
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
 import com.suifeng.sfchain.core.logging.AICallLog;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionPage;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionRecord;
-import com.suifeng.sfchain.core.logging.ingestion.IngestionContractHealthTracker;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
+import com.suifeng.sfchain.core.logging.ingestion.IngestionContractHealthTracker;
 import com.suifeng.sfchain.core.logging.ingestion.MinuteWindowQuotaService;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadItem;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * 配置中心AI调用日志接入接口
- */
 @RestController
-@RequestMapping("/v1/logs/ai-calls")
 @RequiredArgsConstructor
+@RequestMapping("/v1/logs/ai-calls")
+@ConditionalOnProperty(prefix = "sf-chain.ingestion", name = "enabled", havingValue = "true")
 public class AICallLogIngestionController {
 
     private final AICallLogManager logManager;
@@ -42,8 +48,7 @@ public class AICallLogIngestionController {
             @RequestHeader(value = "X-SF-CONTRACT-VERSION", required = false) String headerContractVersion,
             @RequestBody AICallLogUploadBatchRequest request) {
         if (!isApiKeyValid(apiKey)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "invalid api key"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "invalid api key"));
         }
         String contractVersion = resolveContractVersion(request, headerContractVersion);
         if (!isContractVersionSupported(contractVersion)) {
@@ -67,7 +72,6 @@ public class AICallLogIngestionController {
         }
 
         ingestionStore.saveBatch(request.getTenantId(), request.getAppId(), items);
-
         for (AICallLogUploadItem item : items) {
             logManager.addLog(toAICallLog(item));
         }

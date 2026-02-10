@@ -27,7 +27,7 @@ export SF_CHAIN_DB_DRIVER='com.mysql.cj.jdbc.Driver'
 
 ## 3. 构建前端静态资源
 
-该服务 UI 静态资源来自 `sf-chain-legacy-starter`，首次部署前执行：
+该服务 UI 静态资源位于 `sf-chain-config-center-server/src/main/resources/static`，首次部署前执行：
 
 ```bash
 cd /Users/suifeng/Code/SF-Chain

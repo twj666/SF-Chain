@@ -8,7 +8,7 @@ echo "🚀 开始构建SF-Chain前端..."
 # 定义路径
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRONTEND_DIR="$(cd "$SCRIPT_DIR/sf-chain-config-center-frontend" && pwd)"
-STATIC_DIR="$SCRIPT_DIR/sf-chain-legacy-starter/src/main/resources/static"
+STATIC_DIR="$SCRIPT_DIR/sf-chain-config-center-server/src/main/resources/static"
 DIST_DIR="$FRONTEND_DIR/dist"
 
 # 检查前端目录是否存在

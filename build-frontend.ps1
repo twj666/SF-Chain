@@ -20,7 +20,7 @@ function Assert-Command {
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $FrontendDir = Join-Path $ScriptDir "sf-chain-config-center-frontend"
-$StaticDir = Join-Path $ScriptDir "sf-chain-legacy-starter\src\main\resources\static"
+$StaticDir = Join-Path $ScriptDir "sf-chain-config-center-server\src\main\resources\static"
 $DistDir = Join-Path $FrontendDir "dist"
 $RepoRoot = $ScriptDir
 
@@ -69,11 +69,11 @@ Get-ChildItem -Force $StaticDir | Remove-Item -Recurse -Force
 Copy-Item -Recurse -Force (Join-Path $DistDir "*") $StaticDir
 
 if (-not $NoMavenInstall) {
-    Write-Step "Install sf-chain-legacy-starter to local Maven repository"
+    Write-Step "Install sf-chain-config-center-server to local Maven repository"
     Push-Location $RepoRoot
     try {
         $mvnArgs = @(
-            "-pl", "sf-chain-legacy-starter",
+            "-pl", "sf-chain-config-center-server",
             "-am",
             "install",
             "-DskipTests",

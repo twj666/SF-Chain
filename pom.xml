@@ -16,7 +16,6 @@
         <module>sf-chain-core</module>
         <module>sf-chain-config-client</module>
         <module>sf-chain-spring-boot-starter-lite</module>
-        <module>sf-chain-legacy-starter</module>
         <module>sf-chain-config-center-server</module>
     </modules>
 </project>

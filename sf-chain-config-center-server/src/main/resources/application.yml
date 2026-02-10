@@ -32,6 +32,7 @@ sf-chain:
     web-prefix: ${SF_CHAIN_WEB_PREFIX:/sf}
     api-prefix: ${SF_CHAIN_API_PREFIX:/sf-chain}
   ingestion:
+    enabled: true
     api-key: ${SF_CHAIN_INGESTION_API_KEY:}
     require-tenant-app: true
     supported-contract-versions:

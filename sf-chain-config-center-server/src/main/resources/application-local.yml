@@ -25,6 +25,8 @@ sf-chain:
     local-migration: false
     management-api: true
     static-ui: true
+  ingestion:
+    enabled: true
 
 ai:
   openai-models:

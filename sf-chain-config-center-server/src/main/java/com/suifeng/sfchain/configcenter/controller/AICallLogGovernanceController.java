@@ -1,31 +1,33 @@
-package com.suifeng.sfchain.controller;
+package com.suifeng.sfchain.configcenter.controller;
 
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
-import com.suifeng.sfchain.config.remote.RemoteConfigSyncService;
 import com.suifeng.sfchain.core.logging.ingestion.ContractAllowlistGuardService;
 import com.suifeng.sfchain.core.logging.ingestion.IngestionIndexMaintenanceService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
 
-/**
- * 配置中心日志治理接口
- */
 @RestController
-@RequestMapping("/v1/logs/ai-calls")
 @RequiredArgsConstructor
+@RequestMapping("/v1/logs/ai-calls")
+@ConditionalOnProperty(prefix = "sf-chain.ingestion", name = "enabled", havingValue = "true")
 public class AICallLogGovernanceController {
 
     private final SfChainIngestionProperties ingestionProperties;
     private final ContractAllowlistGuardService guardService;
     private final ObjectProvider<IngestionIndexMaintenanceService> indexMaintenanceServiceProvider;
-    private final ObjectProvider<RemoteConfigSyncService> remoteConfigSyncServiceProvider;
 
     @GetMapping("/index-maintenance/metrics")
     public ResponseEntity<?> metrics(
@@ -46,11 +48,7 @@ public class AICallLogGovernanceController {
         if (!isApiKeyValid(apiKey)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "invalid api key"));
         }
-        RemoteConfigSyncService service = remoteConfigSyncServiceProvider.getIfAvailable();
-        if (service == null) {
-            return ResponseEntity.ok(Map.of("enabled", false));
-        }
-        return ResponseEntity.ok(Map.of("enabled", true, "metrics", service.metrics()));
+        return ResponseEntity.ok(Map.of("enabled", false));
     }
 
     @PostMapping("/index-maintenance/rebuild")
