@@ -1,1 +1,1 @@
-com.suifeng.sfchain.config.SfChainLogUploadAutoConfiguration
+com.suifeng.sfchain.starter.lite.autoconfigure.SfChainLogUploadAutoConfiguration

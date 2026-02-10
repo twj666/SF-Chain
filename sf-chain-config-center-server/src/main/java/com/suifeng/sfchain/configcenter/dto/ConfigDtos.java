@@ -41,7 +41,9 @@ public final class ConfigDtos {
         private String appId;
         private String version;
         private LocalDateTime generatedAt;
-        private Object models;
+        private Map<String, Object> models;
+        private Map<String, Object> operationConfigs;
+        private Map<String, String> operationModelMapping;
         private Object operations;
     }
 

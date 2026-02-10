@@ -1,8 +1,10 @@
-package com.suifeng.sfchain.core.logging.upload;
+package com.suifeng.sfchain.starter.lite.logging.upload;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.suifeng.sfchain.config.SfChainLoggingProperties;
 import com.suifeng.sfchain.config.SfChainServerProperties;
+import com.suifeng.sfchain.core.logging.upload.AICallLogUploadClient;
+import com.suifeng.sfchain.core.logging.upload.AICallLogUploadItem;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;

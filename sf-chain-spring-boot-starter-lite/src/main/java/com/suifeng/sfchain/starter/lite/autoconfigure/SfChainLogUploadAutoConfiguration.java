@@ -1,10 +1,12 @@
-package com.suifeng.sfchain.config;
+package com.suifeng.sfchain.starter.lite.autoconfigure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.suifeng.sfchain.config.SfChainLoggingProperties;
+import com.suifeng.sfchain.config.SfChainServerProperties;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadClient;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadGateway;
 import com.suifeng.sfchain.core.logging.upload.AsyncAICallLogUploader;
-import com.suifeng.sfchain.core.logging.upload.HttpAICallLogUploadClient;
+import com.suifeng.sfchain.starter.lite.logging.upload.HttpAICallLogUploadClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

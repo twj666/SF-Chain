@@ -419,9 +419,112 @@ public class ControlPlaneService {
         response.setAppId(appId);
         response.setGeneratedAt(LocalDateTime.now());
         response.setVersion(buildSnapshotVersion(models, operations));
-        response.setModels(models);
+        response.setModels(toModelMap(models));
+        response.setOperationConfigs(toOperationConfigMap(operations));
+        response.setOperationModelMapping(toOperationModelMapping(operations));
         response.setOperations(operations);
         return response;
+    }
+
+    private static Map<String, Object> toModelMap(List<Map<String, Object>> models) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map<String, Object> model : models) {
+            String modelName = normalizeOptional(toString(model.get("modelName")));
+            if (modelName == null) {
+                continue;
+            }
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("modelName", modelName);
+            payload.put("provider", normalizeOptional(toString(model.get("provider"))));
+            payload.put("baseUrl", normalizeOptional(toString(model.get("baseUrl"))));
+            payload.put("enabled", model.get("active") instanceof Boolean ? (Boolean) model.get("active") : true);
+            Object cfg = model.get("config");
+            Map<String, Object> config = cfg instanceof Map ? (Map<String, Object>) cfg : Map.of();
+            payload.put("apiKey", normalizeOptional(toString(config.get("apiKey"))));
+            payload.put("defaultMaxTokens", toInteger(config.get("defaultMaxTokens")));
+            payload.put("defaultTemperature", toDouble(config.get("defaultTemperature")));
+            payload.put("supportStream", toBoolean(config.get("supportStream"), false));
+            payload.put("supportJsonOutput", toBoolean(config.get("supportJsonOutput"), false));
+            payload.put("supportThinking", toBoolean(config.get("supportThinking"), false));
+            payload.put("description", normalizeOptional(toString(config.get("description"))));
+            Object headers = config.get("additionalHeaders");
+            payload.put("additionalHeaders", headers instanceof Map ? headers : Map.of());
+            result.put(modelName, payload);
+        }
+        return result;
+    }
+
+    private static Map<String, Object> toOperationConfigMap(List<Map<String, Object>> operations) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map<String, Object> operation : operations) {
+            String operationType = normalizeOptional(toString(operation.get("operationType")));
+            if (operationType == null) {
+                continue;
+            }
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("enabled", operation.get("active") instanceof Boolean ? (Boolean) operation.get("active") : true);
+            Object cfg = operation.get("config");
+            Map<String, Object> config = cfg instanceof Map ? (Map<String, Object>) cfg : Map.of();
+            payload.put("maxTokens", toInteger(config.get("maxTokens")));
+            payload.put("temperature", toDouble(config.get("temperature")));
+            payload.put("requireJsonOutput", toBoolean(config.get("jsonOutput"), false));
+            payload.put("supportThinking", toBoolean(config.get("thinkingMode"), false));
+            payload.put("retryCount", toInteger(config.get("retryCount")));
+            payload.put("timeoutSeconds", toInteger(config.get("timeoutSeconds")));
+            result.put(operationType, payload);
+        }
+        return result;
+    }
+
+    private static Map<String, String> toOperationModelMapping(List<Map<String, Object>> operations) {
+        Map<String, String> result = new LinkedHashMap<>();
+        for (Map<String, Object> operation : operations) {
+            String operationType = normalizeOptional(toString(operation.get("operationType")));
+            String modelName = normalizeOptional(toString(operation.get("modelName")));
+            if (operationType == null || modelName == null) {
+                continue;
+            }
+            result.put(operationType, modelName);
+        }
+        return result;
+    }
+
+    private static Integer toInteger(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private static Double toDouble(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Double.parseDouble(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private static boolean toBoolean(Object value, boolean fallback) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value == null) {
+            return fallback;
+        }
+        return Boolean.parseBoolean(String.valueOf(value));
     }
 
     private static String buildSnapshotVersion(List<Map<String, Object>> models, List<Map<String, Object>> operations) {
