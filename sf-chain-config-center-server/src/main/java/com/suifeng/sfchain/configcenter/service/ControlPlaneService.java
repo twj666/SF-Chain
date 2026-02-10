@@ -6,10 +6,12 @@ import com.suifeng.sfchain.configcenter.dto.AppDtos;
 import com.suifeng.sfchain.configcenter.dto.ConfigDtos;
 import com.suifeng.sfchain.configcenter.dto.TenantDtos;
 import com.suifeng.sfchain.configcenter.entity.ApiKeyEntity;
+import com.suifeng.sfchain.configcenter.entity.AgentInstanceEntity;
 import com.suifeng.sfchain.configcenter.entity.AppEntity;
 import com.suifeng.sfchain.configcenter.entity.TenantEntity;
 import com.suifeng.sfchain.configcenter.entity.TenantModelConfigEntity;
 import com.suifeng.sfchain.configcenter.entity.TenantOperationConfigEntity;
+import com.suifeng.sfchain.configcenter.repository.AgentInstanceRepository;
 import com.suifeng.sfchain.configcenter.repository.ApiKeyRepository;
 import com.suifeng.sfchain.configcenter.repository.AppRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantModelConfigRepository;
@@ -32,8 +34,11 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -50,6 +55,7 @@ public class ControlPlaneService {
 
     private final TenantRepository tenantRepository;
     private final AppRepository appRepository;
+    private final AgentInstanceRepository agentInstanceRepository;
     private final ApiKeyRepository apiKeyRepository;
     private final TenantModelConfigRepository tenantModelConfigRepository;
     private final TenantOperationConfigRepository tenantOperationConfigRepository;
@@ -123,6 +129,62 @@ public class ControlPlaneService {
         log.info("配置中心: 更新应用状态 tenantId={}, appId={}, active={}",
                 saved.getTenantId(), saved.getAppId(), saved.isActive());
         return toAppView(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppDtos.OnlineAppView> listOnlineApps(int onlineWindowSeconds) {
+        int effectiveWindowSeconds = Math.max(onlineWindowSeconds, 10);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime onlineCutoff = now.minusSeconds(effectiveWindowSeconds);
+
+        Map<String, TenantEntity> tenants = new HashMap<>();
+        for (TenantEntity tenant : tenantRepository.findAll()) {
+            if (tenant.isActive()) {
+                tenants.put(tenant.getTenantId(), tenant);
+            }
+        }
+
+        Map<String, AppEntity> apps = new HashMap<>();
+        for (AppEntity app : appRepository.findAll()) {
+            if (app.isActive() && tenants.containsKey(app.getTenantId())) {
+                apps.put(composeAppKey(app.getTenantId(), app.getAppId()), app);
+            }
+        }
+
+        Map<String, AgentInstanceRepository.OnlineHeartbeatProjection> heartbeatByApp = new HashMap<>();
+        for (AgentInstanceRepository.OnlineHeartbeatProjection item : agentInstanceRepository.findLatestHeartbeatsByApp()) {
+            heartbeatByApp.put(composeAppKey(item.getTenantId(), item.getAppId()), item);
+        }
+
+        List<AppDtos.OnlineAppView> result = new ArrayList<>();
+        for (Map.Entry<String, AppEntity> entry : apps.entrySet()) {
+            AppEntity app = entry.getValue();
+            TenantEntity tenant = tenants.get(app.getTenantId());
+            if (tenant == null) {
+                continue;
+            }
+            AgentInstanceRepository.OnlineHeartbeatProjection heartbeat = heartbeatByApp.get(entry.getKey());
+            LocalDateTime lastSeenAt = heartbeat == null ? null : heartbeat.getLastHeartbeatAt();
+            boolean online = lastSeenAt != null && !lastSeenAt.isBefore(onlineCutoff);
+
+            AppDtos.OnlineAppView view = new AppDtos.OnlineAppView();
+            view.setTenantId(app.getTenantId());
+            view.setTenantName(tenant.getName());
+            view.setAppId(app.getAppId());
+            view.setAppName(app.getAppName());
+            view.setLastSeenAt(lastSeenAt);
+            view.setOnline(online);
+            view.setInstanceCount(heartbeat == null ? 0L : heartbeat.getInstanceCount());
+            view.setOfflineSeconds(lastSeenAt == null ? -1L : ChronoUnit.SECONDS.between(lastSeenAt, now));
+            result.add(view);
+        }
+
+        result.sort(Comparator
+                .comparing(AppDtos.OnlineAppView::isOnline).reversed()
+                .thenComparing(AppDtos.OnlineAppView::getLastSeenAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(AppDtos.OnlineAppView::getTenantId)
+                .thenComparing(AppDtos.OnlineAppView::getAppId));
+        return result;
     }
 
     @Transactional
@@ -317,6 +379,7 @@ public class ControlPlaneService {
             String tenantId,
             String appId,
             String apiKey,
+            String instanceId,
             ConfigDtos.OperationCatalogSyncRequest request) {
         String normalizedTenantId = normalizeRequired(tenantId, "tenantId");
         String normalizedAppId = normalizeRequired(appId, "appId");
@@ -327,6 +390,7 @@ public class ControlPlaneService {
         }
         assertTenantActive(normalizedTenantId);
         assertAppActive(normalizedTenantId, normalizedAppId);
+        touchAgentHeartbeat(normalizedTenantId, normalizedAppId, instanceId, "catalog-sync");
 
         List<ConfigDtos.OperationCatalogItem> operations =
                 request == null || request.getOperations() == null ? List.of() : request.getOperations();
@@ -419,17 +483,42 @@ public class ControlPlaneService {
             String tenantId,
             String appId,
             String apiKey,
+            String instanceId,
             String currentVersion) {
         ConfigDtos.ConfigSnapshotResponse response = buildSnapshotResponse(
                 normalizeRequired(tenantId, "tenantId"),
                 normalizeRequired(appId, "appId"),
                 normalizeRequired(apiKey, "apiKey"));
+        touchAgentHeartbeat(response.getTenantId(), response.getAppId(), instanceId, "snapshot-pull");
         String normalizedCurrentVersion = normalizeOptional(currentVersion);
         if (StringUtils.hasText(normalizedCurrentVersion) && normalizedCurrentVersion.equals(response.getVersion())) {
             return Optional.empty();
         }
         logSnapshotIssued(response);
         return Optional.of(response);
+    }
+
+    @Transactional
+    public void touchAgentHeartbeat(String tenantId, String appId, String instanceId, String source) {
+        String normalizedTenantId = normalizeRequired(tenantId, "tenantId");
+        String normalizedAppId = normalizeRequired(appId, "appId");
+        String normalizedInstanceId = normalizeInstanceId(instanceId, normalizedAppId);
+        LocalDateTime now = LocalDateTime.now();
+
+        AgentInstanceEntity entity = agentInstanceRepository
+                .findByTenantIdAndAppIdAndInstanceId(normalizedTenantId, normalizedAppId, normalizedInstanceId)
+                .orElseGet(AgentInstanceEntity::new);
+        entity.setTenantId(normalizedTenantId);
+        entity.setAppId(normalizedAppId);
+        entity.setInstanceId(normalizedInstanceId);
+        entity.setStatus("ONLINE");
+        entity.setLastHeartbeatAt(now);
+        if (StringUtils.hasText(source)) {
+            entity.setMetadataJson(Map.of("source", source.trim()));
+        } else {
+            entity.setMetadataJson(Map.of());
+        }
+        agentInstanceRepository.save(entity);
     }
 
     private ConfigDtos.ConfigSnapshotResponse buildSnapshotResponse(String tenantId, String appId, String apiKey) {
@@ -786,5 +875,18 @@ public class ControlPlaneService {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("sha-256 unavailable", e);
         }
+    }
+
+    private static String composeAppKey(String tenantId, String appId) {
+        return tenantId + "|" + appId;
+    }
+
+    private static String normalizeInstanceId(String instanceId, String appId) {
+        String value = normalizeOptional(instanceId);
+        if (value != null) {
+            return value.length() > 128 ? value.substring(0, 128) : value;
+        }
+        String fallback = "legacy-" + normalizeRequired(appId, "appId");
+        return fallback.length() > 128 ? fallback.substring(0, 128) : fallback;
     }
 }

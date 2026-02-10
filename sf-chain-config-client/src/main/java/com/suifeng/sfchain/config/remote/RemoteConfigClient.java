@@ -65,6 +65,7 @@ public class RemoteConfigClient {
                 .uri(URI.create(requestUrl))
                 .header("Accept", "application/json")
                 .header("X-SF-API-KEY", serverProperties.getApiKey())
+                .header("X-SF-INSTANCE-ID", resolveInstanceId())
                 .timeout(Duration.ofMillis(serverProperties.getReadTimeoutMs()))
                 .GET()
                 .build();
@@ -169,6 +170,7 @@ public class RemoteConfigClient {
                 .uri(URI.create(requestUrl))
                 .header("Accept", "application/json")
                 .header("X-SF-API-KEY", serverProperties.getApiKey())
+                .header("X-SF-INSTANCE-ID", resolveInstanceId())
                 .timeout(Duration.ofMillis(serverProperties.getReadTimeoutMs()))
                 .GET()
                 .build();
@@ -227,6 +229,13 @@ public class RemoteConfigClient {
         return value != null && value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
     }
 
+    private String resolveInstanceId() {
+        if (StringUtils.hasText(serverProperties.getInstanceId())) {
+            return serverProperties.getInstanceId().trim();
+        }
+        return "unknown-instance";
+    }
+
     private Map<String, Object> toGovernancePayload(String snapshotVersion, GovernanceSyncApplyResult result) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("tenantId", serverProperties.getTenantId());
@@ -263,6 +272,7 @@ public class RemoteConfigClient {
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
                 .header("X-SF-API-KEY", serverProperties.getApiKey())
+                .header("X-SF-INSTANCE-ID", resolveInstanceId())
                 .timeout(Duration.ofMillis(serverProperties.getReadTimeoutMs()))
                 .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
         applySignatureHeaders(builder, body);

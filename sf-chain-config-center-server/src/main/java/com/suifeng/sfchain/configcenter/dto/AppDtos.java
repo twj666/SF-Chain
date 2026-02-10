@@ -32,4 +32,16 @@ public final class AppDtos {
     public static class UpdateAppStatusRequest {
         private boolean active;
     }
+
+    @Data
+    public static class OnlineAppView {
+        private String tenantId;
+        private String tenantName;
+        private String appId;
+        private String appName;
+        private boolean online;
+        private long instanceCount;
+        private LocalDateTime lastSeenAt;
+        private long offlineSeconds;
+    }
 }

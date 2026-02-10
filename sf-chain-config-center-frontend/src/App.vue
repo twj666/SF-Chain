@@ -13,6 +13,20 @@
 
             <div class="tab-list">
               <div
+                :class="['tab-item', { active: outerTab === 'online' }]"
+                @click="outerTab = 'online'"
+              >
+                <div class="tab-icon">
+                  <div class="icon-svg" v-html="outerIcons.online"></div>
+                </div>
+                <div class="tab-content">
+                  <div class="tab-title">在线应用</div>
+                  <div class="tab-description">实时在线实例与快速进入</div>
+                </div>
+                <div class="tab-indicator"></div>
+              </div>
+
+              <div
                 :class="['tab-item', { active: outerTab === 'tenant' }]"
                 @click="outerTab = 'tenant'"
               >
@@ -51,8 +65,48 @@
           <div class="divider"></div>
 
           <section class="outer-content-area">
+            <section v-if="outerTab === 'online'" class="online-workspace">
+              <div class="online-workspace-head">
+                <div>
+                  <h2>在线应用面板</h2>
+                  <p>展示连接配置中心的租户应用，点击卡片可直达内层工作台。</p>
+                  <p class="online-refresh-time">
+                    最近刷新：{{ onlineLastRefreshAt ? formatTime(onlineLastRefreshAt) : '未刷新' }}
+                  </p>
+                </div>
+                <button class="btn btn-secondary" :disabled="onlineRequesting" @click="loadOnlineApps(true)">
+                  {{ onlineRequesting ? '刷新中...' : '刷新' }}
+                </button>
+              </div>
+
+              <div v-if="onlineApps.length === 0" class="online-workspace-empty">
+                {{ onlineRequesting ? '在线列表加载中...' : '暂无在线应用' }}
+              </div>
+              <div v-else class="online-workspace-grid">
+                <button
+                  v-for="item in onlineApps"
+                  :key="`${item.tenantId}:${item.appId}`"
+                  class="online-workspace-card"
+                  :class="{ online: item.online }"
+                  @click="openOnlineApp(item)"
+                >
+                  <div class="online-workspace-top">
+                    <strong>{{ item.appName }}</strong>
+                    <span class="state-chip" :class="item.online ? 'state-on' : 'state-off'">{{ item.online ? '在线' : '离线' }}</span>
+                  </div>
+                  <div class="online-workspace-meta">{{ item.tenantName }} ({{ item.tenantId }})</div>
+                  <div class="online-workspace-meta">{{ item.appId }}</div>
+                  <div class="online-workspace-foot">
+                    <span>实例数：{{ item.instanceCount }}</span>
+                    <span v-if="item.lastSeenAt">最近心跳：{{ new Date(item.lastSeenAt).toLocaleString() }}</span>
+                    <span v-else>最近心跳：无</span>
+                  </div>
+                </button>
+              </div>
+            </section>
+
             <TenantKeyManagement
-              v-if="outerTab === 'tenant'"
+              v-else-if="outerTab === 'tenant'"
               :selected-tenant-id="selectedTenantId"
               :selected-app-id="selectedAppId"
               :refresh-key="tenantPanelRefreshKey"
@@ -143,21 +197,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import ApiInfoConfig from '@/components/ApiInfoConfig.vue'
 import AiNodeConfig from '@/components/AiNodeConfig.vue'
 import AICallLogViewer from '@/components/AICallLogViewer.vue'
 import TenantKeyManagement from '@/components/TenantKeyManagement.vue'
 import DatabaseBootstrapPanel from '@/components/DatabaseBootstrapPanel.vue'
-import { controlPlaneApi } from '@/services/controlPlaneApi'
+import { controlPlaneApi, type OnlineAppView } from '@/services/controlPlaneApi'
 import { getAuthToken } from '@/services/apiUtils'
 import { clearScopeContext, getScopeContext, setScopeContext } from '@/services/scopeContext'
 import type { SystemOverview } from '@/types/system'
 import { toast } from '@/utils/toast'
 
 type Page = 'portal' | 'workspace'
-type OuterTab = 'tenant' | 'database'
+type OuterTab = 'online' | 'tenant' | 'database'
 
 const tabs = [
   {
@@ -182,8 +236,9 @@ const tabs = [
 
 const page = ref<Page>('portal')
 const activeTab = ref('api')
-const outerTab = ref<OuterTab>('tenant')
+const outerTab = ref<OuterTab>('online')
 const outerIcons = {
+  online: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M7 12h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 7v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>`,
   tenant: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 118 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>`,
   database: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" stroke-width="2"/><path d="M4 6V18C4 19.66 7.58 21 12 21C16.42 21 20 19.66 20 18V6" stroke="currentColor" stroke-width="2"/><path d="M4 12C4 13.66 7.58 15 12 15C16.42 15 20 13.66 20 12" stroke="currentColor" stroke-width="2"/></svg>`
 }
@@ -191,6 +246,10 @@ const outerIcons = {
 const selectedTenantId = ref('')
 const selectedAppId = ref('')
 const tenantPanelRefreshKey = ref(0)
+const onlineApps = ref<OnlineAppView[]>([])
+const onlineRequesting = ref(false)
+const onlineLastRefreshAt = ref<number | null>(null)
+let onlinePollTimer: number | null = null
 
 const systemOverview = ref<SystemOverview>({
   totalModels: 0,
@@ -254,6 +313,7 @@ async function fetchSystemOverview() {
 
 async function handleHeaderRefresh() {
   tenantPanelRefreshKey.value += 1
+  await loadOnlineApps(true)
   if (page.value === 'workspace') {
     await fetchSystemOverview()
   }
@@ -267,6 +327,51 @@ function openWorkspace() {
   setScopeContext(selectedTenantId.value, selectedAppId.value)
   page.value = 'workspace'
   fetchSystemOverview()
+}
+
+function openOnlineApp(item: OnlineAppView) {
+  selectedTenantId.value = item.tenantId
+  selectedAppId.value = item.appId
+  setScopeContext(item.tenantId, item.appId)
+  page.value = 'workspace'
+  fetchSystemOverview()
+}
+
+async function loadOnlineApps(showErrorToast = false) {
+  if (onlineRequesting.value) {
+    return
+  }
+  if (!getAuthToken()) {
+    onlineApps.value = []
+    return
+  }
+  onlineRequesting.value = true
+  try {
+    onlineApps.value = await controlPlaneApi.listOnlineApps(45)
+    onlineLastRefreshAt.value = Date.now()
+  } catch (error) {
+    if (showErrorToast) {
+      toast.error(error instanceof Error ? error.message : '加载在线应用失败')
+    } else {
+      console.warn('load online apps failed', error)
+    }
+  } finally {
+    onlineRequesting.value = false
+  }
+}
+
+function startOnlinePolling() {
+  stopOnlinePolling()
+  onlinePollTimer = window.setInterval(() => {
+    loadOnlineApps()
+  }, 10000)
+}
+
+function stopOnlinePolling() {
+  if (onlinePollTimer != null) {
+    window.clearInterval(onlinePollTimer)
+    onlinePollTimer = null
+  }
 }
 
 function restoreScopeFromStorage() {
@@ -298,9 +403,15 @@ onMounted(async () => {
     return
   }
   restoreScopeFromStorage()
+  await loadOnlineApps(true)
+  startOnlinePolling()
   if (selectedTenantId.value && selectedAppId.value) {
     await fetchSystemOverview()
   }
+})
+
+onBeforeUnmount(() => {
+  stopOnlinePolling()
 })
 </script>
 
@@ -471,6 +582,109 @@ onMounted(async () => {
 
 .enter-btn {
   width: 100%;
+}
+
+.online-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.online-workspace-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.online-workspace-head h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.online-workspace-head p {
+  margin: 0.3rem 0 0;
+  color: #697a95;
+  font-size: 0.84rem;
+}
+
+.online-refresh-time {
+  margin-top: 0.35rem;
+  color: #6a7a95;
+  font-size: 0.76rem;
+}
+
+.online-workspace-empty {
+  border: 1px dashed #ccd7eb;
+  border-radius: 12px;
+  background: #fbfcff;
+  padding: 1rem;
+  color: #6e7d97;
+}
+
+.online-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.online-workspace-card {
+  border: 1px solid #dde6f5;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.online-workspace-card:hover {
+  border-color: #a9bde8;
+}
+
+.online-workspace-card.online {
+  border-color: #5f7de6;
+  box-shadow: 0 0 0 1px rgba(95, 125, 230, 0.16);
+}
+
+.online-workspace-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.state-chip {
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.state-chip.state-on {
+  background: #e9f8ef;
+  color: #238e5d;
+}
+
+.state-chip.state-off {
+  background: #f2f4f8;
+  color: #7a8496;
+}
+
+.online-workspace-meta {
+  margin-top: 0.25rem;
+  color: #667790;
+  font-size: 0.8rem;
+}
+
+.online-workspace-foot {
+  margin-top: 0.45rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  color: #495a75;
+  font-size: 0.75rem;
 }
 
 .divider {
@@ -710,6 +924,10 @@ onMounted(async () => {
 
   .legacy-inner .stat-label {
     font-size: 0.65rem;
+  }
+
+  .online-workspace-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -43,6 +43,17 @@ export interface AppView {
   updatedAt: string
 }
 
+export interface OnlineAppView {
+  tenantId: string
+  tenantName: string
+  appId: string
+  appName: string
+  online: boolean
+  instanceCount: number
+  lastSeenAt?: string
+  offlineSeconds: number
+}
+
 export interface TenantModelConfig {
   modelName: string
   provider: string
@@ -88,6 +99,13 @@ export const controlPlaneApi = {
 
   async listApps(tenantId: string): Promise<AppView[]> {
     return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps`, {
+      method: 'GET',
+      requireAuth: true
+    })
+  },
+
+  async listOnlineApps(onlineWindowSeconds = 45): Promise<OnlineAppView[]> {
+    return apiJsonRequest(`${base}/control/apps/online?onlineWindowSeconds=${onlineWindowSeconds}`, {
       method: 'GET',
       requireAuth: true
     })

@@ -49,6 +49,12 @@ public class ControlPlaneController {
         return controlPlaneService.listApps(tenantId);
     }
 
+    @GetMapping("${sf-chain.path.api-prefix:/sf-chain}/control/apps/online")
+    public List<AppDtos.OnlineAppView> listOnlineApps(
+            @RequestParam(defaultValue = "45") int onlineWindowSeconds) {
+        return controlPlaneService.listOnlineApps(onlineWindowSeconds);
+    }
+
     @PostMapping("${sf-chain.path.api-prefix:/sf-chain}/control/tenants/{tenantId}/apps")
     public AppDtos.AppView createApp(
             @PathVariable String tenantId,
@@ -127,8 +133,9 @@ public class ControlPlaneController {
             @RequestParam String tenantId,
             @RequestParam String appId,
             @RequestParam(required = false) String version,
-            @RequestHeader(name = "X-SF-API-KEY") String apiKey) {
-        return controlPlaneService.snapshot(tenantId, appId, apiKey, version)
+            @RequestHeader(name = "X-SF-API-KEY") String apiKey,
+            @RequestHeader(name = "X-SF-INSTANCE-ID", required = false) String instanceId) {
+        return controlPlaneService.snapshot(tenantId, appId, apiKey, instanceId, version)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(304).build());
     }
@@ -138,8 +145,9 @@ public class ControlPlaneController {
             @RequestParam String tenantId,
             @RequestParam String appId,
             @RequestHeader(name = "X-SF-API-KEY") String apiKey,
+            @RequestHeader(name = "X-SF-INSTANCE-ID", required = false) String instanceId,
             @RequestBody(required = false) ConfigDtos.OperationCatalogSyncRequest request) {
-        return controlPlaneService.syncOperationCatalog(tenantId, appId, apiKey, request);
+        return controlPlaneService.syncOperationCatalog(tenantId, appId, apiKey, instanceId, request);
     }
 
     @PostMapping("/v1/auth/token/validate")
