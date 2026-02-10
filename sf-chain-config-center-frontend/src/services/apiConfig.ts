@@ -24,6 +24,9 @@ export async function getApiConfig(): Promise<ApiConfig> {
     const configUrl = `${serverOrigin}${apiPrefix}/config/api-info`;
 
     const response = await fetch(configUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch api-info: ${response.status}`);
+    }
     const config = await response.json();
 
     apiConfig = {

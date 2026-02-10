@@ -11,6 +11,18 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
+  server: {
+    proxy: {
+      '/sf-chain': {
+        target: process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:19090',
+        changeOrigin: true
+      },
+      '/v1': {
+        target: process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:19090',
+        changeOrigin: true
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
