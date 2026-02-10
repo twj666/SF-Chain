@@ -1,2 +1,0 @@
-org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
-com.suifeng.sfchain.lite.LiteAutoConfigurationImportFilter

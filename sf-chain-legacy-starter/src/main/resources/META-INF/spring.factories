@@ -1,11 +1,7 @@
 # Auto Configuration
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.suifeng.sfchain.config.SfChainAutoConfiguration,\
-com.suifeng.sfchain.config.OpenAIAutoConfiguration,\
 com.suifeng.sfchain.config.SfChainPersistenceAutoConfiguration,\
 com.suifeng.sfchain.config.SfChainManagementAutoConfiguration,\
 com.suifeng.sfchain.config.SfChainPersistenceManagementAutoConfiguration,\
 com.suifeng.sfchain.config.SfChainStaticUiAutoConfiguration,\
-com.suifeng.sfchain.config.SfChainRemoteConfigAutoConfiguration,\
-com.suifeng.sfchain.config.SfChainLogIngestionAutoConfiguration,\
-com.suifeng.sfchain.config.SfChainLogUploadAutoConfiguration
+com.suifeng.sfchain.config.SfChainLogIngestionAutoConfiguration

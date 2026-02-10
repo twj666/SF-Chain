@@ -12,12 +12,12 @@
     </parent>
 
     <groupId>io.github.twj666</groupId>
-    <artifactId>sf-chain-spring-boot-starter-lite</artifactId>
+    <artifactId>sf-chain-core</artifactId>
     <version>1.0.11</version>
     <packaging>jar</packaging>
 
-    <name>SF-Chain Starter Lite</name>
-    <description>Lightweight starter for SF-Chain core runtime (without web/jpa/jdbc drivers)</description>
+    <name>SF-Chain Core</name>
+    <description>Core runtime for SF-Chain without web/jpa/database dependencies</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -28,27 +28,45 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.github.twj666</groupId>
-            <artifactId>sf-chain-core</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>io.github.twj666</groupId>
-            <artifactId>sf-chain-config-client</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+            <version>2.0.40</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+            <version>1.3.2</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -70,37 +88,13 @@
                             <artifactId>lombok</artifactId>
                             <version>${lombok.version}</version>
                         </path>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                            <version>2.7.14</version>
+                        </path>
                     </annotationProcessorPaths>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <id>ban-heavy-dependencies</id>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <bannedDependencies>
-                                    <searchTransitive>true</searchTransitive>
-                                    <excludes>
-                                        <exclude>org.springframework.boot:spring-boot-starter-web</exclude>
-                                        <exclude>org.springframework.boot:spring-boot-starter-webflux</exclude>
-                                        <exclude>org.springframework.boot:spring-boot-starter-data-jpa</exclude>
-                                        <exclude>org.springframework.boot:spring-boot-starter-jdbc</exclude>
-                                        <exclude>com.mysql:mysql-connector-j</exclude>
-                                        <exclude>org.postgresql:postgresql</exclude>
-                                    </excludes>
-                                </bannedDependencies>
-                            </rules>
-                            <fail>true</fail>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

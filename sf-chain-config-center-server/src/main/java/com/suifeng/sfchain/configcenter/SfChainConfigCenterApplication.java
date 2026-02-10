@@ -10,10 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * SF-Chain 配置中心独立启动入口。
  */
 @SpringBootApplication
-@EntityScan(basePackages = {
-        "com.suifeng.sfchain.persistence.entity",
-        "com.suifeng.sfchain.configcenter.entity"
-})
+@EntityScan(basePackages = "com.suifeng.sfchain.configcenter.entity")
 @EnableJpaRepositories(basePackages = {
         "com.suifeng.sfchain.configcenter.repository"
 })
