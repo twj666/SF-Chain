@@ -13,20 +13,6 @@
 
             <div class="tab-list">
               <div
-                :class="['tab-item', { active: outerTab === 'scope' }]"
-                @click="outerTab = 'scope'"
-              >
-                <div class="tab-icon">
-                  <div class="icon-svg" v-html="outerIcons.scope"></div>
-                </div>
-                <div class="tab-content">
-                  <div class="tab-title">租户 / 应用</div>
-                  <div class="tab-description">作用域选择与概览</div>
-                </div>
-                <div class="tab-indicator"></div>
-              </div>
-
-              <div
                 :class="['tab-item', { active: outerTab === 'tenant' }]"
                 @click="outerTab = 'tenant'"
               >
@@ -34,7 +20,7 @@
                   <div class="icon-svg" v-html="outerIcons.tenant"></div>
                 </div>
                 <div class="tab-content">
-                  <div class="tab-title">租户与密钥</div>
+                  <div class="tab-title">租户管理</div>
                   <div class="tab-description">租户、应用、API Key</div>
                 </div>
                 <div class="tab-indicator"></div>
@@ -65,73 +51,13 @@
           <div class="divider"></div>
 
           <section class="outer-content-area">
-            <template v-if="outerTab === 'scope'">
-              <div class="outer-head">
-                <h2>租户与应用作用域</h2>
-                <button class="btn btn-secondary" :disabled="loadingTenants || loadingApps" @click="refreshScope">刷新</button>
-              </div>
-
-              <div class="scope-cards">
-                <section class="scope-card">
-                  <div class="scope-card-head">
-                    <h3>租户</h3>
-                    <span>{{ tenants.length }}</span>
-                  </div>
-                  <div v-if="loadingTenants" class="empty-tip">加载租户中...</div>
-                  <div v-else-if="tenants.length === 0" class="empty-tip">暂无租户，请先在“租户与密钥”中创建。</div>
-                  <div v-else class="scope-list">
-                    <button
-                      v-for="tenant in tenants"
-                      :key="tenant.tenantId"
-                      class="scope-item"
-                      :class="{ active: selectedTenantId === tenant.tenantId }"
-                      @click="selectTenant(tenant.tenantId)"
-                    >
-                      <span class="scope-name">{{ tenant.name }}</span>
-                      <span class="scope-meta">{{ tenant.tenantId }}</span>
-                    </button>
-                  </div>
-                </section>
-
-                <section class="scope-card">
-                  <div class="scope-card-head">
-                    <h3>应用</h3>
-                    <span>{{ apps.length }}</span>
-                  </div>
-                  <div v-if="!selectedTenantId" class="empty-tip">请先选择租户。</div>
-                  <div v-else-if="loadingApps" class="empty-tip">加载应用中...</div>
-                  <div v-else-if="apps.length === 0" class="empty-tip">该租户下暂无应用。</div>
-                  <div v-else class="scope-list">
-                    <button
-                      v-for="app in apps"
-                      :key="app.appId"
-                      class="scope-item"
-                      :class="{ active: selectedAppId === app.appId }"
-                      @click="selectApp(app.appId)"
-                    >
-                      <span class="scope-name">{{ app.appName }}</span>
-                      <span class="scope-meta">{{ app.appId }}</span>
-                    </button>
-                  </div>
-                </section>
-              </div>
-
-              <div class="scope-overview-card">
-                <div class="overview-item">
-                  <span>当前租户</span>
-                  <strong>{{ selectedTenantId || '-' }}</strong>
-                </div>
-                <div class="overview-item">
-                  <span>当前应用</span>
-                  <strong>{{ selectedAppId || '-' }}</strong>
-                </div>
-                <div class="overview-item right">
-                  <button class="btn btn-primary" @click="openWorkspace">进入内层工作台</button>
-                </div>
-              </div>
-            </template>
-
-            <TenantKeyManagement v-else-if="outerTab === 'tenant'" />
+            <TenantKeyManagement
+              v-if="outerTab === 'tenant'"
+              :selected-tenant-id="selectedTenantId"
+              :selected-app-id="selectedAppId"
+              :refresh-key="tenantPanelRefreshKey"
+              @scope-change="handleScopeChange"
+            />
             <DatabaseBootstrapPanel v-else-if="outerTab === 'database'" />
           </section>
         </div>
@@ -224,14 +150,14 @@ import AiNodeConfig from '@/components/AiNodeConfig.vue'
 import AICallLogViewer from '@/components/AICallLogViewer.vue'
 import TenantKeyManagement from '@/components/TenantKeyManagement.vue'
 import DatabaseBootstrapPanel from '@/components/DatabaseBootstrapPanel.vue'
-import { controlPlaneApi, type AppView, type TenantView } from '@/services/controlPlaneApi'
+import { controlPlaneApi } from '@/services/controlPlaneApi'
 import { getAuthToken } from '@/services/apiUtils'
 import { clearScopeContext, getScopeContext, setScopeContext } from '@/services/scopeContext'
 import type { SystemOverview } from '@/types/system'
 import { toast } from '@/utils/toast'
 
 type Page = 'portal' | 'workspace'
-type OuterTab = 'scope' | 'tenant' | 'database'
+type OuterTab = 'tenant' | 'database'
 
 const tabs = [
   {
@@ -256,19 +182,15 @@ const tabs = [
 
 const page = ref<Page>('portal')
 const activeTab = ref('api')
-const outerTab = ref<OuterTab>('scope')
+const outerTab = ref<OuterTab>('tenant')
 const outerIcons = {
-  scope: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9L12 4L21 9L12 14L3 9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 15L12 20L21 15" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
   tenant: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 118 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>`,
   database: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" stroke-width="2"/><path d="M4 6V18C4 19.66 7.58 21 12 21C16.42 21 20 19.66 20 18V6" stroke="currentColor" stroke-width="2"/><path d="M4 12C4 13.66 7.58 15 12 15C16.42 15 20 13.66 20 12" stroke="currentColor" stroke-width="2"/></svg>`
 }
 
-const tenants = ref<TenantView[]>([])
-const apps = ref<AppView[]>([])
 const selectedTenantId = ref('')
 const selectedAppId = ref('')
-const loadingTenants = ref(false)
-const loadingApps = ref(false)
+const tenantPanelRefreshKey = ref(0)
 
 const systemOverview = ref<SystemOverview>({
   totalModels: 0,
@@ -331,7 +253,7 @@ async function fetchSystemOverview() {
 }
 
 async function handleHeaderRefresh() {
-  await refreshScope()
+  tenantPanelRefreshKey.value += 1
   if (page.value === 'workspace') {
     await fetchSystemOverview()
   }
@@ -342,99 +264,26 @@ function openWorkspace() {
     toast.error('请先在左侧选择租户和应用')
     return
   }
+  setScopeContext(selectedTenantId.value, selectedAppId.value)
   page.value = 'workspace'
   fetchSystemOverview()
 }
 
-async function refreshScope() {
-  if (!getAuthToken()) {
-    tenants.value = []
-    apps.value = []
-    selectedTenantId.value = ''
-    selectedAppId.value = ''
-    clearScopeContext()
-    page.value = 'portal'
-    return
-  }
-
-  loadingTenants.value = true
-  try {
-    tenants.value = await controlPlaneApi.listTenants()
-
-    if (selectedTenantId.value && !tenants.value.some(item => item.tenantId === selectedTenantId.value)) {
-      selectedTenantId.value = ''
-      selectedAppId.value = ''
-      apps.value = []
-      clearScopeContext()
-      page.value = 'portal'
-    }
-
-    if (selectedTenantId.value) {
-      await loadApps(selectedTenantId.value)
-    }
-  } catch (error) {
-    toast.error(error instanceof Error ? error.message : '加载租户失败')
-  } finally {
-    loadingTenants.value = false
-  }
-}
-
-async function loadApps(tenantId: string) {
-  loadingApps.value = true
-  try {
-    apps.value = await controlPlaneApi.listApps(tenantId)
-    if (selectedAppId.value && !apps.value.some(item => item.appId === selectedAppId.value)) {
-      selectedAppId.value = ''
-      clearScopeContext()
-      page.value = 'portal'
-    }
-  } catch (error) {
-    toast.error(error instanceof Error ? error.message : '加载应用失败')
-  } finally {
-    loadingApps.value = false
-  }
-}
-
-async function selectTenant(tenantId: string) {
-  if (tenantId === selectedTenantId.value) {
-    return
-  }
-  selectedTenantId.value = tenantId
-  selectedAppId.value = ''
-  apps.value = []
-  clearScopeContext()
-  await loadApps(tenantId)
-}
-
-function selectApp(appId: string) {
-  selectedAppId.value = appId
-  if (selectedTenantId.value && appId) {
-    setScopeContext(selectedTenantId.value, appId)
-  }
-}
-
-async function restoreScopeFromStorage() {
+function restoreScopeFromStorage() {
   const stored = getScopeContext()
-  if (!stored) {
-    return
-  }
-
-  const tenantExists = tenants.value.some(item => item.tenantId === stored.tenantId)
-  if (!tenantExists) {
-    clearScopeContext()
-    return
-  }
-
+  if (!stored) return
   selectedTenantId.value = stored.tenantId
-  await loadApps(stored.tenantId)
-
-  const appExists = apps.value.some(item => item.appId === stored.appId)
-  if (!appExists) {
-    clearScopeContext()
-    return
-  }
-
   selectedAppId.value = stored.appId
+}
+
+function handleScopeChange(payload: { tenantId: string; appId: string }) {
+  selectedTenantId.value = payload.tenantId
+  selectedAppId.value = payload.appId
+  if (payload.tenantId && payload.appId) {
+    setScopeContext(payload.tenantId, payload.appId)
+  } else {
+    clearScopeContext()
+  }
 }
 
 watch([selectedTenantId, selectedAppId], ([tenant, app]) => {
@@ -444,12 +293,13 @@ watch([selectedTenantId, selectedAppId], ([tenant, app]) => {
 })
 
 onMounted(async () => {
-  if (getAuthToken()) {
-    await refreshScope()
-    await restoreScopeFromStorage()
-    if (selectedTenantId.value && selectedAppId.value) {
-      await fetchSystemOverview()
-    }
+  if (!getAuthToken()) {
+    clearScopeContext()
+    return
+  }
+  restoreScopeFromStorage()
+  if (selectedTenantId.value && selectedAppId.value) {
+    await fetchSystemOverview()
   }
 })
 </script>
@@ -636,124 +486,6 @@ onMounted(async () => {
   border: 1px solid #eceff6;
   border-left: none;
   overflow-y: auto;
-}
-
-.outer-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.outer-head h2 {
-  margin: 0;
-  font-size: 1.35rem;
-}
-
-.scope-cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.scope-card {
-  border: 1px solid #e8ecf4;
-  border-radius: 14px;
-  background: #fff;
-  padding: 0.9rem;
-}
-
-.scope-card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.6rem;
-}
-
-.scope-card-head h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.scope-card-head span {
-  color: #718096;
-  font-size: 0.78rem;
-}
-
-.empty-tip {
-  color: #718096;
-  font-size: 0.84rem;
-}
-
-.scope-list {
-  display: grid;
-  gap: 0.55rem;
-}
-
-.scope-item {
-  border: 1px solid #dfe6f3;
-  border-radius: 10px;
-  background: #fff;
-  text-align: left;
-  padding: 0.65rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.scope-item:hover {
-  border-color: #b7c8ec;
-}
-
-.scope-item.active {
-  border-color: #667eea;
-  background: #edf2ff;
-}
-
-.scope-name {
-  display: block;
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
-.scope-meta {
-  display: block;
-  margin-top: 2px;
-  color: #718096;
-  font-size: 0.76rem;
-}
-
-.scope-overview-card {
-  margin-top: 1rem;
-  border: 1px solid #e8ecf4;
-  border-radius: 12px;
-  background: #fff;
-  padding: 0.9rem;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.7rem;
-  align-items: center;
-}
-
-.overview-item {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.overview-item span {
-  color: #718096;
-  font-size: 0.76rem;
-}
-
-.overview-item strong {
-  font-size: 0.92rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.overview-item.right {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .legacy-inner {
@@ -953,17 +685,6 @@ onMounted(async () => {
     display: none;
   }
 
-  .scope-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .scope-overview-card {
-    grid-template-columns: 1fr;
-  }
-
-  .overview-item.right {
-    justify-content: flex-start;
-  }
 }
 
 @media (max-width: 768px) {
