@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>io.github.twj666</groupId>
-        <artifactId>sf-chain-parent</artifactId>
+        <artifactId>SF-Chain</artifactId>
         <version>1.0.11</version>
     </parent>
 
@@ -27,7 +27,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.twj666</groupId>
-            <artifactId>sf-chain</artifactId>
+            <artifactId>sf-chain-legacy-starter</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

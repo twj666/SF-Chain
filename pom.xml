@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.twj666</groupId>
-    <artifactId>sf-chain-parent</artifactId>
+    <artifactId>SF-Chain</artifactId>
     <version>1.0.11</version>
     <packaging>pom</packaging>
 

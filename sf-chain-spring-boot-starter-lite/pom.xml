@@ -28,7 +28,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.twj666</groupId>
-            <artifactId>sf-chain</artifactId>
+            <artifactId>sf-chain-legacy-starter</artifactId>
             <version>${project.version}</version>
             <exclusions>
                 <exclusion>
