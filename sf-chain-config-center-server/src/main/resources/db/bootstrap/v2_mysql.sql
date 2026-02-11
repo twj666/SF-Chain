@@ -72,19 +72,6 @@ CREATE TABLE IF NOT EXISTS sfchain_cp_config_releases (
   UNIQUE KEY uk_sfchain_cp_release (tenant_id, app_id, version)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS sfchain_cp_agent_instances (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  tenant_id VARCHAR(64) NOT NULL,
-  app_id VARCHAR(128) NOT NULL,
-  instance_id VARCHAR(128) NOT NULL,
-  status VARCHAR(32) NOT NULL,
-  metadata_json JSON,
-  last_heartbeat_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_sfchain_cp_agent (tenant_id, app_id, instance_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE IF NOT EXISTS sfchain_cp_call_logs (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   tenant_id VARCHAR(64) NOT NULL,
@@ -100,3 +87,5 @@ CREATE TABLE IF NOT EXISTS sfchain_cp_call_logs (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_sfchain_cp_logs_tenant_app (tenant_id, app_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS sfchain_cp_agent_instances;

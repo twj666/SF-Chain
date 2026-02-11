@@ -6,12 +6,10 @@ import com.suifeng.sfchain.configcenter.dto.AppDtos;
 import com.suifeng.sfchain.configcenter.dto.ConfigDtos;
 import com.suifeng.sfchain.configcenter.dto.TenantDtos;
 import com.suifeng.sfchain.configcenter.entity.ApiKeyEntity;
-import com.suifeng.sfchain.configcenter.entity.AgentInstanceEntity;
 import com.suifeng.sfchain.configcenter.entity.AppEntity;
 import com.suifeng.sfchain.configcenter.entity.TenantEntity;
 import com.suifeng.sfchain.configcenter.entity.TenantModelConfigEntity;
 import com.suifeng.sfchain.configcenter.entity.TenantOperationConfigEntity;
-import com.suifeng.sfchain.configcenter.repository.AgentInstanceRepository;
 import com.suifeng.sfchain.configcenter.repository.ApiKeyRepository;
 import com.suifeng.sfchain.configcenter.repository.AppRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantModelConfigRepository;
@@ -55,7 +53,7 @@ public class ControlPlaneService {
 
     private final TenantRepository tenantRepository;
     private final AppRepository appRepository;
-    private final AgentInstanceRepository agentInstanceRepository;
+    private final InMemoryAgentHeartbeatStore heartbeatStore;
     private final ApiKeyRepository apiKeyRepository;
     private final TenantModelConfigRepository tenantModelConfigRepository;
     private final TenantOperationConfigRepository tenantOperationConfigRepository;
@@ -151,10 +149,8 @@ public class ControlPlaneService {
             }
         }
 
-        Map<String, AgentInstanceRepository.OnlineHeartbeatProjection> heartbeatByApp = new HashMap<>();
-        for (AgentInstanceRepository.OnlineHeartbeatProjection item : agentInstanceRepository.findLatestHeartbeatsByApp(onlineCutoff)) {
-            heartbeatByApp.put(composeAppKey(item.getTenantId(), item.getAppId()), item);
-        }
+        Map<String, InMemoryAgentHeartbeatStore.AppHeartbeatSummary> heartbeatByApp =
+                heartbeatStore.summarizeByApp(effectiveWindowSeconds);
 
         List<AppDtos.OnlineAppView> result = new ArrayList<>();
         for (Map.Entry<String, AppEntity> entry : apps.entrySet()) {
@@ -163,8 +159,8 @@ public class ControlPlaneService {
             if (tenant == null) {
                 continue;
             }
-            AgentInstanceRepository.OnlineHeartbeatProjection heartbeat = heartbeatByApp.get(entry.getKey());
-            LocalDateTime lastSeenAt = heartbeat == null ? null : heartbeat.getLastHeartbeatAt();
+            InMemoryAgentHeartbeatStore.AppHeartbeatSummary heartbeat = heartbeatByApp.get(entry.getKey());
+            LocalDateTime lastSeenAt = heartbeat == null ? null : heartbeat.getLastSeenAt();
             boolean online = lastSeenAt != null && !lastSeenAt.isBefore(onlineCutoff);
             if (onlyOnline && !online) {
                 continue;
@@ -177,8 +173,16 @@ public class ControlPlaneService {
             view.setAppName(app.getAppName());
             view.setLastSeenAt(lastSeenAt);
             view.setOnline(online);
-            view.setInstanceCount(heartbeat == null ? 0L : heartbeat.getInstanceCount());
+            view.setInstanceCount(heartbeat == null ? 0L : heartbeat.getOnlineInstanceCount());
             view.setOfflineSeconds(lastSeenAt == null ? -1L : ChronoUnit.SECONDS.between(lastSeenAt, now));
+            view.setInstances(heartbeat == null
+                    ? List.of()
+                    : heartbeat.getOnlineInstances().stream().map(instance -> {
+                        AppDtos.OnlineInstanceView item = new AppDtos.OnlineInstanceView();
+                        item.setInstanceId(instance.getInstanceId());
+                        item.setLastSeenAt(instance.getLastSeenAt());
+                        return item;
+                    }).collect(Collectors.toList()));
             result.add(view);
         }
 
@@ -500,27 +504,11 @@ public class ControlPlaneService {
         return Optional.of(response);
     }
 
-    @Transactional
     public void touchAgentHeartbeat(String tenantId, String appId, String instanceId, String source) {
         String normalizedTenantId = normalizeRequired(tenantId, "tenantId");
         String normalizedAppId = normalizeRequired(appId, "appId");
         String normalizedInstanceId = normalizeInstanceId(instanceId, normalizedAppId);
-        LocalDateTime now = LocalDateTime.now();
-
-        AgentInstanceEntity entity = agentInstanceRepository
-                .findByTenantIdAndAppIdAndInstanceId(normalizedTenantId, normalizedAppId, normalizedInstanceId)
-                .orElseGet(AgentInstanceEntity::new);
-        entity.setTenantId(normalizedTenantId);
-        entity.setAppId(normalizedAppId);
-        entity.setInstanceId(normalizedInstanceId);
-        entity.setStatus("ONLINE");
-        entity.setLastHeartbeatAt(now);
-        if (StringUtils.hasText(source)) {
-            entity.setMetadataJson(Map.of("source", source.trim()));
-        } else {
-            entity.setMetadataJson(Map.of());
-        }
-        agentInstanceRepository.save(entity);
+        heartbeatStore.touch(normalizedTenantId, normalizedAppId, normalizedInstanceId, normalizeOptional(source));
     }
 
     private ConfigDtos.ConfigSnapshotResponse buildSnapshotResponse(String tenantId, String appId, String apiKey) {

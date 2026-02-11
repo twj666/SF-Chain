@@ -14,6 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.lang.management.ManagementFactory;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -238,7 +239,11 @@ public class RemoteConfigClient {
                 ? serverProperties.getAppId().trim()
                 : "default-app";
         String hostName = resolveHostName();
-        String value = appId + "@" + hostName;
+        String port = resolvePort();
+        String pid = resolvePid();
+        String value = StringUtils.hasText(port)
+                ? appId + "@" + hostName + ":" + port + "#" + pid
+                : appId + "@" + hostName + "#" + pid;
         return value.length() > 128 ? value.substring(0, 128) : value;
     }
 
@@ -252,6 +257,57 @@ public class RemoteConfigClient {
             // ignore
         }
         return "unknown-host";
+    }
+
+    private static String resolvePort() {
+        String serverPort = normalizePort(System.getProperty("server.port"));
+        if (serverPort != null) {
+            return serverPort;
+        }
+        serverPort = normalizePort(System.getenv("SERVER_PORT"));
+        if (serverPort != null) {
+            return serverPort;
+        }
+        return normalizePort(System.getProperty("local.server.port"));
+    }
+
+    private static String resolvePid() {
+        try {
+            long pid = ProcessHandle.current().pid();
+            if (pid > 0) {
+                return String.valueOf(pid);
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+        try {
+            String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
+            if (StringUtils.hasText(runtimeName)) {
+                int idx = runtimeName.indexOf('@');
+                if (idx > 0) {
+                    String candidate = runtimeName.substring(0, idx);
+                    if (normalizePort(candidate) != null) {
+                        return candidate;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+        return "0";
+    }
+
+    private static String normalizePort(String rawPort) {
+        if (!StringUtils.hasText(rawPort)) {
+            return null;
+        }
+        String value = rawPort.trim();
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isDigit(value.charAt(i))) {
+                return null;
+            }
+        }
+        return value;
     }
 
     private Map<String, Object> toGovernancePayload(String snapshotVersion, GovernanceSyncApplyResult result) {

@@ -3,6 +3,7 @@ package com.suifeng.sfchain.configcenter.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public final class AppDtos {
 
@@ -43,5 +44,12 @@ public final class AppDtos {
         private long instanceCount;
         private LocalDateTime lastSeenAt;
         private long offlineSeconds;
+        private List<OnlineInstanceView> instances;
+    }
+
+    @Data
+    public static class OnlineInstanceView {
+        private String instanceId;
+        private LocalDateTime lastSeenAt;
     }
 }

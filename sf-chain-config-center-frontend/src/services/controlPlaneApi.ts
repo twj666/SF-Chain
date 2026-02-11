@@ -52,6 +52,12 @@ export interface OnlineAppView {
   instanceCount: number
   lastSeenAt?: string
   offlineSeconds: number
+  instances: OnlineInstanceView[]
+}
+
+export interface OnlineInstanceView {
+  instanceId: string
+  lastSeenAt: string
 }
 
 export interface TenantModelConfig {

@@ -91,14 +91,29 @@
                 >
                   <div class="online-workspace-top">
                     <strong>{{ item.appName }}</strong>
-                    <span class="state-chip state-on">在线</span>
+                    <span class="state-chip state-on">在线: {{ item.instanceCount }}</span>
                   </div>
-                  <div class="online-workspace-meta">{{ item.tenantName }} ({{ item.tenantId }})</div>
-                  <div class="online-workspace-meta">{{ item.appId }}</div>
-                  <div class="online-workspace-foot">
-                    <span>实例数：{{ item.instanceCount }}</span>
-                    <span v-if="item.lastSeenAt">最近心跳：{{ new Date(item.lastSeenAt).toLocaleString() }}</span>
-                    <span v-else>最近心跳：无</span>
+                  <div class="online-workspace-sub">
+                    <span>{{ item.tenantName }}</span>
+                    <span class="online-dot">·</span>
+                    <span>{{ item.tenantId }}</span>
+                  </div>
+                  <div class="online-workspace-appid">{{ item.appId }}</div>
+                  <div class="online-heartbeat-inline">
+                    最近心跳 {{ formatRelativeTime(item.lastSeenAt) }}
+                  </div>
+                  <div v-if="item.instances.length > 0" class="online-instance-list">
+                    <div
+                      v-for="instance in item.instances.slice(0, 4)"
+                      :key="`${item.tenantId}:${item.appId}:${instance.instanceId}`"
+                      class="online-instance-row"
+                    >
+                      <code :title="instance.instanceId">{{ instance.instanceId }}</code>
+                      <span>{{ formatRelativeTime(instance.lastSeenAt) }}</span>
+                    </div>
+                    <div v-if="item.instances.length > 4" class="online-instance-extra">
+                      其余 {{ item.instances.length - 4 }} 个实例已折叠
+                    </div>
                   </div>
                 </button>
               </div>
@@ -271,6 +286,18 @@ const formatTime = (timestamp: number) => {
   return new Date(timestamp).toLocaleString()
 }
 
+const formatRelativeTime = (timestamp?: string) => {
+  if (!timestamp) return '无'
+  const deltaSeconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000)
+  if (deltaSeconds < 0) return '刚刚'
+  if (deltaSeconds < 60) return `${deltaSeconds}s 前`
+  const minutes = Math.floor(deltaSeconds / 60)
+  if (minutes < 60) return `${minutes}m 前`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h 前`
+  return `${Math.floor(hours / 24)}d 前`
+}
+
 async function fetchSystemOverview() {
   if (!selectedTenantId.value || !selectedAppId.value) {
     systemOverview.value = {
@@ -346,7 +373,11 @@ async function loadOnlineApps(showErrorToast = false) {
   }
   onlineRequesting.value = true
   try {
-    onlineApps.value = await controlPlaneApi.listOnlineApps(45)
+    const list = await controlPlaneApi.listOnlineApps(45)
+    onlineApps.value = list.map(item => ({
+      ...item,
+      instances: Array.isArray(item.instances) ? item.instances : []
+    }))
     onlineLastRefreshAt.value = Date.now()
   } catch (error) {
     if (showErrorToast) {
@@ -623,18 +654,22 @@ onBeforeUnmount(() => {
 
 .online-workspace-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 420px));
+  justify-content: flex-start;
+  gap: 1rem;
 }
 
 .online-workspace-card {
   border: 1px solid #dde6f5;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
-  padding: 0.85rem;
+  padding: 0.95rem;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .online-workspace-card:hover {
@@ -648,9 +683,14 @@ onBeforeUnmount(() => {
   gap: 0.5rem;
 }
 
+.online-workspace-top strong {
+  font-size: 1.02rem;
+  color: #1f2d46;
+}
+
 .state-chip {
   border-radius: 999px;
-  padding: 0.1rem 0.45rem;
+  padding: 0.15rem 0.5rem;
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -660,20 +700,69 @@ onBeforeUnmount(() => {
   color: #238e5d;
 }
 
-.online-workspace-meta {
-  margin-top: 0.25rem;
-  color: #667790;
+.online-workspace-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #647390;
+  font-size: 0.82rem;
+}
+
+.online-dot {
+  color: #9aaccb;
+}
+
+.online-workspace-appid {
+  color: #3d5276;
+  font-size: 0.82rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.online-heartbeat-inline {
+  margin-top: 0.1rem;
+  color: #5f6f8c;
   font-size: 0.8rem;
 }
 
-.online-workspace-foot {
-  margin-top: 0.45rem;
+.online-instance-list {
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+
+.online-instance-row {
+  border: 1px solid #e2e9f8;
+  border-radius: 9px;
+  background: #fcfdff;
+  padding: 0.28rem 0.45rem;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 0.6rem;
-  color: #495a75;
-  font-size: 0.75rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.online-instance-row code {
+  margin: 0;
+  color: #35507f;
+  font-size: 0.72rem;
+  background: transparent;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  flex: 1;
+}
+
+.online-instance-row span {
+  color: #5f6f8c;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+
+.online-instance-extra {
+  color: #7f8da8;
+  font-size: 0.72rem;
+  padding-left: 0.2rem;
 }
 
 .divider {
