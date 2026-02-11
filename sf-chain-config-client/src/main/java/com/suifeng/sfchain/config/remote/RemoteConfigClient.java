@@ -7,6 +7,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.InetAddress;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -233,7 +234,24 @@ public class RemoteConfigClient {
         if (StringUtils.hasText(serverProperties.getInstanceId())) {
             return serverProperties.getInstanceId().trim();
         }
-        return "unknown-instance";
+        String appId = StringUtils.hasText(serverProperties.getAppId())
+                ? serverProperties.getAppId().trim()
+                : "default-app";
+        String hostName = resolveHostName();
+        String value = appId + "@" + hostName;
+        return value.length() > 128 ? value.substring(0, 128) : value;
+    }
+
+    private static String resolveHostName() {
+        try {
+            String host = InetAddress.getLocalHost().getHostName();
+            if (StringUtils.hasText(host)) {
+                return host.trim();
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+        return "unknown-host";
     }
 
     private Map<String, Object> toGovernancePayload(String snapshotVersion, GovernanceSyncApplyResult result) {

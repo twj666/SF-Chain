@@ -51,8 +51,9 @@ public class ControlPlaneController {
 
     @GetMapping("${sf-chain.path.api-prefix:/sf-chain}/control/apps/online")
     public List<AppDtos.OnlineAppView> listOnlineApps(
-            @RequestParam(defaultValue = "45") int onlineWindowSeconds) {
-        return controlPlaneService.listOnlineApps(onlineWindowSeconds);
+            @RequestParam(defaultValue = "45") int onlineWindowSeconds,
+            @RequestParam(defaultValue = "true") boolean onlyOnline) {
+        return controlPlaneService.listOnlineApps(onlineWindowSeconds, onlyOnline);
     }
 
     @PostMapping("${sf-chain.path.api-prefix:/sf-chain}/control/tenants/{tenantId}/apps")

@@ -132,7 +132,7 @@ public class ControlPlaneService {
     }
 
     @Transactional(readOnly = true)
-    public List<AppDtos.OnlineAppView> listOnlineApps(int onlineWindowSeconds) {
+    public List<AppDtos.OnlineAppView> listOnlineApps(int onlineWindowSeconds, boolean onlyOnline) {
         int effectiveWindowSeconds = Math.max(onlineWindowSeconds, 10);
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime onlineCutoff = now.minusSeconds(effectiveWindowSeconds);
@@ -152,7 +152,7 @@ public class ControlPlaneService {
         }
 
         Map<String, AgentInstanceRepository.OnlineHeartbeatProjection> heartbeatByApp = new HashMap<>();
-        for (AgentInstanceRepository.OnlineHeartbeatProjection item : agentInstanceRepository.findLatestHeartbeatsByApp()) {
+        for (AgentInstanceRepository.OnlineHeartbeatProjection item : agentInstanceRepository.findLatestHeartbeatsByApp(onlineCutoff)) {
             heartbeatByApp.put(composeAppKey(item.getTenantId(), item.getAppId()), item);
         }
 
@@ -166,6 +166,9 @@ public class ControlPlaneService {
             AgentInstanceRepository.OnlineHeartbeatProjection heartbeat = heartbeatByApp.get(entry.getKey());
             LocalDateTime lastSeenAt = heartbeat == null ? null : heartbeat.getLastHeartbeatAt();
             boolean online = lastSeenAt != null && !lastSeenAt.isBefore(onlineCutoff);
+            if (onlyOnline && !online) {
+                continue;
+            }
 
             AppDtos.OnlineAppView view = new AppDtos.OnlineAppView();
             view.setTenantId(app.getTenantId());
@@ -180,8 +183,7 @@ public class ControlPlaneService {
         }
 
         result.sort(Comparator
-                .comparing(AppDtos.OnlineAppView::isOnline).reversed()
-                .thenComparing(AppDtos.OnlineAppView::getLastSeenAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                .comparing(AppDtos.OnlineAppView::getLastSeenAt, Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(AppDtos.OnlineAppView::getTenantId)
                 .thenComparing(AppDtos.OnlineAppView::getAppId));
         return result;

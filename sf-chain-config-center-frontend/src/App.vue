@@ -69,7 +69,7 @@
               <div class="online-workspace-head">
                 <div>
                   <h2>在线应用面板</h2>
-                  <p>展示连接配置中心的租户应用，点击卡片可直达内层工作台。</p>
+                  <p>仅展示当前在线的租户应用，点击卡片可直达内层工作台。</p>
                   <p class="online-refresh-time">
                     最近刷新：{{ onlineLastRefreshAt ? formatTime(onlineLastRefreshAt) : '未刷新' }}
                   </p>
@@ -80,19 +80,18 @@
               </div>
 
               <div v-if="onlineApps.length === 0" class="online-workspace-empty">
-                {{ onlineRequesting ? '在线列表加载中...' : '暂无在线应用' }}
+                {{ onlineRequesting ? '在线列表加载中...' : '当前没有在线实例' }}
               </div>
               <div v-else class="online-workspace-grid">
                 <button
                   v-for="item in onlineApps"
                   :key="`${item.tenantId}:${item.appId}`"
                   class="online-workspace-card"
-                  :class="{ online: item.online }"
                   @click="openOnlineApp(item)"
                 >
                   <div class="online-workspace-top">
                     <strong>{{ item.appName }}</strong>
-                    <span class="state-chip" :class="item.online ? 'state-on' : 'state-off'">{{ item.online ? '在线' : '离线' }}</span>
+                    <span class="state-chip state-on">在线</span>
                   </div>
                   <div class="online-workspace-meta">{{ item.tenantName }} ({{ item.tenantId }})</div>
                   <div class="online-workspace-meta">{{ item.appId }}</div>
@@ -642,11 +641,6 @@ onBeforeUnmount(() => {
   border-color: #a9bde8;
 }
 
-.online-workspace-card.online {
-  border-color: #5f7de6;
-  box-shadow: 0 0 0 1px rgba(95, 125, 230, 0.16);
-}
-
 .online-workspace-top {
   display: flex;
   justify-content: space-between;
@@ -664,11 +658,6 @@ onBeforeUnmount(() => {
 .state-chip.state-on {
   background: #e9f8ef;
   color: #238e5d;
-}
-
-.state-chip.state-off {
-  background: #f2f4f8;
-  color: #7a8496;
 }
 
 .online-workspace-meta {

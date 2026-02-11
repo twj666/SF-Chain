@@ -3,9 +3,6 @@ package com.suifeng.sfchain.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.lang.management.ManagementFactory;
-import java.util.UUID;
-
 /**
  * SF-Chain 远程服务配置
  */
@@ -36,7 +33,7 @@ public class SfChainServerProperties {
     /**
      * 当前租户应用实例ID（用于配置中心在线状态识别）
      */
-    private String instanceId = buildDefaultInstanceId();
+    private String instanceId;
 
     /**
      * 连接超时（毫秒）
@@ -77,16 +74,4 @@ public class SfChainServerProperties {
      * 响应签名重放保护窗口（秒）
      */
     private int responseSignatureReplayWindowSeconds = 600;
-
-    private static String buildDefaultInstanceId() {
-        try {
-            String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
-            if (runtimeName != null && !runtimeName.isBlank()) {
-                return runtimeName;
-            }
-        } catch (Exception ignored) {
-            // ignore
-        }
-        return UUID.randomUUID().toString();
-    }
 }

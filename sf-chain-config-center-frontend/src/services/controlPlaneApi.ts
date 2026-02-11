@@ -105,7 +105,7 @@ export const controlPlaneApi = {
   },
 
   async listOnlineApps(onlineWindowSeconds = 45): Promise<OnlineAppView[]> {
-    return apiJsonRequest(`${base}/control/apps/online?onlineWindowSeconds=${onlineWindowSeconds}`, {
+    return apiJsonRequest(`${base}/control/apps/online?onlineWindowSeconds=${onlineWindowSeconds}&onlyOnline=true`, {
       method: 'GET',
       requireAuth: true
     })
