@@ -207,10 +207,13 @@
     </div>
 
     <!-- 添加/编辑模型弹窗 - 无滚动条优化 -->
-    <div v-if="showAddModel || editingModel" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
+    <div v-if="showAddModel || editingModel" class="modal-overlay">
+      <div class="modal-content">
         <div class="modal-header">
-          <h3>{{ editingModel ? '编辑模型' : '添加模型' }}</h3>
+          <div class="modal-title-group">
+            <h3>{{ editingModel ? '编辑模型配置' : '添加模型配置' }}</h3>
+            <p>填写连接参数与鉴权信息，保存后即可用于节点映射。</p>
+          </div>
           <button @click="closeModal" class="btn-close">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -219,11 +222,10 @@
         </div>
 
         <form @submit.prevent="saveModel" class="modal-body">
-          <!-- 紧凑的两列布局 -->
           <div class="form-grid">
-            <!-- 左列 -->
-            <div class="form-column">
-              <!-- 基本信息 -->
+            <section class="form-panel">
+              <h4 class="panel-title">核心连接参数</h4>
+              <p class="panel-desc">先配置 URL、模型名和 API Key，这三项决定是否可用。</p>
               <div class="form-group">
                 <label for="modelName">模型名称 *</label>
                 <input
@@ -238,17 +240,6 @@
               </div>
 
               <div class="form-group">
-                <label for="provider">提供商</label>
-                <select id="provider" v-model="modelForm.provider" class="form-input" @change="onProviderChange">
-                  <optgroup v-for="(providers, category) in providersByCategory" :key="category" :label="getCategoryName(category)">
-                    <option v-for="provider in providers" :key="provider.key" :value="provider.key">
-                      {{ provider.name }}
-                    </option>
-                  </optgroup>
-                </select>
-              </div>
-
-              <div class="form-group">
                 <label for="baseUrl">Base URL *</label>
                 <input
                   id="baseUrl"
@@ -260,10 +251,6 @@
                 />
               </div>
 
-            </div>
-
-            <!-- 右列 -->
-            <div class="form-column">
               <div class="form-group">
                 <label for="apiKey">API Key *</label>
                 <div class="input-wrapper">
@@ -290,27 +277,41 @@
                   </button>
                 </div>
               </div>
+            </section>
+
+            <section class="form-panel">
+              <h4 class="panel-title">分类与补充信息</h4>
+              <p class="panel-desc">提供商和描述用于分类与识别，可按需填写。</p>
+
+              <div class="form-group">
+                <label for="provider">提供商（可选）</label>
+                <select id="provider" v-model="modelForm.provider" class="form-input" @change="onProviderChange">
+                  <option value="">未指定</option>
+                  <optgroup v-for="(providers, category) in providersByCategory" :key="category" :label="getCategoryName(category)">
+                    <option v-for="provider in providers" :key="provider.key" :value="provider.key">
+                      {{ provider.name }}
+                    </option>
+                  </optgroup>
+                </select>
+              </div>
 
               <div class="form-group">
                 <label for="description">描述</label>
                 <textarea
                   id="description"
                   v-model="modelForm.description"
-                  placeholder="模型描述信息"
+                  placeholder="可填写适用场景、限流策略、负责人等"
                   class="form-textarea"
                   rows="3"
                 ></textarea>
               </div>
-            </div>
+            </section>
           </div>
 
           <div class="form-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              取消
-            </button>
             <button type="submit" class="btn btn-primary" :disabled="saving">
               <span v-if="saving" class="btn-loading"></span>
-              <span>{{ saving ? '保存中...' : '保存' }}</span>
+              <span>{{ saving ? '保存中...' : (editingModel ? '保存修改' : '创建模型') }}</span>
             </button>
           </div>
         </form>
@@ -359,7 +360,7 @@ const modelForm = reactive<ModelConfigData>({
   baseUrl: '',
   apiKey: '',
   description: '',
-  provider: 'openai',
+  provider: '',
   enabled: true
 })
 
@@ -489,7 +490,7 @@ const resetForm = () => {
     baseUrl: '',
     apiKey: '',
     description: '',
-    provider: 'openai',
+    provider: '',
     enabled: true
   })
 }
@@ -511,7 +512,11 @@ const loadModels = async () => {
 const saveModel = async () => {
   try {
     saving.value = true
-    const response = await aiModelApi.saveModel(modelForm.modelName, modelForm)
+    const payload: ModelConfigData = {
+      ...modelForm,
+      provider: modelForm.provider?.trim() ? modelForm.provider : 'other'
+    }
+    const response = await aiModelApi.saveModel(modelForm.modelName, payload)
 
     if (response.success) {
       alert(response.message || '模型保存成功')
@@ -608,6 +613,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  padding: 0.2rem 0.1rem;
 }
 
 .header-left {
@@ -617,7 +623,7 @@ onMounted(() => {
 .header-left h2 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1a202c;
+  color: #1f2a3d;
   margin: 0 0 0.125rem 0;
 }
 
@@ -642,11 +648,11 @@ onMounted(() => {
 }
 
 .stat-card {
-  background: white;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   padding: 0.75rem 1rem;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 2px solid #e2e8f0;
+  border: 1px solid #dbe5f3;
   min-width: 90px;
   display: flex;
   justify-content: space-between;
@@ -657,15 +663,16 @@ onMounted(() => {
 }
 
 .stat-card:hover {
-  border-color: #667eea;
+  border-color: #b8c9e6;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 4px 12px rgba(168, 185, 214, 0.25);
 }
 
 .stat-card.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-color: #667eea;
+  background: linear-gradient(180deg, #f6f9ff 0%, #eaf1ff 100%);
+  color: #253859;
+  border-color: #9fb5de;
+  box-shadow: 0 6px 16px rgba(145, 166, 205, 0.28);
 }
 
 .stat-content {
@@ -702,10 +709,14 @@ onMounted(() => {
 
 /* 主要内容区域 */
 .main-content {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(148, 163, 184, 0.16);
+  border: 1px solid #e1e9f5;
+}
+
+.models-list {
+  --model-grid: minmax(250px, 1.45fr) minmax(520px, 2.9fr) minmax(180px, 1fr) 176px;
 }
 
 .list-header {
@@ -776,24 +787,27 @@ onMounted(() => {
   color: #374151;
 }
 
-/* 精确修复表格对齐 */
+/* 模型表格：统一列栅格，避免表头和行错位 */
 .table-header {
   display: grid;
-  grid-template-columns: 2.6fr 1.5fr 1.0fr 2.2fr 0.8fr 1.2fr;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: #f1f5f9;
+  grid-template-columns: var(--model-grid);
+  column-gap: 0.85rem;
+  padding: 0.85rem 1.25rem;
+  background: #f7fafe;
   border-bottom: 1px solid #e2e8f0;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
+  color: #334155;
 }
 
 .header-cell {
   display: flex;
   align-items: center;
+  min-width: 0;
+}
+
+.header-cell.actions-cell {
+  justify-content: flex-end;
 }
 
 .models-container {
@@ -803,16 +817,16 @@ onMounted(() => {
 
 .model-row {
   display: grid;
-  grid-template-columns: 2.6fr 1.5fr 1.0fr 2.2fr 0.8fr 1.2fr;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  grid-template-columns: var(--model-grid);
+  column-gap: 0.85rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid #eef2f7;
   transition: background-color 0.2s ease;
-  align-items: center;
+  align-items: start;
 }
 
 .model-row:hover {
-  background: #f8fafc;
+  background: #f8fbff;
 }
 
 .model-row.disabled {
@@ -826,12 +840,13 @@ onMounted(() => {
 /* 模型信息单元格 */
 .model-cell {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .model-identity {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   width: 100%;
 }
@@ -869,7 +884,8 @@ onMounted(() => {
   font-size: 0.875rem;
   font-weight: 600;
   color: #1a202c;
-  margin: 0 0 0.25rem 0;
+  line-height: 1.35;
+  margin: 0 0 0.3rem 0;
   cursor: pointer;
   transition: color 0.2s ease;
   word-break: break-all;
@@ -920,21 +936,21 @@ onMounted(() => {
 
 /* 其他单元格 - 精确对齐 */
 .base-url-cell {
-  overflow: hidden;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .base-url-text {
-  font-size: 0.8125rem;
-  color: #374151;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #334155;
   cursor: pointer;
   transition: color 0.2s ease;
-  word-break: break-all;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  width: 100%;
 }
 
 .base-url-text:hover {
@@ -955,18 +971,17 @@ onMounted(() => {
 }
 
 .description-cell {
-  overflow: hidden;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .description-text {
-  font-size: 0.8125rem;
-  color: #6b7280;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #64748b;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .status-cell {
@@ -996,13 +1011,14 @@ onMounted(() => {
 /* 操作按钮 */
 .actions-cell {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-end;
+  align-items: flex-start;
+  min-width: 0;
 }
 
 .action-buttons {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
 
 .action-btn {
@@ -1048,14 +1064,15 @@ onMounted(() => {
 }
 
 .action-btn.edit {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #eef3fb;
+  color: #33527d;
+  border: 1px solid #d4e0f3;
 }
 
 .action-btn.edit:hover:not(:disabled) {
-  background: #bfdbfe;
+  background: #e2ebf9;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(110, 137, 180, 0.28);
 }
 
 .action-btn.delete {
@@ -1104,30 +1121,29 @@ onMounted(() => {
   margin: 0;
 }
 
-/* 精致小巧的弹窗样式 */
+/* 模型弹窗：现代化、分区化、无背景变暗 */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: transparent;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding: 3.5rem 1.25rem 1.5rem;
   z-index: 1000;
-  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 85vh;
+  background: #ffffff;
+  border-radius: 16px;
+  width: min(980px, 96vw);
+  max-height: calc(100vh - 5rem);
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.16), 0 6px 16px rgba(15, 23, 42, 0.08);
+  border: 1px solid #dbe4f4;
   display: flex;
   flex-direction: column;
 }
@@ -1135,93 +1151,114 @@ onMounted(() => {
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px 12px 0 0;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem 0.9rem;
+  border-bottom: 1px solid #e7edf7;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f7ff 100%);
   flex-shrink: 0;
 }
 
-.modal-header h3 {
+.modal-title-group h3 {
   font-size: 1.125rem;
-  font-weight: 600;
-  color: #1a202c;
+  font-weight: 700;
+  color: #0f172a;
   margin: 0;
 }
 
+.modal-title-group p {
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
+  color: #5f708f;
+}
+
 .btn-close {
-  background: none;
-  border: none;
+  background: #f1f5fb;
+  border: 1px solid #d9e2f2;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: #6b7280;
-  padding: 0.25rem;
-  border-radius: 4px;
+  color: #51617e;
+  border-radius: 8px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .btn-close:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: #e7eef9;
+  border-color: #c9d7ef;
+  color: #334155;
 }
 
 .modal-body {
-  padding: 1.25rem;
+  padding: 1rem 1.25rem 1.1rem;
   flex: 1;
   overflow-y: auto;
 }
 
-/* 两列网格布局 */
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 0.95rem;
 }
 
-.form-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
+.form-panel {
+  border: 1px solid #e4ebf8;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
+  padding: 0.9rem 0.95rem;
 }
 
-.form-group {
-  margin-bottom: 0;
+.panel-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+.panel-desc {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.76rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.form-group + .form-group {
+  margin-top: 0.75rem;
 }
 
 .form-group label {
   display: block;
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.375rem;
-  font-size: 0.75rem;
+  color: #344256;
+  margin-bottom: 0.35rem;
+  font-size: 0.76rem;
 }
 
 .form-input, .form-textarea {
   width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  padding: 0.52rem 0.72rem;
+  border: 1px solid #d9e2f0;
+  border-radius: 8px;
+  font-size: 0.84rem;
   transition: all 0.2s ease;
-  background: white;
+  background: #fff;
+  color: #1f2937;
 }
 
 .form-input:focus, .form-textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+  border-color: #6a86d8;
+  box-shadow: 0 0 0 3px rgba(106, 134, 216, 0.12);
 }
 
 .form-textarea {
   resize: vertical;
-  min-height: 50px;
+  min-height: 82px;
   font-family: inherit;
 }
 
@@ -1231,30 +1268,33 @@ onMounted(() => {
 
 .toggle-visibility {
   position: absolute;
-  right: 0.5rem;
+  right: 0.45rem;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: #64748b;
   padding: 0.25rem;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.2s ease;
 }
 
 .toggle-visibility:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: #eef3fc;
+  color: #334155;
 }
 
 .form-actions {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #e5e7eb;
+  margin-top: 0.2rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid #e7edf7;
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, #ffffff 24%);
 }
 
 /* 按钮样式 */
@@ -1279,23 +1319,26 @@ onMounted(() => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(180deg, #f4f8ff 0%, #e7efff 100%);
+  color: #27406d;
+  border: 1px solid #c8d8f2;
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(137, 164, 209, 0.35);
+  background: linear-gradient(180deg, #eef5ff 0%, #dde9ff 100%);
 }
 
 .btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #415572;
+  border: 1px solid #d2ddee;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #e5e7eb;
+  background: #f7fafe;
+  border-color: #c0cfe8;
 }
 
 .btn-loading {
@@ -1364,10 +1407,13 @@ onMounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 1024px) {
+  .models-list {
+    --model-grid: minmax(190px, 1.45fr) minmax(320px, 2.2fr) minmax(150px, 1fr) 156px;
+  }
+
   .table-header,
   .model-row {
-    grid-template-columns: 2fr 2.5fr 1fr 1.2fr 0.8fr 1fr;
-    gap: 0.5rem;
+    column-gap: 0.6rem;
   }
 
   .search-box {
@@ -1375,7 +1421,7 @@ onMounted(() => {
   }
 
   .modal-content {
-    max-width: 600px;
+    max-width: 760px;
   }
 }
 
@@ -1426,7 +1472,7 @@ onMounted(() => {
     width: 100%;
   }
 
-  .form-row {
+  .form-grid {
     grid-template-columns: 1fr;
   }
 
