@@ -231,6 +231,11 @@ public class PromptTemplateEngine {
     private EvaluationContext createEvaluationContext(Map<String, Object> context) {
         StandardEvaluationContext evaluationContext = new StandardEvaluationContext(context);
         evaluationContext.addPropertyAccessor(new MapAccessor());
+        if (context != null) {
+            for (Map.Entry<String, Object> entry : context.entrySet()) {
+                evaluationContext.setVariable(entry.getKey(), entry.getValue());
+            }
+        }
         return evaluationContext;
     }
 
@@ -242,9 +247,18 @@ public class PromptTemplateEngine {
         if (expression == null || expression.trim().isEmpty()) {
             return null;
         }
+        String normalized = expression.trim();
         try {
-            return EXPRESSION_PARSER.parseExpression(expression.trim()).getValue(evaluationContext);
+            return EXPRESSION_PARSER.parseExpression(normalized).getValue(evaluationContext);
         } catch (Exception ex) {
+            if (normalized.contains("fn.")) {
+                String fallbackExpr = normalized.replaceAll("\\bfn\\.", "#fn.");
+                try {
+                    return EXPRESSION_PARSER.parseExpression(fallbackExpr).getValue(evaluationContext);
+                } catch (Exception ignored) {
+                    // keep original exception behavior below
+                }
+            }
             if (!strictRender) {
                 return null;
             }

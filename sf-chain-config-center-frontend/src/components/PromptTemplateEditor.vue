@@ -1,6 +1,6 @@
 <template>
   <div class="prompt-template-editor" :class="{ disabled }">
-    <div class="editor-badge">Template Editor</div>
+    <div v-if="badgeText" class="editor-badge">{{ badgeText }}</div>
     <div ref="editorRoot" class="editor-root"></div>
   </div>
 </template>
@@ -16,8 +16,10 @@ import { PROMPT_TEMPLATE_FUNCTION_NAMES } from '@/constants/promptTemplateBuilti
 const props = withDefaults(defineProps<{
   modelValue: string
   disabled?: boolean
+  badgeText?: string
 }>(), {
-  disabled: false
+  disabled: false,
+  badgeText: 'Template Editor'
 })
 
 const emit = defineEmits<{
@@ -97,7 +99,8 @@ const editorTheme = EditorView.theme({
     fontSize: '13px',
     border: '1px solid rgba(209, 213, 219, 0.8)',
     borderRadius: '10px',
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    height: '100%'
   },
   '&.cm-focused': {
     outline: 'none',
@@ -106,11 +109,11 @@ const editorTheme = EditorView.theme({
   },
   '.cm-scroller': {
     fontFamily: '"JetBrains Mono", "SFMono-Regular", "Consolas", monospace',
-    lineHeight: '1.58',
-    minHeight: '420px'
+    lineHeight: '1.58'
   },
   '.cm-content': {
-    padding: '12px 14px'
+    padding: '12px 14px',
+    minHeight: '100%'
   },
   '.cm-line': {
     padding: '0'
@@ -234,6 +237,8 @@ onBeforeUnmount(() => {
 .prompt-template-editor {
   width: 100%;
   position: relative;
+  height: 100%;
+  min-height: 0;
 }
 
 .prompt-template-editor.disabled {
@@ -242,6 +247,31 @@ onBeforeUnmount(() => {
 
 .editor-root {
   width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+:deep(.cm-scroller) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.62) transparent;
+}
+
+:deep(.cm-scroller::-webkit-scrollbar) {
+  width: 7px;
+  height: 7px;
+}
+
+:deep(.cm-scroller::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+:deep(.cm-scroller::-webkit-scrollbar-thumb) {
+  background: rgba(148, 163, 184, 0.52);
+  border-radius: 999px;
+}
+
+:deep(.cm-scroller::-webkit-scrollbar-thumb:hover) {
+  background: rgba(100, 116, 139, 0.72);
 }
 
 .editor-badge {

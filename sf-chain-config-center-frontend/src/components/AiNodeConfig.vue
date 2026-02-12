@@ -382,7 +382,8 @@
       </div>
     </div>
 
-    <div v-if="templateWorkspaceOperationType" class="template-workspace">
+    <Teleport to="body">
+      <div v-if="templateWorkspaceOperationType" class="template-workspace">
       <div class="template-workspace-header">
         <button type="button" class="btn btn-secondary btn-sm" @click="closeTemplateWorkspace">
           返回节点列表
@@ -398,86 +399,118 @@
       </div>
 
       <div class="template-workspace-body">
-        <div class="template-preview-panel template-preview-panel-full">
-          <div class="template-preview-header">
-            <h5>调试数据</h5>
-            <button
-              type="button"
-              class="btn btn-primary btn-sm"
-              :disabled="previewingTemplate || templateWorkspace.promptMode !== 'TEMPLATE_OVERRIDE'"
-              @click="previewPromptTemplate"
-            >
-              <span v-if="previewingTemplate" class="btn-loading"></span>
-              <span>{{ previewingTemplate ? '预览中...' : '预览渲染' }}</span>
-            </button>
-          </div>
-          <p class="template-preview-desc">用于模拟运行时参数，点击“预览渲染”可在右侧即时查看模板结果。</p>
-
-          <div class="template-preview-grid">
-            <div class="template-preview-input">
-              <label for="previewInputJson">input JSON（方法入参）</label>
-              <textarea
-                id="previewInputJson"
-                v-model="promptPreviewInputJson"
-                class="form-textarea preview-textarea"
-                rows="7"
-                spellcheck="false"
-              ></textarea>
+        <div class="template-left-column">
+          <div class="template-control-card">
+            <div class="template-control-title">提示词来源</div>
+            <div class="template-control-desc">选择运行时使用本地提示词，或使用配置中心远程模板。</div>
+            <div class="prompt-mode-segment">
+              <button
+                type="button"
+                class="prompt-mode-btn"
+                :class="{ active: templateWorkspace.promptMode === 'LOCAL_ONLY' }"
+                @click="templateWorkspace.promptMode = 'LOCAL_ONLY'"
+              >
+                本地构建
+              </button>
+              <button
+                type="button"
+                class="prompt-mode-btn"
+                :class="{ active: templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE' }"
+                @click="templateWorkspace.promptMode = 'TEMPLATE_OVERRIDE'"
+              >
+                远程模板覆盖
+              </button>
             </div>
-            <div class="template-preview-input">
-              <label for="previewCtxJson">ctx JSON（上下文参数）</label>
-              <textarea
-                id="previewCtxJson"
-                v-model="promptPreviewCtxJson"
-                class="form-textarea preview-textarea"
-                rows="7"
-                spellcheck="false"
-              ></textarea>
+          </div>
+
+          <div class="template-control-card">
+            <div class="template-control-title">模板严格渲染</div>
+            <div class="template-control-desc">开启后表达式为空会直接报错，便于及时发现模板问题。</div>
+            <label class="template-strict-toggle">
+              <input
+                type="checkbox"
+                v-model="templateWorkspace.promptStrictRender"
+                class="template-strict-input"
+              />
+              <span class="template-strict-slider"></span>
+              <span class="template-strict-label">模板严格渲染</span>
+            </label>
+          </div>
+
+          <div class="template-debug-panel">
+            <div class="template-preview-header">
+              <h5>调试数据</h5>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                :disabled="previewingTemplate || templateWorkspace.promptMode !== 'TEMPLATE_OVERRIDE'"
+                @click="previewPromptTemplate"
+              >
+                <span v-if="previewingTemplate" class="btn-loading"></span>
+                <span>{{ previewingTemplate ? '预览中...' : '预览渲染' }}</span>
+              </button>
+            </div>
+            <p class="template-preview-desc">填写运行参数后渲染，右侧会展示最终结果。</p>
+
+            <div class="template-preview-grid">
+              <div class="template-preview-input">
+                <label for="previewInputJson">input JSON（方法入参）</label>
+                <textarea
+                  id="previewInputJson"
+                  v-model="promptPreviewInputJson"
+                  class="form-textarea preview-textarea"
+                  rows="6"
+                  spellcheck="false"
+                ></textarea>
+              </div>
+              <div class="template-preview-input">
+                <label for="previewCtxJson">ctx JSON（上下文参数）</label>
+                <textarea
+                  id="previewCtxJson"
+                  v-model="promptPreviewCtxJson"
+                  class="form-textarea preview-textarea"
+                  rows="6"
+                  spellcheck="false"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="template-hints-panel">
+            <div class="template-hints-title">模板提示</div>
+            <div class="template-hint-section">
+              <div class="hint-section-title">可用变量</div>
+              <div class="hint-code-row">
+                <code v-pre>{{ input.xxx }}</code>
+                <code v-pre>{{ ctx.xxx }}</code>
+                <code v-pre>{{ operationType }}</code>
+                <code v-pre>{{ localPrompt }}</code>
+                <code v-pre>{{ fn.xxx(...) }}</code>
+              </div>
+            </div>
+
+            <div class="template-hint-section">
+              <div class="hint-section-title">语法示例</div>
+              <div class="hint-code-list">
+                <code v-pre>{{#if input.debug}}调试模式{{else}}正常模式{{/if}}</code>
+                <code v-pre>{{#each ctx.items}}- {{ item }}{{/each}}</code>
+              </div>
+            </div>
+
+            <div class="template-hint-section">
+              <div class="hint-section-title">内置函数（与后端引擎一致）</div>
+              <div class="function-doc-list">
+                <div v-for="fnDoc in promptFunctionDocs" :key="fnDoc.name" class="function-doc-item">
+                  <code>{{ fnDoc.signature }}</code>
+                  <span>{{ fnDoc.description }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="template-editor-main">
-          <div class="template-controls-grid">
-            <div class="template-control-card">
-              <div class="template-control-title">提示词来源</div>
-              <div class="template-control-desc">选择运行时使用本地提示词，或使用配置中心远程模板。</div>
-              <div class="prompt-mode-segment">
-                <button
-                  type="button"
-                  class="prompt-mode-btn"
-                  :class="{ active: templateWorkspace.promptMode === 'LOCAL_ONLY' }"
-                  @click="templateWorkspace.promptMode = 'LOCAL_ONLY'"
-                >
-                  本地构建
-                </button>
-                <button
-                  type="button"
-                  class="prompt-mode-btn"
-                  :class="{ active: templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE' }"
-                  @click="templateWorkspace.promptMode = 'TEMPLATE_OVERRIDE'"
-                >
-                  远程模板覆盖
-                </button>
-              </div>
-            </div>
-
-            <div class="template-control-card">
-              <div class="template-control-title">模板严格渲染</div>
-              <div class="template-control-desc">开启后表达式为空会直接报错，便于及时发现模板问题。</div>
-              <label class="template-strict-toggle">
-                <input
-                  type="checkbox"
-                  v-model="templateWorkspace.promptStrictRender"
-                  class="template-strict-input"
-                />
-                <span class="template-strict-slider"></span>
-                <span class="template-strict-label">模板严格渲染</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="prompt-template-header" v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'">
+          <div class="prompt-template-header">
             <label for="workspacePromptTemplate">提示词模板</label>
             <div class="template-entry-actions">
               <button
@@ -490,8 +523,8 @@
               </button>
             </div>
           </div>
-          <p v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'" class="template-editor-desc">
-            推荐先在左侧填写调试数据，再编辑模板并预览，确认无误后保存。
+          <p class="template-editor-desc" v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'">
+            推荐先在右侧填写调试数据，再编辑模板并预览，确认无误后保存。
           </p>
           <PromptTemplateEditor
             v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'"
@@ -504,34 +537,29 @@
           <div class="template-local-only" v-else>
             当前为本地构建模式，运行时将使用 Operation 本地提示词。
           </div>
+        </div>
 
-          <div class="prompt-template-hint">
-            <div>可用变量：<code v-pre>{{ input.xxx }}</code>、<code v-pre>{{ ctx.xxx }}</code>、<code v-pre>{{ operationType }}</code>、<code v-pre>{{ localPrompt }}</code>、<code v-pre>{{ fn.xxx(...) }}</code></div>
-            <div>结构语法：<code v-pre>{{#if input.debug}}调试模式{{else}}正常模式{{/if}}</code>、<code v-pre>{{#each ctx.items}}- {{ item }}{{/each}}</code></div>
-            <div>内置函数（与后端引擎一致）：</div>
-            <div class="function-doc-list">
-              <div v-for="fnDoc in promptFunctionDocs" :key="fnDoc.name" class="function-doc-item">
-                <code>{{ fnDoc.signature }}</code>
-                <span>{{ fnDoc.description }}</span>
-              </div>
-            </div>
+        <div class="template-preview-panel template-preview-panel-full">
+          <div class="template-preview-header">
+            <h5>渲染结果</h5>
+            <span v-if="promptPreviewError" class="status-pill error">渲染失败</span>
+            <span v-else-if="promptPreviewRendered" class="status-pill success">渲染成功</span>
           </div>
+          <p class="template-preview-desc">用于对照中间模板编辑内容，查看最终渲染输出。</p>
 
-          <div v-if="promptPreviewError" class="template-preview-result error">
-            <div class="preview-result-title">渲染失败</div>
-            <div class="preview-result-line" v-if="promptPreviewError.expression">
-              表达式：<code>{{ promptPreviewError.expression }}</code>
-            </div>
-            <div class="preview-result-line">{{ promptPreviewError.message }}</div>
+          <div class="template-preview-meta" v-if="promptPreviewError?.expression">
+            表达式：<code>{{ promptPreviewError.expression }}</code>
           </div>
-
-          <div v-if="promptPreviewRendered" class="template-preview-result success">
-            <div class="preview-result-title">渲染结果</div>
-            <pre class="preview-result-content">{{ promptPreviewRendered }}</pre>
-          </div>
+          <PromptTemplateEditor
+            :model-value="previewDisplayText"
+            :disabled="true"
+            badge-text="Render Output"
+            class="template-output-editor"
+          />
         </div>
       </div>
-    </div>
+      </div>
+    </Teleport>
 
     <!-- 成功提示 -->
     <div v-if="showSuccessToast" class="success-toast">
@@ -552,7 +580,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
 import { aiModelApi } from '@/services/aiModelApi'
 import { aiOperationApi } from '@/services/aiOperationApi'
 import type { OperationConfigData, OperationsResponse, ModelConfigData } from '@/types/system'
@@ -680,6 +708,31 @@ const pendingCount = computed(() => {
 })
 
 const promptFunctionDocs = PROMPT_TEMPLATE_FUNCTIONS
+
+const previewDisplayText = computed(() => {
+  if (promptPreviewError.value) {
+    return promptPreviewError.value.message || '模板渲染失败'
+  }
+  if (promptPreviewRendered.value) {
+    return promptPreviewRendered.value
+  }
+  return '点击左侧“预览渲染”后，这里会展示渲染结果。'
+})
+
+const lockBodyScroll = (locked: boolean) => {
+  document.body.style.overflow = locked ? 'hidden' : ''
+}
+
+watch(
+  () => templateWorkspaceOperationType.value,
+  (value) => {
+    lockBodyScroll(!!value)
+  }
+)
+
+onBeforeUnmount(() => {
+  lockBodyScroll(false)
+})
 
 const currentLocalPromptTemplate = computed(() => {
   const operationType = templateWorkspaceOperationType.value || editingOperationType.value
@@ -1762,41 +1815,78 @@ refreshData()
   border-color: rgba(100, 116, 139, 0.6);
 }
 
-.prompt-template-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  line-height: 1.55;
-  color: #64748b;
-}
-
-.prompt-template-hint code {
-  background: rgba(241, 245, 249, 0.9);
-  border: 1px solid rgba(203, 213, 225, 0.8);
-  border-radius: 4px;
-  padding: 0 4px;
-  color: #334155;
-}
-
 .function-doc-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px 10px;
-  margin-top: 4px;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .function-doc-item {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
   padding: 6px 8px;
-  border: 1px solid rgba(203, 213, 225, 0.7);
-  border-radius: 8px;
-  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid rgba(203, 213, 225, 0.6);
+  border-radius: 6px;
+  background: rgba(248, 250, 252, 0.72);
 }
 
 .function-doc-item span {
   font-size: 11px;
   color: #64748b;
+  white-space: nowrap;
+}
+
+.function-doc-item code {
+  font-size: 11px;
+  background: rgba(241, 245, 249, 0.95);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 4px;
+  padding: 0 4px;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.template-hint-section {
+  border: 1px solid rgba(203, 213, 225, 0.62);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(248, 250, 252, 0.55);
+  margin-top: 8px;
+}
+
+.hint-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.hint-code-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hint-code-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hint-code-row code,
+.hint-code-list code {
+  background: rgba(241, 245, 249, 0.92);
+  border: 1px solid rgba(203, 213, 225, 0.82);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: #334155;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .template-entry-actions {
@@ -1868,11 +1958,14 @@ refreshData()
 }
 
 .template-workspace {
+  position: fixed;
+  inset: 0;
   margin: 0;
   border: 0;
   border-radius: 0;
-  background: transparent;
-  overflow: visible;
+  background: #f8fafc;
+  z-index: 2000;
+  overflow: hidden;
 }
 
 .template-workspace-header {
@@ -1880,9 +1973,9 @@ refreshData()
   grid-template-columns: auto 1fr auto;
   gap: 12px;
   align-items: center;
-  padding: 14px 24px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.75);
-  background: rgba(255, 255, 255, 0.95);
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  background: #ffffff;
 }
 
 .template-workspace-title-wrap h3 {
@@ -1898,11 +1991,42 @@ refreshData()
 }
 
 .template-workspace-body {
-  min-height: calc(100vh - 190px);
+  height: calc(100vh - 74px);
   display: grid;
-  grid-template-columns: minmax(280px, 0.72fr) minmax(620px, 1.48fr);
-  gap: 16px;
-  padding: 16px 24px 22px;
+  grid-template-columns: minmax(290px, 0.72fr) minmax(560px, 1.08fr) minmax(440px, 1fr);
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.template-left-column {
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.65) transparent;
+}
+
+.template-hints-panel {
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 10px 12px;
+}
+
+.template-debug-panel {
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 10px 12px;
+}
+
+.template-hints-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 6px;
 }
 
 .template-editor-main {
@@ -1914,11 +2038,12 @@ refreshData()
   padding: 14px;
   background: #ffffff;
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
 }
 
 .template-editor-textarea {
   flex: 1;
-  min-height: 420px;
+  min-height: 0;
   resize: none;
   font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
   font-size: 13px;
@@ -1958,7 +2083,7 @@ refreshData()
   margin-top: 0;
   border: 1px solid #dbe4f0;
   border-radius: 12px;
-  background: #f8fafc;
+  background: #ffffff;
   padding: 14px;
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
 }
@@ -1967,6 +2092,9 @@ refreshData()
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.65) transparent;
 }
 
 .template-preview-header {
@@ -1978,13 +2106,13 @@ refreshData()
 
 .template-preview-header h5 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
 }
 
 .template-preview-desc {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   font-size: 12px;
   line-height: 1.5;
   color: #64748b;
@@ -2015,50 +2143,72 @@ refreshData()
 
 .preview-textarea {
   font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.45;
-  min-height: 180px;
+  min-height: 130px;
 }
 
-.template-preview-result {
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 10px;
-  max-height: 300px;
-  overflow: auto;
+.template-preview-meta {
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #64748b;
 }
 
-.template-preview-result.success {
-  border-color: rgba(134, 239, 172, 0.8);
-  background: rgba(240, 253, 244, 0.85);
+.template-preview-meta code {
+  background: rgba(241, 245, 249, 0.95);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 4px;
+  padding: 0 4px;
+  color: #334155;
 }
 
-.template-preview-result.error {
-  border-color: rgba(252, 165, 165, 0.85);
-  background: rgba(254, 242, 242, 0.9);
+.template-output-editor {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
-.preview-result-title {
+.template-left-column::-webkit-scrollbar,
+.template-preview-panel-full::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.template-left-column::-webkit-scrollbar-track,
+.template-preview-panel-full::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.template-left-column::-webkit-scrollbar-thumb,
+.template-preview-panel-full::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.55);
+  border-radius: 999px;
+}
+
+.template-left-column::-webkit-scrollbar-thumb:hover,
+.template-preview-panel-full::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.72);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 10px;
   font-size: 12px;
   font-weight: 700;
-  margin-bottom: 6px;
 }
 
-.preview-result-line {
-  font-size: 12px;
-  color: #334155;
-  margin-bottom: 4px;
+.status-pill.success {
+  color: #166534;
+  background: rgba(187, 247, 208, 0.5);
+  border: 1px solid rgba(134, 239, 172, 0.8);
 }
 
-.preview-result-content {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #0f172a;
+.status-pill.error {
+  color: #991b1b;
+  background: rgba(254, 202, 202, 0.55);
+  border: 1px solid rgba(252, 165, 165, 0.85);
 }
 
 .form-input, .form-textarea {
@@ -2314,8 +2464,8 @@ refreshData()
 
   .template-workspace-body {
     grid-template-columns: 1fr;
-    min-height: auto;
-    padding: 12px 16px 16px;
+    height: calc(100vh - 74px);
+    padding: 10px 12px 12px;
   }
 
   .template-controls-grid {
