@@ -493,22 +493,28 @@
           <p v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'" class="template-editor-desc">
             推荐先在左侧填写调试数据，再编辑模板并预览，确认无误后保存。
           </p>
-          <textarea
+          <PromptTemplateEditor
             v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'"
-            id="workspacePromptTemplate"
             v-model="templateWorkspace.promptTemplate"
-            placeholder="使用模板变量，例如 {{ input.text }}"
-            class="form-textarea template-editor-textarea"
-            spellcheck="false"
-          ></textarea>
+            class="template-editor-textarea"
+          />
+          <div v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'" class="template-editor-status-hint">
+            提示：<code v-pre>{{ }}</code> 表达式已高亮，<code>fn.xxx()</code> 未内置函数会红色标记。
+          </div>
           <div class="template-local-only" v-else>
             当前为本地构建模式，运行时将使用 Operation 本地提示词。
           </div>
 
           <div class="prompt-template-hint">
-            <div>可用变量：<code v-pre>{{ input.xxx }}</code>、<code v-pre>{{ ctx.xxx }}</code>、<code v-pre>{{ operationType }}</code>、<code v-pre>{{ fn.xxx(...) }}</code></div>
+            <div>可用变量：<code v-pre>{{ input.xxx }}</code>、<code v-pre>{{ ctx.xxx }}</code>、<code v-pre>{{ operationType }}</code>、<code v-pre>{{ localPrompt }}</code>、<code v-pre>{{ fn.xxx(...) }}</code></div>
             <div>结构语法：<code v-pre>{{#if input.debug}}调试模式{{else}}正常模式{{/if}}</code>、<code v-pre>{{#each ctx.items}}- {{ item }}{{/each}}</code></div>
-            <div>时间函数：<code v-pre>{{ fn.nowMillis() }}</code>、<code v-pre>{{ fn.dateAdd(fn.now('yyyy-MM-dd HH:mm:ss'), 3, 'days', 'yyyy-MM-dd') }}</code></div>
+            <div>内置函数（与后端引擎一致）：</div>
+            <div class="function-doc-list">
+              <div v-for="fnDoc in promptFunctionDocs" :key="fnDoc.name" class="function-doc-item">
+                <code>{{ fnDoc.signature }}</code>
+                <span>{{ fnDoc.description }}</span>
+              </div>
+            </div>
           </div>
 
           <div v-if="promptPreviewError" class="template-preview-result error">
@@ -550,6 +556,8 @@ import { ref, reactive, computed } from 'vue'
 import { aiModelApi } from '@/services/aiModelApi'
 import { aiOperationApi } from '@/services/aiOperationApi'
 import type { OperationConfigData, OperationsResponse, ModelConfigData } from '@/types/system'
+import PromptTemplateEditor from '@/components/PromptTemplateEditor.vue'
+import { PROMPT_TEMPLATE_FUNCTIONS } from '@/constants/promptTemplateBuiltins'
 // 导入统一的AI提供商工具函数
 import { getProviderName, getProviderIcon, getAllProviders } from '@/utils/aiProviders'
 
@@ -670,6 +678,8 @@ const pendingCount = computed(() => {
   if (!operationsData.value?.configs) return 0
   return Object.values(operationsData.value.configs).filter(op => !op.modelName).length
 })
+
+const promptFunctionDocs = PROMPT_TEMPLATE_FUNCTIONS
 
 const currentLocalPromptTemplate = computed(() => {
   const operationType = templateWorkspaceOperationType.value || editingOperationType.value
@@ -1767,6 +1777,28 @@ refreshData()
   color: #334155;
 }
 
+.function-doc-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 10px;
+  margin-top: 4px;
+}
+
+.function-doc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid rgba(203, 213, 225, 0.7);
+  border-radius: 8px;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.function-doc-item span {
+  font-size: 11px;
+  color: #64748b;
+}
+
 .template-entry-actions {
   display: flex;
   gap: 8px;
@@ -1897,6 +1929,20 @@ refreshData()
   margin: 0 0 8px;
   font-size: 12px;
   color: #64748b;
+}
+
+.template-editor-status-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.template-editor-status-hint code {
+  background: rgba(241, 245, 249, 0.95);
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 4px;
+  padding: 0 4px;
+  color: #334155;
 }
 
 .template-local-only {
@@ -2273,6 +2319,10 @@ refreshData()
   }
 
   .template-controls-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .function-doc-list {
     grid-template-columns: 1fr;
   }
 }

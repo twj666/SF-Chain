@@ -13,6 +13,9 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.2",
+    "@codemirror/state": "^6.5.4",
+    "@codemirror/view": "^6.39.13",
     "lodash-es": "^4.17.21",
     "marked": "^16.1.0",
     "pinia": "^3.0.3",
