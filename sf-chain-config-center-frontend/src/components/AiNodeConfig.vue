@@ -1,7 +1,7 @@
 <template>
   <div class="ai-node-config-content">
     <!-- 紧凑型页面头部 - 整合统计信息 -->
-    <div class="content-header">
+    <div class="content-header" v-if="!templateWorkspaceOperationType">
       <div class="header-left">
         <h2>AI节点</h2>
       </div>
@@ -48,7 +48,7 @@
     </div>
 
     <!-- 搜索和筛选工具栏 -->
-    <div class="toolbar">
+    <div class="toolbar" v-if="!templateWorkspaceOperationType">
       <div class="search-container">
         <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -89,7 +89,7 @@
     </div>
 
     <!-- 主要内容区域 -->
-    <div class="main-content">
+    <div class="main-content" v-if="!templateWorkspaceOperationType">
       <!-- 加载状态 -->
       <div v-if="loading && !operationsData" class="loading-state">
         <div class="loading-spinner"></div>
@@ -201,6 +201,15 @@
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </button>
+            <button
+              @click="openTemplateWorkspace(String(operationType), operation)"
+              class="action-btn template large"
+              title="模板配置"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"></path>
               </svg>
             </button>
           </div>
@@ -348,53 +357,6 @@
               </label>
             </div>
 
-            <div class="form-group">
-              <label for="operationPromptMode">提示词来源</label>
-              <select id="operationPromptMode" v-model="operationForm.promptMode" class="form-input">
-                <option value="LOCAL_ONLY">本地构建</option>
-                <option value="TEMPLATE_OVERRIDE">远程模板覆盖</option>
-              </select>
-            </div>
-
-            <div class="form-group checkbox-group">
-              <label class="checkbox-label">
-                <input
-                  type="checkbox"
-                  v-model="operationForm.promptStrictRender"
-                  class="checkbox-input"
-                />
-                <span>模板严格渲染</span>
-              </label>
-            </div>
-
-            <div class="form-group full-width" v-if="operationForm.promptMode === 'TEMPLATE_OVERRIDE'">
-              <div class="template-entry-card">
-                <div class="template-entry-main">
-                  <div class="template-entry-title">提示词模板</div>
-                  <div class="template-entry-meta">
-                    当前长度：{{ (operationForm.promptTemplate || '').length }} 字符
-                  </div>
-                </div>
-                <div class="template-entry-actions">
-                  <button
-                    v-if="currentPromptTemplateExample"
-                    type="button"
-                    class="template-example-btn"
-                    @click="fillPromptTemplateExample"
-                  >
-                    填充示例模板
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-primary btn-sm"
-                    @click="openTemplateEditor"
-                  >
-                    编辑模板
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <div class="form-group full-width">
               <label for="operationDescription">描述</label>
               <textarea
@@ -420,114 +382,147 @@
       </div>
     </div>
 
-    <div v-if="showTemplateEditor" class="modal-overlay template-editor-overlay">
-      <div class="template-editor-modal" @click.stop>
-        <div class="modal-header template-editor-header">
-          <h3>模板编辑器 - {{ editingOperationType }}</h3>
-          <button @click="closeTemplateEditor" class="btn-close">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+    <div v-if="templateWorkspaceOperationType" class="template-workspace">
+      <div class="template-workspace-header">
+        <button type="button" class="btn btn-secondary btn-sm" @click="closeTemplateWorkspace">
+          返回节点列表
+        </button>
+        <div class="template-workspace-title-wrap">
+          <h3>提示词模板配置 - {{ templateWorkspaceOperationType }}</h3>
+          <p>{{ templateWorkspaceOperationDesc || '在这里配置提示词来源与模板内容' }}</p>
+        </div>
+        <button type="button" class="btn btn-primary" :disabled="saving" @click="saveTemplateWorkspace">
+          <span v-if="saving" class="btn-loading"></span>
+          <span>{{ saving ? '保存中...' : '保存模板配置' }}</span>
+        </button>
+      </div>
+
+      <div class="template-workspace-body">
+        <div class="template-preview-panel template-preview-panel-full">
+          <div class="template-preview-header">
+            <h5>调试数据</h5>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              :disabled="previewingTemplate || templateWorkspace.promptMode !== 'TEMPLATE_OVERRIDE'"
+              @click="previewPromptTemplate"
+            >
+              <span v-if="previewingTemplate" class="btn-loading"></span>
+              <span>{{ previewingTemplate ? '预览中...' : '预览渲染' }}</span>
+            </button>
+          </div>
+          <p class="template-preview-desc">用于模拟运行时参数，点击“预览渲染”可在右侧即时查看模板结果。</p>
+
+          <div class="template-preview-grid">
+            <div class="template-preview-input">
+              <label for="previewInputJson">input JSON（方法入参）</label>
+              <textarea
+                id="previewInputJson"
+                v-model="promptPreviewInputJson"
+                class="form-textarea preview-textarea"
+                rows="7"
+                spellcheck="false"
+              ></textarea>
+            </div>
+            <div class="template-preview-input">
+              <label for="previewCtxJson">ctx JSON（上下文参数）</label>
+              <textarea
+                id="previewCtxJson"
+                v-model="promptPreviewCtxJson"
+                class="form-textarea preview-textarea"
+                rows="7"
+                spellcheck="false"
+              ></textarea>
+            </div>
+          </div>
         </div>
 
-        <div class="template-editor-body">
-          <div class="template-editor-main">
-            <div class="prompt-template-header">
-              <label for="operationPromptTemplate">提示词模板</label>
-              <div class="template-entry-actions">
+        <div class="template-editor-main">
+          <div class="template-controls-grid">
+            <div class="template-control-card">
+              <div class="template-control-title">提示词来源</div>
+              <div class="template-control-desc">选择运行时使用本地提示词，或使用配置中心远程模板。</div>
+              <div class="prompt-mode-segment">
                 <button
-                  v-if="currentPromptTemplateExample"
                   type="button"
-                  class="template-example-btn"
-                  @click="fillPromptTemplateExample"
+                  class="prompt-mode-btn"
+                  :class="{ active: templateWorkspace.promptMode === 'LOCAL_ONLY' }"
+                  @click="templateWorkspace.promptMode = 'LOCAL_ONLY'"
                 >
-                  填充示例模板
+                  本地构建
+                </button>
+                <button
+                  type="button"
+                  class="prompt-mode-btn"
+                  :class="{ active: templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE' }"
+                  @click="templateWorkspace.promptMode = 'TEMPLATE_OVERRIDE'"
+                >
+                  远程模板覆盖
                 </button>
               </div>
             </div>
-            <textarea
-              id="operationPromptTemplate"
-              v-model="operationForm.promptTemplate"
-              placeholder="使用模板变量，例如 {{ input.text }}"
-              class="form-textarea template-editor-textarea"
-              spellcheck="false"
-            ></textarea>
-            <div class="prompt-template-hint">
-              <div>可用变量：<code v-pre>{{ input.xxx }}</code>、<code v-pre>{{ ctx.xxx }}</code>、<code v-pre>{{ localPrompt }}</code>、<code v-pre>{{ operationType }}</code>、<code v-pre>{{ fn.xxx(...) }}</code></div>
-              <div>结构语法：<code v-pre>{{#if input.debug}}调试模式{{else}}正常模式{{/if}}</code>、<code v-pre>{{#each ctx.items}}- {{ item }}{{/each}}</code></div>
-              <div>时间函数：<code v-pre>{{ fn.nowMillis() }}</code>、<code v-pre>{{ fn.dateAdd(fn.now('yyyy-MM-dd HH:mm:ss'), 3, 'days', 'yyyy-MM-dd') }}</code></div>
+
+            <div class="template-control-card">
+              <div class="template-control-title">模板严格渲染</div>
+              <div class="template-control-desc">开启后表达式为空会直接报错，便于及时发现模板问题。</div>
+              <label class="template-strict-toggle">
+                <input
+                  type="checkbox"
+                  v-model="templateWorkspace.promptStrictRender"
+                  class="template-strict-input"
+                />
+                <span class="template-strict-slider"></span>
+                <span class="template-strict-label">模板严格渲染</span>
+              </label>
             </div>
           </div>
 
-          <div class="template-preview-panel template-preview-panel-full">
-            <div class="template-preview-header">
-              <h5>模板调试预览</h5>
+          <div class="prompt-template-header" v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'">
+            <label for="workspacePromptTemplate">提示词模板</label>
+            <div class="template-entry-actions">
               <button
+                v-if="currentLocalPromptTemplate"
                 type="button"
-                class="btn btn-secondary btn-sm"
-                :disabled="previewingTemplate"
-                @click="previewPromptTemplate"
+                class="template-example-btn"
+                @click="restoreLocalPromptTemplate"
               >
-                <span v-if="previewingTemplate" class="btn-loading"></span>
-                <span>{{ previewingTemplate ? '预览中...' : '预览渲染' }}</span>
+                恢复本地模板
               </button>
             </div>
-
-            <div class="template-preview-grid">
-              <div class="template-preview-input">
-                <label for="previewInputJson">input JSON</label>
-                <textarea
-                  id="previewInputJson"
-                  v-model="promptPreviewInputJson"
-                  class="form-textarea preview-textarea"
-                  rows="7"
-                  spellcheck="false"
-                ></textarea>
-              </div>
-              <div class="template-preview-input">
-                <label for="previewCtxJson">ctx JSON</label>
-                <textarea
-                  id="previewCtxJson"
-                  v-model="promptPreviewCtxJson"
-                  class="form-textarea preview-textarea"
-                  rows="7"
-                  spellcheck="false"
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="template-preview-input">
-              <label for="previewLocalPrompt">localPrompt (可选)</label>
-              <textarea
-                id="previewLocalPrompt"
-                v-model="promptPreviewLocalPrompt"
-                class="form-textarea preview-textarea"
-                rows="3"
-                spellcheck="false"
-                placeholder="用于模板中引用 {{ localPrompt }} 的调试数据"
-              ></textarea>
-            </div>
-
-            <div v-if="promptPreviewError" class="template-preview-result error">
-              <div class="preview-result-title">渲染失败</div>
-              <div class="preview-result-line" v-if="promptPreviewError.expression">
-                表达式：<code>{{ promptPreviewError.expression }}</code>
-              </div>
-              <div class="preview-result-line">{{ promptPreviewError.message }}</div>
-            </div>
-
-            <div v-if="promptPreviewRendered" class="template-preview-result success">
-              <div class="preview-result-title">渲染结果</div>
-              <pre class="preview-result-content">{{ promptPreviewRendered }}</pre>
-            </div>
           </div>
-        </div>
+          <p v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'" class="template-editor-desc">
+            推荐先在左侧填写调试数据，再编辑模板并预览，确认无误后保存。
+          </p>
+          <textarea
+            v-if="templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE'"
+            id="workspacePromptTemplate"
+            v-model="templateWorkspace.promptTemplate"
+            placeholder="使用模板变量，例如 {{ input.text }}"
+            class="form-textarea template-editor-textarea"
+            spellcheck="false"
+          ></textarea>
+          <div class="template-local-only" v-else>
+            当前为本地构建模式，运行时将使用 Operation 本地提示词。
+          </div>
 
-        <div class="form-actions template-editor-actions">
-          <button type="button" @click="closeTemplateEditor" class="btn btn-secondary">
-            完成
-          </button>
+          <div class="prompt-template-hint">
+            <div>可用变量：<code v-pre>{{ input.xxx }}</code>、<code v-pre>{{ ctx.xxx }}</code>、<code v-pre>{{ operationType }}</code>、<code v-pre>{{ fn.xxx(...) }}</code></div>
+            <div>结构语法：<code v-pre>{{#if input.debug}}调试模式{{else}}正常模式{{/if}}</code>、<code v-pre>{{#each ctx.items}}- {{ item }}{{/each}}</code></div>
+            <div>时间函数：<code v-pre>{{ fn.nowMillis() }}</code>、<code v-pre>{{ fn.dateAdd(fn.now('yyyy-MM-dd HH:mm:ss'), 3, 'days', 'yyyy-MM-dd') }}</code></div>
+          </div>
+
+          <div v-if="promptPreviewError" class="template-preview-result error">
+            <div class="preview-result-title">渲染失败</div>
+            <div class="preview-result-line" v-if="promptPreviewError.expression">
+              表达式：<code>{{ promptPreviewError.expression }}</code>
+            </div>
+            <div class="preview-result-line">{{ promptPreviewError.message }}</div>
+          </div>
+
+          <div v-if="promptPreviewRendered" class="template-preview-result success">
+            <div class="preview-result-title">渲染结果</div>
+            <pre class="preview-result-content">{{ promptPreviewRendered }}</pre>
+          </div>
         </div>
       </div>
     </div>
@@ -565,65 +560,6 @@ interface ModelData {
   enabled: boolean
 }
 
-const PROMPT_TEMPLATE_EXAMPLES: Record<string, string> = {
-  CONTENT_MODIFICATION_OP: `你是一个专业的文档编辑助手，擅长根据批注内容精准修改文档。
-
-原始文档：
-\`\`\`
-{{ input.originalText }}
-\`\`\`
-
-批注内容：{{ input.annotationContent }}
-选中文本：{{ input.selectedText }}
-保持原文风格：{{ input.keepOriginalStyle }}
-
-请返回 JSON：
-{
-  "reason": "本次修改的总体原因和目标",
-  "changes": [
-    {
-      "line": "行号",
-      "content": "该行修改后的完整内容"
-    }
-  ]
-}`,
-  COPYWRITING_GENERATION: `你是一位擅长抖音科普的内容创作者，请围绕主题生成口播文案。
-
-主题：{{ input.topic }}
-项目描述：{{ input.description }}
-参考素材：{{ input.materials }}
-目标字数：{{ input.wordLimit }}
-额外要求：{{ input.additionalRequirements }}
-
-输出要求：
-1. 只输出正文，不要解释过程
-2. 语言口语化、节奏紧凑
-3. 保持信息准确`,
-  ANNOTATION_ANALYSIS_OP: `你是一位资深内容策划师，请分析文案并给出可执行优化建议。
-
-平台风格：{{ input.contentStyle }}
-分析类型：{{ input.analysisType }}
-分析深度：{{ input.analysisDepth }}
-
-待分析文案：
-{{ input.content }}
-
-返回 JSON：
-{
-  "overallScore": 85,
-  "analysisSummary": "整体评价",
-  "suggestions": [
-    {
-      "selectedText": "原文片段",
-      "content": "具体建议",
-      "type": "OPTIMIZATION",
-      "severity": "MEDIUM",
-      "color": "#4ECDC4"
-    }
-  ]
-}`
-}
-
 // 状态管理
 const loading = ref(false)
 const saving = ref(false)
@@ -637,11 +573,11 @@ const filterStatus = ref<'all' | 'configured' | 'pending'>('all')
 const showSuccessToast = ref(false)
 const showErrorToast = ref(false)
 const toastMessage = ref('')
-const showTemplateEditor = ref(false)
+const templateWorkspaceOperationType = ref('')
+const templateWorkspaceOperationDesc = ref('')
 const previewingTemplate = ref(false)
 const promptPreviewInputJson = ref('{\n  "topic": "AI模板优化"\n}')
 const promptPreviewCtxJson = ref('{\n  "keywords": ["模板", "渲染", "调试"]\n}')
-const promptPreviewLocalPrompt = ref('')
 const promptPreviewRendered = ref('')
 const promptPreviewError = ref<{ expression?: string; message: string } | null>(null)
 
@@ -665,6 +601,16 @@ const operationForm = reactive<OperationConfigData>({
   promptStrictRender: false,
   customParams: {},
   modelName: ''
+})
+
+const templateWorkspace = reactive<{
+  promptMode: 'LOCAL_ONLY' | 'TEMPLATE_OVERRIDE'
+  promptTemplate: string
+  promptStrictRender: boolean
+}>({
+  promptMode: 'LOCAL_ONLY',
+  promptTemplate: '',
+  promptStrictRender: false
 })
 
 // 计算属性
@@ -725,12 +671,12 @@ const pendingCount = computed(() => {
   return Object.values(operationsData.value.configs).filter(op => !op.modelName).length
 })
 
-const currentPromptTemplateExample = computed(() => {
-  const operationType = editingOperationType.value
-  if (!operationType) {
+const currentLocalPromptTemplate = computed(() => {
+  const operationType = templateWorkspaceOperationType.value || editingOperationType.value
+  if (!operationType || !operationsData.value?.configs?.[operationType]) {
     return ''
   }
-  return PROMPT_TEMPLATE_EXAMPLES[operationType] || ''
+  return operationsData.value.configs[operationType].localPromptTemplate || ''
 })
 
 // 辅助函数
@@ -838,26 +784,61 @@ const editOperation = (operationType: string, operation: OperationConfigData) =>
 const closeEditOperation = () => {
   editingOperation.value = null
   editingOperationType.value = ''
-  showTemplateEditor.value = false
   promptPreviewRendered.value = ''
   promptPreviewError.value = null
 }
 
-const openTemplateEditor = () => {
-  showTemplateEditor.value = true
-}
-
-const closeTemplateEditor = () => {
-  showTemplateEditor.value = false
-}
-
-const fillPromptTemplateExample = () => {
-  const example = currentPromptTemplateExample.value
-  if (!example) {
+const restoreLocalPromptTemplate = () => {
+  const localTemplate = currentLocalPromptTemplate.value
+  if (!localTemplate) {
+    showToast('当前操作没有可恢复的本地模板', 'error')
     return
   }
-  operationForm.promptMode = 'TEMPLATE_OVERRIDE'
-  operationForm.promptTemplate = example
+  templateWorkspace.promptMode = 'TEMPLATE_OVERRIDE'
+  templateWorkspace.promptTemplate = localTemplate
+  showToast('已恢复本地模板，可继续编辑')
+}
+
+const openTemplateWorkspace = (operationType: string, operation: OperationConfigData) => {
+  templateWorkspaceOperationType.value = operationType
+  templateWorkspaceOperationDesc.value = operation.description || ''
+  templateWorkspace.promptMode = operation.promptMode || 'LOCAL_ONLY'
+  templateWorkspace.promptTemplate = operation.promptTemplate || ''
+  templateWorkspace.promptStrictRender = operation.promptStrictRender ?? false
+  promptPreviewRendered.value = ''
+  promptPreviewError.value = null
+}
+
+const closeTemplateWorkspace = () => {
+  templateWorkspaceOperationType.value = ''
+  templateWorkspaceOperationDesc.value = ''
+  promptPreviewRendered.value = ''
+  promptPreviewError.value = null
+}
+
+const saveTemplateWorkspace = async () => {
+  const operationType = templateWorkspaceOperationType.value
+  if (!operationType || !operationsData.value?.configs[operationType]) {
+    showToast('找不到目标操作节点', 'error')
+    return
+  }
+  try {
+    saving.value = true
+    const baseConfig = operationsData.value.configs[operationType]
+    await aiOperationApi.saveOperationConfig(operationType, {
+      ...baseConfig,
+      promptMode: templateWorkspace.promptMode,
+      promptTemplate: templateWorkspace.promptMode === 'TEMPLATE_OVERRIDE' ? templateWorkspace.promptTemplate : '',
+      promptStrictRender: templateWorkspace.promptStrictRender
+    })
+    showToast('模板配置保存成功')
+    await refreshData()
+  } catch (error: any) {
+    console.error('保存模板配置失败:', error)
+    showToast('模板保存失败: ' + (error.message || '未知错误'), 'error')
+  } finally {
+    saving.value = false
+  }
 }
 
 const parsePreviewJson = (raw: string, field: 'input' | 'ctx') => {
@@ -877,7 +858,11 @@ const parsePreviewJson = (raw: string, field: 'input' | 'ctx') => {
 }
 
 const previewPromptTemplate = async () => {
-  if (!operationForm.promptTemplate?.trim()) {
+  if (templateWorkspace.promptMode !== 'TEMPLATE_OVERRIDE') {
+    showToast('当前是本地构建模式，无需预览远程模板', 'error')
+    return
+  }
+  if (!templateWorkspace.promptTemplate?.trim()) {
     showToast('请先填写提示词模板', 'error')
     return
   }
@@ -890,12 +875,11 @@ const previewPromptTemplate = async () => {
     const ctx = parsePreviewJson(promptPreviewCtxJson.value, 'ctx')
 
     const response = await aiOperationApi.previewPromptTemplate({
-      operationType: editingOperationType.value || operationForm.operationType,
-      template: operationForm.promptTemplate || '',
-      strictRender: operationForm.promptStrictRender ?? false,
+      operationType: templateWorkspaceOperationType.value,
+      template: templateWorkspace.promptTemplate || '',
+      strictRender: templateWorkspace.promptStrictRender ?? false,
       input,
-      ctx,
-      localPrompt: promptPreviewLocalPrompt.value || ''
+      ctx
     })
 
     if (response.success) {
@@ -1576,6 +1560,18 @@ refreshData()
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
+.action-btn.template {
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #7c3aed;
+}
+
+.action-btn.template:hover {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
 .action-btn.clear {
   border-color: rgba(239, 68, 68, 0.4);
   color: #ef4444;
@@ -1771,37 +1767,67 @@ refreshData()
   color: #334155;
 }
 
-.template-entry-card {
+.template-entry-actions {
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
   align-items: center;
+}
+
+.template-controls-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  border: 1px solid rgba(203, 213, 225, 0.7);
+  margin-bottom: 12px;
+}
+
+.template-control-card {
+  border: 1px solid #dbe4f0;
   border-radius: 10px;
+  background: #f8fafc;
   padding: 10px 12px;
-  background: rgba(248, 250, 252, 0.75);
 }
 
-.template-entry-main {
-  min-width: 0;
-}
-
-.template-entry-title {
+.template-control-title {
   font-size: 13px;
   font-weight: 700;
   color: #1f2937;
 }
 
-.template-entry-meta {
+.template-control-desc {
   margin-top: 2px;
+  margin-bottom: 8px;
   font-size: 12px;
   color: #64748b;
+  line-height: 1.45;
 }
 
-.template-entry-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+.prompt-mode-segment {
+  display: inline-flex;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 2px;
+  background: #ffffff;
+}
+
+.prompt-mode-btn {
+  border: 0;
+  background: transparent;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.prompt-mode-btn:hover {
+  color: #1e293b;
+}
+
+.prompt-mode-btn.active {
+  background: #2f6fec;
+  color: #ffffff;
 }
 
 .btn-sm {
@@ -1809,70 +1835,89 @@ refreshData()
   font-size: 12px;
 }
 
-.template-editor-overlay {
-  padding: 0;
-  background: rgba(15, 23, 42, 0.36);
+.template-workspace {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
 }
 
-.template-editor-modal {
-  width: 100vw;
-  height: 100vh;
-  background: #f8fafc;
-  display: flex;
-  flex-direction: column;
-}
-
-.template-editor-header {
-  background: rgba(255, 255, 255, 0.96);
-  border-bottom: 1px solid rgba(203, 213, 225, 0.8);
-  padding-left: 20px;
-  padding-right: 20px;
-}
-
-.template-editor-body {
-  flex: 1;
-  min-height: 0;
+.template-workspace-header {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: auto 1fr auto;
   gap: 12px;
-  padding: 12px;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.75);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.template-workspace-title-wrap h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #1f2937;
+}
+
+.template-workspace-title-wrap p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.template-workspace-body {
+  min-height: calc(100vh - 190px);
+  display: grid;
+  grid-template-columns: minmax(280px, 0.72fr) minmax(620px, 1.48fr);
+  gap: 16px;
+  padding: 16px 24px 22px;
 }
 
 .template-editor-main {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(203, 213, 225, 0.65);
-  border-radius: 10px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  padding: 14px;
+  background: #ffffff;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
 }
 
 .template-editor-textarea {
   flex: 1;
-  min-height: 300px;
+  min-height: 420px;
   resize: none;
   font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.52;
 }
 
-.template-editor-actions {
-  border-top: 1px solid rgba(203, 213, 225, 0.7);
-  background: rgba(255, 255, 255, 0.94);
-  padding: 10px 16px;
+.template-editor-desc {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.template-local-only {
+  border: 1px dashed rgba(203, 213, 225, 0.9);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #64748b;
+  font-size: 13px;
+  background: rgba(248, 250, 252, 0.8);
 }
 
 .template-preview-panel {
-  margin-top: 12px;
-  border: 1px solid rgba(203, 213, 225, 0.65);
-  border-radius: 10px;
-  background: rgba(248, 250, 252, 0.7);
-  padding: 12px;
+  margin-top: 0;
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 14px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
 }
 
 .template-preview-panel-full {
-  margin-top: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -1887,21 +1932,35 @@ refreshData()
 
 .template-preview-header h5 {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: #334155;
 }
 
+.template-preview-desc {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
 .template-preview-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
 .template-preview-input {
   display: flex;
   flex-direction: column;
-  margin-top: 10px;
+  margin-top: 0;
+}
+
+.template-preview-input label {
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 600;
 }
 
 .template-preview-input:first-child {
@@ -1910,8 +1969,9 @@ refreshData()
 
 .preview-textarea {
   font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.45;
+  min-height: 180px;
 }
 
 .template-preview-result {
@@ -1919,6 +1979,8 @@ refreshData()
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 10px;
+  max-height: 300px;
+  overflow: auto;
 }
 
 .template-preview-result.success {
@@ -1981,6 +2043,62 @@ refreshData()
   font-size: 13px;
   cursor: pointer;
   font-weight: 500;
+}
+
+.template-strict-group {
+  align-items: flex-end;
+}
+
+.template-strict-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.template-strict-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.template-strict-slider {
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  position: relative;
+  transition: background-color 0.2s ease;
+  box-shadow: inset 0 0 0 1px rgba(100, 116, 139, 0.25);
+}
+
+.template-strict-slider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.template-strict-input:checked + .template-strict-slider {
+  background: #3b82f6;
+}
+
+.template-strict-input:checked + .template-strict-slider::after {
+  transform: translateX(18px);
+}
+
+.template-strict-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
 }
 
 .operation-checkboxes {
@@ -2138,7 +2256,23 @@ refreshData()
     grid-template-columns: 1fr;
   }
 
-  .template-editor-body {
+  .template-workspace {
+    margin: 0;
+  }
+
+  .template-workspace-header {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    padding: 12px 16px;
+  }
+
+  .template-workspace-body {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 12px 16px 16px;
+  }
+
+  .template-controls-grid {
     grid-template-columns: 1fr;
   }
 }

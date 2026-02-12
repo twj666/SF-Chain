@@ -48,6 +48,7 @@ function mapToOperationConfig(item: TenantOperationConfig): OperationConfigData 
     retryCount: typeof cfg.retryCount === 'number' ? cfg.retryCount : undefined,
     promptMode,
     promptTemplate: typeof cfg.promptTemplate === 'string' ? cfg.promptTemplate : undefined,
+    localPromptTemplate: typeof catalog.localPromptTemplate === 'string' ? catalog.localPromptTemplate : undefined,
     promptStrictRender: typeof cfg.promptStrictRender === 'boolean' ? cfg.promptStrictRender : false,
     outputFormat: typeof cfg.outputFormat === 'string' ? cfg.outputFormat : undefined,
     customParams: typeof cfg.customParams === 'object' && cfg.customParams !== null

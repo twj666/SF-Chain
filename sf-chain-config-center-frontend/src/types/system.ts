@@ -70,6 +70,7 @@ export interface OperationConfigData {
   thinkingMode?: boolean
   promptMode?: 'LOCAL_ONLY' | 'TEMPLATE_OVERRIDE'
   promptTemplate?: string
+  localPromptTemplate?: string
   promptStrictRender?: boolean
   outputFormat?: string
   customParams?: Record<string, unknown>

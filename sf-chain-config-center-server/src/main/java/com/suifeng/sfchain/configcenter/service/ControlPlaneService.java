@@ -874,6 +874,9 @@ public class ControlPlaneService {
         if (normalizeOptional(item.getLocalPromptTemplateChecksum()) != null) {
             meta.put("localPromptTemplateChecksum", item.getLocalPromptTemplateChecksum().trim());
         }
+        if (normalizeOptional(item.getLocalPromptTemplate()) != null) {
+            meta.put("localPromptTemplate", item.getLocalPromptTemplate().trim());
+        }
         return meta;
     }
 

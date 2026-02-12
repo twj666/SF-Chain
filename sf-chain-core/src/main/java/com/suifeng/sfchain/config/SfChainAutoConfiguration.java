@@ -3,6 +3,7 @@ package com.suifeng.sfchain.config;
 import com.suifeng.sfchain.core.AIOperationRegistry;
 import com.suifeng.sfchain.core.AIService;
 import com.suifeng.sfchain.core.ModelRegistry;
+import com.suifeng.sfchain.core.PromptTemplateEngine;
 import com.suifeng.sfchain.core.logging.AICallLogAspect;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
 import com.suifeng.sfchain.core.logging.upload.AICallLogUploadGateway;
@@ -18,6 +19,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * SF-Chain 自动配置类
@@ -74,6 +76,12 @@ public class SfChainAutoConfiguration {
     public AICallLogAspect aiCallLogAspect(AICallLogManager logManager) {
         log.info("初始化SF-Chain AI调用日志切面");
         return new AICallLogAspect(logManager);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public PromptTemplateEngine promptTemplateEngine(ObjectMapper objectMapper) {
+        return new PromptTemplateEngine(objectMapper);
     }
 
     @Bean
