@@ -1,4 +1,8 @@
-﻿import { controlPlaneApi, type TenantOperationConfig } from './controlPlaneApi'
+﻿import {
+  controlPlaneApi,
+  type TenantOperationConfig,
+  type PromptTemplatePreviewResponse
+} from './controlPlaneApi'
 import { getScopeContext } from './scopeContext'
 import type { OperationConfigData, OperationsResponse, OperationDetailResponse, ApiResponse } from '@/types/system'
 
@@ -13,6 +17,7 @@ function requireScope() {
 function mapToOperationConfig(item: TenantOperationConfig): OperationConfigData {
   const cfg = item.config || {}
   const catalog = (cfg._catalog as Record<string, unknown>) || {}
+  const promptMode = cfg.promptMode === 'TEMPLATE_OVERRIDE' ? 'TEMPLATE_OVERRIDE' : 'LOCAL_ONLY'
 
   return {
     operationType: String(item.operationType),
@@ -41,9 +46,9 @@ function mapToOperationConfig(item: TenantOperationConfig): OperationConfigData 
     streamOutput: typeof cfg.streamOutput === 'boolean' ? cfg.streamOutput : undefined,
     timeout: typeof cfg.timeout === 'number' ? cfg.timeout : undefined,
     retryCount: typeof cfg.retryCount === 'number' ? cfg.retryCount : undefined,
-    promptPrefix: typeof cfg.promptPrefix === 'string' ? cfg.promptPrefix : undefined,
-    promptSuffix: typeof cfg.promptSuffix === 'string' ? cfg.promptSuffix : undefined,
-    systemPrompt: typeof cfg.systemPrompt === 'string' ? cfg.systemPrompt : undefined,
+    promptMode,
+    promptTemplate: typeof cfg.promptTemplate === 'string' ? cfg.promptTemplate : undefined,
+    promptStrictRender: typeof cfg.promptStrictRender === 'boolean' ? cfg.promptStrictRender : false,
     outputFormat: typeof cfg.outputFormat === 'string' ? cfg.outputFormat : undefined,
     customParams: typeof cfg.customParams === 'object' && cfg.customParams !== null
       ? (cfg.customParams as Record<string, unknown>)
@@ -61,9 +66,9 @@ function toConfigPayload(config: OperationConfigData): Record<string, unknown> {
     streamOutput: config.streamOutput,
     timeout: config.timeout,
     retryCount: config.retryCount,
-    promptPrefix: config.promptPrefix,
-    promptSuffix: config.promptSuffix,
-    systemPrompt: config.systemPrompt,
+    promptMode: config.promptMode || 'LOCAL_ONLY',
+    promptTemplate: config.promptMode === 'TEMPLATE_OVERRIDE' ? config.promptTemplate : undefined,
+    promptStrictRender: config.promptStrictRender ?? false,
     outputFormat: config.outputFormat,
     customParams: config.customParams || {}
   }
@@ -141,5 +146,16 @@ export const aiOperationApi = {
       success: true,
       message: '批量映射更新成功'
     }
+  },
+
+  async previewPromptTemplate(payload: {
+    operationType?: string
+    template: string
+    strictRender: boolean
+    input?: Record<string, unknown>
+    ctx?: Record<string, unknown>
+    localPrompt?: string
+  }): Promise<PromptTemplatePreviewResponse> {
+    return controlPlaneApi.previewPromptTemplate(payload)
   }
 }

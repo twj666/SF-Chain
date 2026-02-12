@@ -539,6 +539,8 @@ public class RemoteConfigClient {
         private int defaultMaxTokens;
         private double defaultTemperature;
         private List<String> supportedModels;
+        private String localPromptTemplate;
+        private String localPromptTemplateChecksum;
 
         public String getOperationType() {
             return operationType;
@@ -618,6 +620,22 @@ public class RemoteConfigClient {
 
         public void setSupportedModels(List<String> supportedModels) {
             this.supportedModels = supportedModels;
+        }
+
+        public String getLocalPromptTemplate() {
+            return localPromptTemplate;
+        }
+
+        public void setLocalPromptTemplate(String localPromptTemplate) {
+            this.localPromptTemplate = localPromptTemplate;
+        }
+
+        public String getLocalPromptTemplateChecksum() {
+            return localPromptTemplateChecksum;
+        }
+
+        public void setLocalPromptTemplateChecksum(String localPromptTemplateChecksum) {
+            this.localPromptTemplateChecksum = localPromptTemplateChecksum;
         }
     }
 }

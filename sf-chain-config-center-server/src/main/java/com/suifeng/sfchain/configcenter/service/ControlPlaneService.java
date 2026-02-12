@@ -15,6 +15,7 @@ import com.suifeng.sfchain.configcenter.repository.AppRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantModelConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantOperationConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantRepository;
+import com.suifeng.sfchain.core.PromptTemplateEngine;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -513,6 +514,7 @@ public class ControlPlaneService {
         int created = 0;
         int existed = 0;
         int ignored = 0;
+        int backfilledTemplate = 0;
         for (ConfigDtos.OperationCatalogItem item : operations) {
             if (item == null || normalizeOptional(item.getOperationType()) == null) {
                 ignored++;
@@ -520,6 +522,13 @@ public class ControlPlaneService {
             }
             String operationType = normalizeRequired(item.getOperationType(), "operationType");
             if (existing.containsKey(operationType)) {
+                TenantOperationConfigEntity entity = existing.get(operationType);
+                Map<String, Object> mergedConfig = mergeCatalogConfig(entity.getConfigJson(), item);
+                if (!isConfigEquivalent(entity.getConfigJson(), mergedConfig)) {
+                    entity.setConfigJson(mergedConfig);
+                    tenantOperationConfigRepository.save(entity);
+                    backfilledTemplate++;
+                }
                 existed++;
                 continue;
             }
@@ -529,7 +538,7 @@ public class ControlPlaneService {
             entity.setOperationType(operationType);
             entity.setActive(item.isEnabled());
             entity.setModelName(normalizeOptional(item.getDefaultModel()));
-            entity.setConfigJson(toCatalogMeta(item));
+            entity.setConfigJson(mergeCatalogConfig(Map.of(), item));
             TenantOperationConfigEntity saved = tenantOperationConfigRepository.save(entity);
             existing.put(saved.getOperationType(), saved);
             created++;
@@ -543,8 +552,8 @@ public class ControlPlaneService {
         response.setExisted(existed);
         response.setIgnored(ignored);
         response.setSyncedAt(LocalDateTime.now());
-        log.info("配置中心: 操作目录同步 tenantId={}, appId={}, received={}, created={}, existed={}, ignored={}",
-                normalizedTenantId, normalizedAppId, response.getReceived(), created, existed, ignored);
+        log.info("配置中心: 操作目录同步 tenantId={}, appId={}, received={}, created={}, existed={}, ignored={}, backfilledTemplate={}",
+                normalizedTenantId, normalizedAppId, response.getReceived(), created, existed, ignored, backfilledTemplate);
         return response;
     }
 
@@ -560,6 +569,41 @@ public class ControlPlaneService {
                         "config", item.getConfigJson() == null ? Map.of() : item.getConfigJson(),
                         "updatedAt", item.getUpdatedAt()))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public ConfigDtos.PromptTemplatePreviewResponse previewPromptTemplate(ConfigDtos.PromptTemplatePreviewRequest request) {
+        String template = normalizeRequired(request.getTemplate(), "template");
+        Map<String, Object> input = request.getInput() == null ? Map.of() : request.getInput();
+        Map<String, Object> ctx = request.getCtx() == null ? Map.of() : request.getCtx();
+        String operationType = normalizeOptional(request.getOperationType());
+        boolean strictRender = request.getStrictRender() == null || request.getStrictRender();
+
+        Map<String, Object> renderContext = new LinkedHashMap<>();
+        renderContext.put("input", input);
+        renderContext.put("ctx", ctx);
+        renderContext.put("localPrompt", request.getLocalPrompt());
+        renderContext.put("operationType", operationType == null ? "UNKNOWN_OPERATION" : operationType);
+
+        ConfigDtos.PromptTemplatePreviewResponse response = new ConfigDtos.PromptTemplatePreviewResponse();
+        PromptTemplateEngine templateEngine = new PromptTemplateEngine(objectMapper);
+        try {
+            String rendered = templateEngine.render(template, renderContext, strictRender);
+            response.setSuccess(true);
+            response.setRenderedPrompt(rendered);
+            return response;
+        } catch (PromptTemplateEngine.TemplateRenderException ex) {
+            response.setSuccess(false);
+            response.setErrorType(ex.getErrorType());
+            response.setErrorExpression(ex.getExpression());
+            response.setErrorMessage(ex.getMessage());
+            return response;
+        } catch (Exception ex) {
+            response.setSuccess(false);
+            response.setErrorType(ex.getClass().getSimpleName());
+            response.setErrorMessage(ex.getMessage());
+            return response;
+        }
     }
 
     @Transactional
@@ -685,12 +729,16 @@ public class ControlPlaneService {
             payload.put("enabled", operation.get("active") instanceof Boolean ? (Boolean) operation.get("active") : true);
             Object cfg = operation.get("config");
             Map<String, Object> config = cfg instanceof Map ? (Map<String, Object>) cfg : Map.of();
+            String promptMode = normalizeOptional(toString(config.get("promptMode")));
             payload.put("maxTokens", toInteger(config.get("maxTokens")));
             payload.put("temperature", toDouble(config.get("temperature")));
             payload.put("requireJsonOutput", toBoolean(config.get("jsonOutput"), false));
             payload.put("supportThinking", toBoolean(config.get("thinkingMode"), false));
             payload.put("retryCount", toInteger(config.get("retryCount")));
             payload.put("timeoutSeconds", toInteger(config.get("timeoutSeconds")));
+            payload.put("promptMode", promptMode == null ? "LOCAL_ONLY" : promptMode);
+            payload.put("promptTemplate", normalizeOptional(toString(config.get("promptTemplate"))));
+            payload.put("promptStrictRender", toBoolean(config.get("promptStrictRender"), false));
             result.put(operationType, payload);
         }
         return result;
@@ -767,6 +815,32 @@ public class ControlPlaneService {
         return 0L;
     }
 
+    private Map<String, Object> mergeCatalogConfig(Map<String, Object> existingConfig, ConfigDtos.OperationCatalogItem item) {
+        Map<String, Object> merged = new LinkedHashMap<>();
+        if (existingConfig != null) {
+            merged.putAll(existingConfig);
+        }
+        merged.put("_catalog", toCatalogMeta(item));
+
+        String localTemplate = normalizeOptional(item.getLocalPromptTemplate());
+        if (localTemplate != null && normalizeOptional(toString(merged.get("promptTemplate"))) == null) {
+            merged.put("promptTemplate", localTemplate);
+            merged.putIfAbsent("promptMode", "LOCAL_ONLY");
+            merged.putIfAbsent("promptStrictRender", false);
+        }
+        return merged;
+    }
+
+    private boolean isConfigEquivalent(Map<String, Object> left, Map<String, Object> right) {
+        if (left == right) {
+            return true;
+        }
+        if (left == null || right == null) {
+            return false;
+        }
+        return objectMapper.valueToTree(left).equals(objectMapper.valueToTree(right));
+    }
+
     private static Map<String, Object> toCatalogMeta(ConfigDtos.OperationCatalogItem item) {
         Map<String, Object> meta = new LinkedHashMap<>();
         if (normalizeOptional(item.getSourceClass()) != null) {
@@ -797,10 +871,10 @@ public class ControlPlaneService {
         if (!cleanedModels.isEmpty()) {
             meta.put("supportedModels", cleanedModels);
         }
-        if (meta.isEmpty()) {
-            return Map.of();
+        if (normalizeOptional(item.getLocalPromptTemplateChecksum()) != null) {
+            meta.put("localPromptTemplateChecksum", item.getLocalPromptTemplateChecksum().trim());
         }
-        return Map.of("_catalog", meta);
+        return meta;
     }
 
     private ApiKeyDtos.ValidateApiKeyResponse validateBySecret(String apiKey, String tenantId, String appId) {

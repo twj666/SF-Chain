@@ -112,6 +112,23 @@ export interface ModelConfigImportResponse {
   items: ModelImportItemResult[]
 }
 
+export interface PromptTemplatePreviewRequest {
+  operationType?: string
+  template: string
+  strictRender: boolean
+  input?: Record<string, unknown>
+  ctx?: Record<string, unknown>
+  localPrompt?: string
+}
+
+export interface PromptTemplatePreviewResponse {
+  success: boolean
+  renderedPrompt?: string
+  errorType?: string
+  errorExpression?: string
+  errorMessage?: string
+}
+
 const base = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_SYSTEM.replace('/system', '')}`
 
 export const controlPlaneApi = {
@@ -259,6 +276,14 @@ export const controlPlaneApi = {
     payload: { operationType: string; modelName?: string; active: boolean; config: Record<string, unknown> }
   ): Promise<void> {
     return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/operations`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      requireAuth: true
+    })
+  },
+
+  async previewPromptTemplate(payload: PromptTemplatePreviewRequest): Promise<PromptTemplatePreviewResponse> {
+    return apiJsonRequest(`${base}/control/template/preview`, {
       method: 'POST',
       body: JSON.stringify(payload),
       requireAuth: true

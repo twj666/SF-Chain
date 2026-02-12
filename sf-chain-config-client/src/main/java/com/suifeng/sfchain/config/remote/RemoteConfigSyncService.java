@@ -14,9 +14,12 @@ import org.springframework.util.StringUtils;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -239,12 +242,38 @@ public class RemoteConfigSyncService {
                         item.setSupportedModels(List.of(supportedModels));
                     }
                 }
+                String localTemplate = trimToNull(operation.promptTemplate());
+                if (localTemplate != null) {
+                    item.setLocalPromptTemplate(localTemplate);
+                    item.setLocalPromptTemplateChecksum(sha256Hex(localTemplate));
+                }
                 items.add(item);
             } catch (Exception ex) {
                 log.warn("Failed to build operation catalog item, operationType={}, err={}", operationType, ex.getMessage());
             }
         }
         return items;
+    }
+
+    private static String trimToNull(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private static String sha256Hex(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 not available", ex);
+        }
     }
 
     GovernanceSyncApplyResult applySnapshot(RemoteConfigSnapshot snapshot, boolean leaseAcquired) {

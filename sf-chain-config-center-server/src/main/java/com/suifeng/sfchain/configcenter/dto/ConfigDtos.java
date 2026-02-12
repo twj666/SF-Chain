@@ -104,6 +104,8 @@ public final class ConfigDtos {
         private int defaultMaxTokens;
         private double defaultTemperature;
         private List<String> supportedModels;
+        private String localPromptTemplate;
+        private String localPromptTemplateChecksum;
     }
 
     @Data
@@ -115,5 +117,24 @@ public final class ConfigDtos {
         private int existed;
         private int ignored;
         private LocalDateTime syncedAt;
+    }
+
+    @Data
+    public static class PromptTemplatePreviewRequest {
+        private String operationType;
+        private String template;
+        private Boolean strictRender = Boolean.TRUE;
+        private Map<String, Object> input;
+        private Map<String, Object> ctx;
+        private String localPrompt;
+    }
+
+    @Data
+    public static class PromptTemplatePreviewResponse {
+        private boolean success;
+        private String renderedPrompt;
+        private String errorType;
+        private String errorExpression;
+        private String errorMessage;
     }
 }

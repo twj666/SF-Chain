@@ -59,6 +59,7 @@ sf-chain:
 历史 `legacy` 模块已移除。迁移指引见：
 
 - `/Users/suifeng/Code/SF-Chain/docs/migration-to-config-center.md`
+- `/Users/suifeng/Code/SF-Chain/docs/prompt-template-operation-migration.md`
 
 ## 许可证
 

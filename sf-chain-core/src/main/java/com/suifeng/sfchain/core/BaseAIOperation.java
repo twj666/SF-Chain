@@ -18,7 +18,9 @@ import javax.annotation.PostConstruct;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,7 +36,6 @@ import static com.suifeng.sfchain.constants.AIOperationConstant.JSON_REPAIR_OP;
  */
 @Slf4j
 public abstract class BaseAIOperation<INPUT, OUTPUT> {
-
     @Autowired
     protected AIOperationRegistry operationRegistry;
 
@@ -49,6 +50,9 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
 
     @Autowired
     private AICallLogManager logManager;
+
+    @Autowired
+    private PromptTemplateEngine promptTemplateEngine;
 
     /**
      * 操作的注解信息
@@ -416,8 +420,7 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
      * @return 完整的提示词
      */
     protected String buildPromptWithContext(INPUT input, String sessionId) {
-        // 构建基础提示词
-        String basePrompt = buildPrompt(input);
+        String basePrompt = resolvePromptByConfig(input);
 
         // 如果没有会话ID，直接返回基础提示词
         if (sessionId == null || !chatContextService.sessionExists(sessionId)) {
@@ -456,6 +459,70 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
         return contextPrompt.toString();
     }
 
+    private String resolvePromptByConfig(INPUT input) {
+        AIOperationRegistry.OperationConfig config = operationRegistry.getOperationConfig(annotation.value());
+        String mode = normalizePromptMode(config.getPromptMode());
+        if (!"TEMPLATE_OVERRIDE".equals(mode)) {
+            return buildLocalPrompt(input);
+        }
+
+        String localPrompt = buildLocalPrompt(input);
+        String template = trimToNull(config.getPromptTemplate());
+        boolean strictRender = config.isPromptStrictRender();
+        if (template == null) {
+            throw new IllegalStateException("远程提示词模板为空, operation=" + annotation.value());
+        }
+
+        try {
+            String rendered = renderPromptTemplate(template, input, localPrompt, strictRender);
+            log.debug("使用远程提示词模板, operation={}", annotation.value());
+            return rendered;
+        } catch (Exception ex) {
+            throw new IllegalStateException("远程提示词模板渲染失败, operation=" + annotation.value() + ", err=" + ex.getMessage(), ex);
+        }
+    }
+
+    private String buildLocalPrompt(INPUT input) {
+        String localTemplate = trimToNull(promptTemplate());
+        if (localTemplate == null) {
+            throw new IllegalStateException("本地提示词模板为空, operation=" + annotation.value());
+        }
+        String rendered = renderPromptTemplate(
+                localTemplate,
+                input,
+                null,
+                true);
+        log.debug("使用本地提示词模板, operation={}", annotation.value());
+        return rendered;
+    }
+
+    private String renderPromptTemplate(
+            String template,
+            INPUT input,
+            String localPrompt,
+            boolean strictRender) {
+        Map<String, Object> context = new HashMap<>();
+        Map<String, Object> inputContext = objectMapper.convertValue(input, Map.class);
+        context.put("input", inputContext == null ? Map.of() : inputContext);
+        Map<String, Object> promptContext = preparePromptContext(input);
+        context.put("ctx", promptContext == null ? Map.of() : promptContext);
+        context.put("localPrompt", localPrompt);
+        context.put("operationType", annotation.value());
+        return promptTemplateEngine.render(template, context, strictRender);
+    }
+
+    private String normalizePromptMode(String promptMode) {
+        return promptMode == null ? "LOCAL_ONLY" : promptMode.trim().toUpperCase();
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
     /**
      * 获取角色字符串
      *
@@ -475,13 +542,11 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
         }
     }
 
-    /**
-     * 构建提示词（子类实现）
-     *
-     * @param input 输入参数
-     * @return 提示词
-     */
-    protected abstract String buildPrompt(INPUT input);
+    public abstract String promptTemplate();
+
+    protected Map<String, Object> preparePromptContext(INPUT input) {
+        return Map.of();
+    }
 
     /**
      * 解析AI响应（最终方法，子类不应重写）

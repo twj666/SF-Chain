@@ -26,21 +26,9 @@ import static com.suifeng.sfchain.constants.AIOperationConstant.JSON_REPAIR_OP;
 @Component
 public class JSONRepairOperation extends BaseAIOperation<String, JSONObject> {
 
-    /**
-     * 当前输入的JSON字符串
-     */
-    private String currentInput;
-
     @Override
-    public String buildPrompt(String brokenJson) {
-        this.currentInput = brokenJson; // 保存当前输入
-        
-        // 如果输入已经是有效JSON，尝试直接解析
-        if (isValidJson(brokenJson)) {
-            return ""; // 返回空字符串表示不需要AI修复
-        }
-
-        return String.format("""
+    public String promptTemplate() {
+        return """
                 你是一位专业的JSON格式修复专家，需要将格式错误的JSON字符串修复为有效的JSON格式。
                 
                 ## 任务描述
@@ -55,7 +43,7 @@ public class JSONRepairOperation extends BaseAIOperation<String, JSONObject> {
                 
                 ## 需要修复的JSON
                 ```
-                %s
+                {{ input }}
                 ```
                 
                 ## 输出要求
@@ -71,14 +59,13 @@ public class JSONRepairOperation extends BaseAIOperation<String, JSONObject> {
                 - 确保所有字符串值使用双引号包围
                 - 确保数字、布尔值和null值不使用引号
                 - 移除任何注释或非JSON元素
-                """, brokenJson);
+                """;
     }
 
     @Override
     protected String preprocessResponse(String aiResponse, String brokenJson) {
-        // 如果提示为空（表示原始输入已是有效JSON），直接返回原始输入
-        if (aiResponse.isEmpty()) {
-            return this.currentInput;
+        if (isValidJson(brokenJson)) {
+            return brokenJson;
         }
         return aiResponse;
     }

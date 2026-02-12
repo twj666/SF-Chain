@@ -25,20 +25,17 @@ import static com.suifeng.sfchain.constants.AIOperationConstant.MODEL_VALIDATION
 public class ModelValidationOperation extends BaseAIOperation<ModelValidationOperation.ValidationRequest, ModelValidationOperation.ValidationResult> {
 
     @Override
-    protected String buildPrompt(ValidationRequest input) {
-        return String.format(
-                """
-                        请回答一个简单的问题来验证模型是否正常工作。
-                        问题: %s
-                        请严格作答，并以JSON格式返回结果：
-                        ```json
-                        {
-                          "answer": "5"
-                        }
-                        ```
-                        注意：请确保返回有效的JSON格式。""",
-                input.getQuestion()
-        );
+    public String promptTemplate() {
+        return """
+                请回答一个简单的问题来验证模型是否正常工作。
+                问题: {{ input.question }}
+                请严格作答，并以JSON格式返回结果：
+                ```json
+                {
+                  "answer": "5"
+                }
+                ```
+                注意：请确保返回有效的JSON格式。""";
     }
 
     @Override

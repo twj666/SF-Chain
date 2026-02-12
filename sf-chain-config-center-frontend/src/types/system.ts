@@ -68,9 +68,9 @@ export interface OperationConfigData {
   jsonOutput?: boolean
   streamOutput?: boolean
   thinkingMode?: boolean
-  promptPrefix?: string
-  promptSuffix?: string
-  systemPrompt?: string
+  promptMode?: 'LOCAL_ONLY' | 'TEMPLATE_OVERRIDE'
+  promptTemplate?: string
+  promptStrictRender?: boolean
   outputFormat?: string
   customParams?: Record<string, unknown>
   modelName?: string

@@ -148,5 +148,8 @@ public class AIOperationRegistry {
         private boolean supportThinking = false;
         private int timeoutSeconds = 30;
         private int retryCount = 2;
+        private String promptMode = "LOCAL_ONLY";
+        private String promptTemplate;
+        private boolean promptStrictRender = false;
     }
 }

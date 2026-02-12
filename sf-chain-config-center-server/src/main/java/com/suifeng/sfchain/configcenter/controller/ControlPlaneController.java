@@ -140,6 +140,12 @@ public class ControlPlaneController {
         return controlPlaneService.upsertOperationConfig(tenantId, appId, request);
     }
 
+    @PostMapping("${sf-chain.path.api-prefix:/sf-chain}/control/template/preview")
+    public ConfigDtos.PromptTemplatePreviewResponse previewPromptTemplate(
+            @RequestBody ConfigDtos.PromptTemplatePreviewRequest request) {
+        return controlPlaneService.previewPromptTemplate(request);
+    }
+
     @PostMapping("/v1/config/snapshot")
     public ConfigDtos.ConfigSnapshotResponse snapshot(@RequestBody ConfigDtos.ConfigSnapshotRequest request) {
         return controlPlaneService.snapshot(request);
