@@ -77,6 +77,41 @@ export interface TenantOperationConfig {
   updatedAt: string
 }
 
+export type ModelImportMode = 'UPSERT' | 'SKIP_EXISTING' | 'OVERWRITE_EXISTING'
+
+export interface ModelConfigExportResponse {
+  schemaVersion: string
+  exportedAt: string
+  source: {
+    tenantId: string
+    appId: string
+  }
+  models: Array<{
+    modelName: string
+    provider: string
+    baseUrl?: string
+    active: boolean
+    config: Record<string, unknown>
+  }>
+}
+
+export interface ModelImportItemResult {
+  modelName: string
+  action: string
+  message: string
+}
+
+export interface ModelConfigImportResponse {
+  mode: ModelImportMode
+  dryRun: boolean
+  total: number
+  created: number
+  updated: number
+  skipped: number
+  failed: number
+  items: ModelImportItemResult[]
+}
+
 const base = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_SYSTEM.replace('/system', '')}`
 
 export const controlPlaneApi = {
@@ -178,6 +213,35 @@ export const controlPlaneApi = {
   async testModelConfig(tenantId: string, appId: string, modelName: string): Promise<{ success: boolean; message: string; modelName: string }> {
     return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/models/${encodeURIComponent(modelName)}/test`, {
       method: 'POST',
+      requireAuth: true
+    })
+  },
+
+  async exportModelConfigs(tenantId: string, appId: string, includeSecrets = false): Promise<ModelConfigExportResponse> {
+    return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/models/export?includeSecrets=${includeSecrets}`, {
+      method: 'GET',
+      requireAuth: true
+    })
+  },
+
+  async importModelConfigs(
+    tenantId: string,
+    appId: string,
+    payload: {
+      mode: ModelImportMode
+      dryRun: boolean
+      models: Array<{
+        modelName: string
+        provider?: string
+        baseUrl?: string
+        active?: boolean
+        config?: Record<string, unknown>
+      }>
+    }
+  ): Promise<ModelConfigImportResponse> {
+    return apiJsonRequest(`${base}/control/tenants/${encodeURIComponent(tenantId)}/apps/${encodeURIComponent(appId)}/models/import`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
       requireAuth: true
     })
   },

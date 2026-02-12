@@ -6,6 +6,12 @@
         <h2>AI模型</h2>
       </div>
       <div class="header-actions">
+        <button @click="openExportModal" class="btn btn-secondary" :disabled="loading || importing || exporting">
+          <span>导出 JSON</span>
+        </button>
+        <button @click="openImportModal" class="btn btn-secondary" :disabled="loading || importing">
+          <span>导入 JSON</span>
+        </button>
         <button @click="loadModels" class="btn btn-secondary" :disabled="loading">
           <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -318,12 +324,145 @@
       </div>
     </div>
 
+    <div v-if="showExportModal" class="modal-overlay">
+      <div class="modal-content export-modal-content">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3>导出模型配置</h3>
+            <p>导出当前应用模型为 JSON，可在其他应用直接导入。</p>
+          </div>
+          <button @click="closeExportModal" class="btn-close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <section class="form-panel">
+            <h4 class="panel-title">导出选项</h4>
+            <div class="export-option-row">
+              <label class="export-check">
+                <input v-model="exportIncludeSecrets" type="checkbox" />
+                <span>包含 API Key（敏感）</span>
+              </label>
+            </div>
+            <p class="export-tip">
+              {{ exportIncludeSecrets ? '将导出完整配置，请妥善保管文件。' : '将导出不含 API Key 的安全配置。' }}
+            </p>
+          </section>
+          <div class="form-actions">
+            <button class="btn btn-secondary" type="button" :disabled="exporting" @click="closeExportModal">
+              取消
+            </button>
+            <button class="btn btn-primary" type="button" :disabled="exporting" @click="exportModels">
+              {{ exporting ? '导出中...' : '确认导出' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showImportModal" class="modal-overlay">
+      <div class="modal-content import-modal-content">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3>导入模型配置</h3>
+            <p>粘贴或上传导出的 JSON，先预检再执行导入。</p>
+          </div>
+          <button @click="closeImportModal" class="btn-close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid import-grid">
+            <section class="form-panel">
+              <h4 class="panel-title">导入内容</h4>
+              <div class="import-actions">
+                <input ref="importFileInputRef" type="file" accept="application/json,.json" class="import-file-input" @change="onImportFileChange" />
+                <button class="btn btn-secondary" type="button" @click="triggerImportFile">
+                  选择文件
+                </button>
+              </div>
+              <textarea
+                v-model="importJsonText"
+                class="form-textarea import-json"
+                placeholder="请粘贴模型配置 JSON"
+              ></textarea>
+              <p v-if="importParseError" class="import-parse-error">{{ importParseError }}</p>
+            </section>
+            <section class="form-panel">
+              <h4 class="panel-title">导入策略</h4>
+              <div class="strategy-list">
+                <label
+                  v-for="strategy in importStrategies"
+                  :key="strategy.mode"
+                  class="strategy-item"
+                  :class="{ active: importMode === strategy.mode }"
+                >
+                  <input v-model="importMode" type="radio" :value="strategy.mode" />
+                  <div class="strategy-content">
+                    <div class="strategy-title">{{ strategy.title }}</div>
+                    <div class="strategy-desc">{{ strategy.desc }}</div>
+                  </div>
+                </label>
+              </div>
+              <p class="strategy-tip">{{ importStrategyTip }}</p>
+              <div class="import-summary" v-if="importLocalPreview">
+                <div class="summary-title">本地预判</div>
+                <div>总数：{{ importLocalPreview.total }}</div>
+                <div>预计新建：{{ importLocalPreview.created }}</div>
+                <div>预计更新：{{ importLocalPreview.updated }}</div>
+                <div>预计跳过：{{ importLocalPreview.skipped }}</div>
+                <div>格式错误：{{ importLocalPreview.failed }}</div>
+              </div>
+              <div class="import-result-list" v-if="importLocalPreview && importLocalPreview.items?.length">
+                <div class="import-result-item" v-for="(item, idx) in importLocalPreview.items" :key="'local-' + idx">
+                  <span class="import-result-action" :class="item.action">{{ localActionLabel(item.action) }}</span>
+                  <span class="import-result-name">{{ item.modelName || '-' }}</span>
+                  <span class="import-result-msg">{{ item.message }}</span>
+                </div>
+              </div>
+              <div class="import-summary" v-if="importResult">
+                <div class="summary-title">服务端预检结果</div>
+                <div>总数：{{ importResult.total }}</div>
+                <div>新建：{{ importResult.created }}</div>
+                <div>更新：{{ importResult.updated }}</div>
+                <div>跳过：{{ importResult.skipped }}</div>
+                <div>失败：{{ importResult.failed }}</div>
+              </div>
+              <div class="import-result-list" v-if="importResult && importResult.items?.length">
+                <div class="import-result-item" v-for="(item, idx) in importResult.items" :key="idx">
+                  <span class="import-result-action" :class="item.action">{{ serverActionLabel(item.action) }}</span>
+                  <span class="import-result-name">{{ item.modelName || '-' }}</span>
+                  <span class="import-result-msg">{{ item.message }}</span>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-secondary" type="button" :disabled="importing" @click="runImport(true)">
+              {{ importing ? '处理中...' : '执行预检（不落库）' }}
+            </button>
+            <button class="btn btn-primary" type="button" :disabled="importing" @click="runImport(false)">
+              {{ importing ? '处理中...' : '执行导入' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 复制成功提示 -->
     <div v-if="showCopyToast" class="copy-toast">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
       </svg>
       复制成功
+    </div>
+
+    <div v-if="actionMessage" class="action-toast" :class="actionMessageType">
+      {{ actionMessage }}
     </div>
   </div>
 </template>
@@ -332,6 +471,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { aiModelApi } from '@/services/aiModelApi'
 import type { ModelConfigData, ModelsResponse } from '@/types/system'
+import type { ModelConfigImportResponse, ModelImportMode } from '@/services/controlPlaneApi'
 // 导入增强的AI提供商工具函数
 import { 
   getProviderName, 
@@ -353,6 +493,42 @@ const modelsData = ref<ModelsResponse | null>(null)
 const searchQuery = ref('')
 const selectedProvider = ref<string>('all')
 const showCopyToast = ref(false)
+const showImportModal = ref(false)
+const showExportModal = ref(false)
+const importJsonText = ref('')
+const importMode = ref<ModelImportMode>('UPSERT')
+const importResult = ref<ModelConfigImportResponse | null>(null)
+const importLocalPreview = ref<{
+  total: number
+  created: number
+  updated: number
+  skipped: number
+  failed: number
+  items: Array<{ modelName: string; action: string; message: string }>
+} | null>(null)
+const importParseError = ref('')
+const importing = ref(false)
+const exporting = ref(false)
+const exportIncludeSecrets = ref(false)
+const importFileInputRef = ref<HTMLInputElement | null>(null)
+const actionMessage = ref('')
+const actionMessageType = ref<'success' | 'error' | 'info'>('info')
+
+const importStrategies: Array<{ mode: ModelImportMode; title: string; desc: string }> = [
+  { mode: 'UPSERT', title: 'UPSERT（推荐）', desc: '不存在则新建，已存在则更新。适合常规同步。' },
+  { mode: 'SKIP_EXISTING', title: 'SKIP_EXISTING', desc: '已存在模型直接跳过，只导入新增项。' },
+  { mode: 'OVERWRITE_EXISTING', title: 'OVERWRITE_EXISTING', desc: '已存在模型全部覆盖更新。适合强制对齐。' }
+]
+
+const importStrategyTip = computed(() => {
+  if (importMode.value === 'UPSERT') {
+    return '适合大多数场景，增量新增并同步更新。'
+  }
+  if (importMode.value === 'SKIP_EXISTING') {
+    return '不会改动现有模型，只补充新增模型。'
+  }
+  return '会覆盖已有模型配置，请先做预检确认。'
+})
 
 // 表单数据
 const modelForm = reactive<ModelConfigData>({
@@ -502,7 +678,7 @@ const loadModels = async () => {
     modelsData.value = await aiModelApi.getAllModels()
   } catch (error) {
     console.error('加载模型列表失败:', error)
-    alert('加载模型列表失败，请稍后重试')
+    showActionMessage('加载模型列表失败，请稍后重试', 'error')
   } finally {
     loading.value = false
   }
@@ -519,15 +695,15 @@ const saveModel = async () => {
     const response = await aiModelApi.saveModel(modelForm.modelName, payload)
 
     if (response.success) {
-      alert(response.message || '模型保存成功')
+      showActionMessage(response.message || '模型保存成功', 'success')
       closeModal()
       await loadModels()
     } else {
-      alert(response.message || '保存失败')
+      showActionMessage(response.message || '保存失败', 'error')
     }
   } catch (error) {
     console.error('保存模型失败:', error)
-    alert('保存模型失败，请稍后重试')
+    showActionMessage('保存模型失败，请稍后重试', 'error')
   } finally {
     saving.value = false
   }
@@ -562,14 +738,14 @@ const deleteModel = async (modelName: string) => {
   try {
     const response = await aiModelApi.deleteModel(modelName)
     if (response.success) {
-      alert(response.message || '删除成功')
+      showActionMessage(response.message || '删除成功', 'success')
       await loadModels()
     } else {
-      alert(response.message || '删除失败')
+      showActionMessage(response.message || '删除失败', 'error')
     }
   } catch (error) {
     console.error('删除模型失败:', error)
-    alert('删除模型失败，请稍后重试')
+    showActionMessage('删除模型失败，请稍后重试', 'error')
   }
 }
 
@@ -580,13 +756,13 @@ const testModel = async (modelName: string) => {
     const response = await aiModelApi.testModel(modelName)
 
     if (response.success) {
-      alert('模型连接测试成功！')
+      showActionMessage('模型连接测试成功', 'success')
     } else {
-      alert(`测试失败: ${response.message}`)
+      showActionMessage(`测试失败: ${response.message}`, 'error')
     }
   } catch (error) {
     console.error('测试模型失败:', error)
-    alert('测试模型失败，请稍后重试')
+    showActionMessage('测试模型失败，请稍后重试', 'error')
   } finally {
     testing.value = null
   }
@@ -598,6 +774,232 @@ const closeModal = () => {
   editingModel.value = null
   resetForm()
   showApiKey.value = false
+}
+
+const openImportModal = () => {
+  showImportModal.value = true
+  importResult.value = null
+  importLocalPreview.value = null
+  importParseError.value = ''
+}
+
+const closeImportModal = () => {
+  showImportModal.value = false
+  importJsonText.value = ''
+  importResult.value = null
+  importLocalPreview.value = null
+  importParseError.value = ''
+  importMode.value = 'UPSERT'
+  if (importFileInputRef.value) {
+    importFileInputRef.value.value = ''
+  }
+}
+
+const triggerImportFile = () => {
+  importFileInputRef.value?.click()
+}
+
+const onImportFileChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  try {
+    importJsonText.value = await file.text()
+    importParseError.value = ''
+  } catch (error) {
+    console.error('读取导入文件失败:', error)
+    showActionMessage('读取导入文件失败，请重试', 'error')
+  } finally {
+    target.value = ''
+  }
+}
+
+const parseImportPayload = (): {
+  models: Array<{
+    modelName: string
+    provider?: string
+    baseUrl?: string
+    active?: boolean
+    config?: Record<string, unknown>
+  }>
+} => {
+  const raw = JSON.parse(importJsonText.value)
+  const maybeModels = Array.isArray(raw) ? raw : raw?.models
+  if (!Array.isArray(maybeModels)) {
+    throw new Error('JSON格式错误：需要数组或包含 models 数组')
+  }
+  const duplicates = new Set<string>()
+  const seen = new Set<string>()
+  return {
+    models: maybeModels.map((item: unknown, index: number) => {
+      const model = (item || {}) as Record<string, unknown>
+      const modelName = String(model.modelName || '').trim()
+      if (!modelName) {
+        throw new Error(`第 ${index + 1} 项缺少 modelName`)
+      }
+      if (seen.has(modelName)) {
+        duplicates.add(modelName)
+      } else {
+        seen.add(modelName)
+      }
+      return {
+        modelName,
+        provider: typeof model.provider === 'string' ? model.provider : undefined,
+        baseUrl: typeof model.baseUrl === 'string' ? model.baseUrl : undefined,
+        active: typeof model.active === 'boolean' ? model.active : true,
+        config: (typeof model.config === 'object' && model.config !== null)
+          ? model.config as Record<string, unknown>
+          : {}
+      }
+    })
+  }
+}
+
+const buildLocalImportPreview = (
+  models: Array<{ modelName: string; provider?: string; baseUrl?: string; active?: boolean; config?: Record<string, unknown> }>
+) => {
+  const existingModels = new Set(Object.keys(modelsData.value?.models || {}))
+  const seenInPayload = new Set<string>()
+  const preview = {
+    total: models.length,
+    created: 0,
+    updated: 0,
+    skipped: 0,
+    failed: 0,
+    items: [] as Array<{ modelName: string; action: string; message: string }>
+  }
+
+  for (const model of models) {
+    if (seenInPayload.has(model.modelName)) {
+      preview.failed++
+      preview.items.push({
+        modelName: model.modelName,
+        action: 'FAILED',
+        message: '导入JSON中模型名重复，建议先去重'
+      })
+      continue
+    }
+    seenInPayload.add(model.modelName)
+
+    const exists = existingModels.has(model.modelName)
+    if (exists && importMode.value === 'SKIP_EXISTING') {
+      preview.skipped++
+      preview.items.push({
+        modelName: model.modelName,
+        action: 'SKIPPED',
+        message: '模型已存在，按策略跳过'
+      })
+      continue
+    }
+
+    if (exists) {
+      preview.updated++
+      preview.items.push({
+        modelName: model.modelName,
+        action: 'UPDATED',
+        message: importMode.value === 'OVERWRITE_EXISTING' ? '将覆盖现有模型配置' : '将更新现有模型配置'
+      })
+      continue
+    }
+
+    preview.created++
+    preview.items.push({
+      modelName: model.modelName,
+      action: 'CREATED',
+      message: '将创建新模型'
+    })
+  }
+  return preview
+}
+
+const runImport = async (dryRun: boolean) => {
+  if (!importJsonText.value.trim()) {
+    showActionMessage('请先粘贴或上传 JSON 内容', 'error')
+    return
+  }
+  try {
+    importing.value = true
+    importParseError.value = ''
+    const payload = parseImportPayload()
+    importLocalPreview.value = buildLocalImportPreview(payload.models)
+    const response = await aiModelApi.importModels({
+      mode: importMode.value,
+      dryRun,
+      models: payload.models
+    })
+    importResult.value = response
+    if (dryRun) {
+      showActionMessage(`预检完成：新建${response.created}，更新${response.updated}，跳过${response.skipped}，失败${response.failed}`, 'info')
+      return
+    }
+    await loadModels()
+    showActionMessage(`导入完成：新建${response.created}，更新${response.updated}，跳过${response.skipped}，失败${response.failed}`, 'success')
+  } catch (error) {
+    console.error('导入模型失败:', error)
+    importParseError.value = error instanceof Error ? error.message : 'JSON解析失败'
+    showActionMessage('导入模型失败，请检查JSON格式或重试', 'error')
+  } finally {
+    importing.value = false
+  }
+}
+
+const openExportModal = () => {
+  showExportModal.value = true
+  exportIncludeSecrets.value = false
+}
+
+const closeExportModal = () => {
+  showExportModal.value = false
+  exportIncludeSecrets.value = false
+}
+
+const exportModels = async () => {
+  try {
+    exporting.value = true
+    const data = await aiModelApi.exportModels(exportIncludeSecrets.value)
+    const json = JSON.stringify(data, null, 2)
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    const ts = new Date().toISOString().replace(/[:.]/g, '-')
+    anchor.download = `sf-chain-models-${data.source.tenantId}-${data.source.appId}-${ts}.json`
+    document.body.appendChild(anchor)
+    anchor.click()
+    document.body.removeChild(anchor)
+    URL.revokeObjectURL(url)
+    closeExportModal()
+    showActionMessage(exportIncludeSecrets.value ? '导出成功（包含 API Key）' : '导出成功（不含 API Key）', 'success')
+  } catch (error) {
+    console.error('导出模型失败:', error)
+    showActionMessage('导出模型失败，请稍后重试', 'error')
+  } finally {
+    exporting.value = false
+  }
+}
+
+const showActionMessage = (message: string, type: 'success' | 'error' | 'info') => {
+  actionMessageType.value = type
+  actionMessage.value = message
+  window.setTimeout(() => {
+    actionMessage.value = ''
+  }, 2600)
+}
+
+const serverActionLabel = (action: string) => {
+  if (action === 'CREATED') return '新建'
+  if (action === 'UPDATED') return '更新'
+  if (action === 'SKIPPED') return '跳过'
+  if (action === 'FAILED') return '失败'
+  return action
+}
+
+const localActionLabel = (action: string) => {
+  if (action === 'CREATED') return '预计新建'
+  if (action === 'UPDATED') return '预计更新'
+  if (action === 'SKIPPED') return '预计跳过'
+  if (action === 'FAILED') return '格式问题'
+  return action
 }
 
 // 组件挂载时加载数据
@@ -1148,6 +1550,14 @@ onMounted(() => {
   flex-direction: column;
 }
 
+.import-modal-content {
+  width: min(1040px, 96vw);
+}
+
+.export-modal-content {
+  width: min(620px, 92vw);
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1204,6 +1614,163 @@ onMounted(() => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem;
   margin-bottom: 0.95rem;
+}
+
+.import-grid {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+}
+
+.import-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.6rem;
+}
+
+.export-option-row {
+  margin-top: 0.35rem;
+}
+
+.export-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  color: #334155;
+  cursor: pointer;
+}
+
+.export-tip {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.import-file-input {
+  display: none;
+}
+
+.import-json {
+  min-height: 300px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.import-parse-error {
+  margin: 0.55rem 0 0;
+  color: #b91c1c;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.strategy-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.strategy-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border: 1px solid #dbe4f3;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  background: #f8fbff;
+  transition: all 0.18s ease;
+}
+
+.strategy-item.active {
+  border-color: #9bb4e3;
+  background: #ecf3ff;
+}
+
+.strategy-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.strategy-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e3a5f;
+}
+
+.strategy-desc {
+  font-size: 0.76rem;
+  color: #556987;
+  line-height: 1.35;
+}
+
+.strategy-tip {
+  margin-top: 0.55rem;
+  font-size: 0.77rem;
+  color: #64748b;
+}
+
+.import-summary {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.summary-title {
+  grid-column: 1 / -1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin-bottom: 0.1rem;
+}
+
+.import-result-list {
+  margin-top: 0.75rem;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.import-result-item {
+  display: grid;
+  grid-template-columns: 92px 1.3fr 2fr;
+  gap: 0.55rem;
+  padding: 0.42rem 0.55rem;
+  border-bottom: 1px solid #e8edf5;
+  font-size: 0.75rem;
+  color: #334155;
+}
+
+.import-result-item:last-child {
+  border-bottom: none;
+}
+
+.import-result-action {
+  font-weight: 700;
+}
+
+.import-result-action.CREATED,
+.import-result-action.UPDATED {
+  color: #166534;
+}
+
+.import-result-action.SKIPPED {
+  color: #92400e;
+}
+
+.import-result-action.FAILED {
+  color: #b91c1c;
+}
+
+.import-result-name {
+  word-break: break-all;
+}
+
+.import-result-msg {
+  color: #64748b;
+  word-break: break-word;
 }
 
 .form-panel {
@@ -1367,6 +1934,38 @@ onMounted(() => {
   font-weight: 500;
   z-index: 1001;
   animation: slideIn 0.3s ease-out;
+}
+
+.action-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.2rem;
+  transform: translateX(-50%);
+  z-index: 1100;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+  border: 1px solid transparent;
+}
+
+.action-toast.success {
+  background: #ecfdf3;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.action-toast.error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.action-toast.info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
 }
 
 @keyframes slideIn {

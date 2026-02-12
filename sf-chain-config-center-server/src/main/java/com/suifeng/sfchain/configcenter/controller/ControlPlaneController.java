@@ -103,6 +103,22 @@ public class ControlPlaneController {
         return controlPlaneService.upsertModelConfig(tenantId, appId, request);
     }
 
+    @GetMapping("${sf-chain.path.api-prefix:/sf-chain}/control/tenants/{tenantId}/apps/{appId}/models/export")
+    public ConfigDtos.ModelConfigExportResponse exportModelConfigs(
+            @PathVariable String tenantId,
+            @PathVariable String appId,
+            @RequestParam(defaultValue = "false") boolean includeSecrets) {
+        return controlPlaneService.exportModelConfigs(tenantId, appId, includeSecrets);
+    }
+
+    @PostMapping("${sf-chain.path.api-prefix:/sf-chain}/control/tenants/{tenantId}/apps/{appId}/models/import")
+    public ConfigDtos.ModelConfigImportResponse importModelConfigs(
+            @PathVariable String tenantId,
+            @PathVariable String appId,
+            @RequestBody ConfigDtos.ModelConfigImportRequest request) {
+        return controlPlaneService.importModelConfigs(tenantId, appId, request);
+    }
+
     @PostMapping("${sf-chain.path.api-prefix:/sf-chain}/control/tenants/{tenantId}/apps/{appId}/models/{modelName}/test")
     public Map<String, Object> testModelConfig(
             @PathVariable String tenantId,

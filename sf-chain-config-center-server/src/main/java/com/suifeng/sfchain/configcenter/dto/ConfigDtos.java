@@ -21,6 +21,46 @@ public final class ConfigDtos {
     }
 
     @Data
+    public static class ModelConfigExportResponse {
+        private String schemaVersion;
+        private LocalDateTime exportedAt;
+        private Scope source;
+        private List<UpsertModelConfigRequest> models;
+    }
+
+    @Data
+    public static class Scope {
+        private String tenantId;
+        private String appId;
+    }
+
+    @Data
+    public static class ModelConfigImportRequest {
+        private String mode;
+        private boolean dryRun = true;
+        private List<UpsertModelConfigRequest> models;
+    }
+
+    @Data
+    public static class ModelConfigImportResponse {
+        private String mode;
+        private boolean dryRun;
+        private int total;
+        private int created;
+        private int updated;
+        private int skipped;
+        private int failed;
+        private List<ModelImportItemResult> items;
+    }
+
+    @Data
+    public static class ModelImportItemResult {
+        private String modelName;
+        private String action;
+        private String message;
+    }
+
+    @Data
     public static class UpsertOperationConfigRequest {
         private String operationType;
         private String modelName;

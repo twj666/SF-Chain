@@ -1,4 +1,10 @@
-﻿import { controlPlaneApi, type TenantModelConfig } from './controlPlaneApi'
+import {
+  controlPlaneApi,
+  type TenantModelConfig,
+  type ModelConfigExportResponse,
+  type ModelConfigImportResponse,
+  type ModelImportMode
+} from './controlPlaneApi'
 import { getScopeContext } from './scopeContext'
 import type { ModelConfigData, ApiResponse, ModelsResponse, TestConnectionResponse } from '@/types/system'
 
@@ -98,5 +104,25 @@ export const aiModelApi = {
       message: result.message || (result.success ? '模型连接测试成功' : '模型连接测试失败'),
       modelName: result.modelName || modelName
     }
+  },
+
+  async exportModels(includeSecrets = false): Promise<ModelConfigExportResponse> {
+    const scope = requireScope()
+    return controlPlaneApi.exportModelConfigs(scope.tenantId, scope.appId, includeSecrets)
+  },
+
+  async importModels(payload: {
+    mode: ModelImportMode
+    dryRun: boolean
+    models: Array<{
+      modelName: string
+      provider?: string
+      baseUrl?: string
+      active?: boolean
+      config?: Record<string, unknown>
+    }>
+  }): Promise<ModelConfigImportResponse> {
+    const scope = requireScope()
+    return controlPlaneApi.importModelConfigs(scope.tenantId, scope.appId, payload)
   }
 }

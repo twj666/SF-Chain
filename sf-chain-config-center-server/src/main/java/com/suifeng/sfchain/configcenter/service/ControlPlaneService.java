@@ -50,6 +50,9 @@ import java.util.stream.Collectors;
 public class ControlPlaneService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final String MODEL_IMPORT_MODE_SKIP_EXISTING = "SKIP_EXISTING";
+    private static final String MODEL_IMPORT_MODE_OVERWRITE_EXISTING = "OVERWRITE_EXISTING";
+    private static final String MODEL_IMPORT_MODE_UPSERT = "UPSERT";
 
     private final TenantRepository tenantRepository;
     private final AppRepository appRepository;
@@ -287,6 +290,108 @@ public class ControlPlaneService {
                         "config", item.getConfigJson() == null ? Map.of() : item.getConfigJson(),
                         "updatedAt", item.getUpdatedAt()))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public ConfigDtos.ModelConfigExportResponse exportModelConfigs(String tenantId, String appId, boolean includeSecrets) {
+        assertTenantActive(tenantId);
+        assertAppActive(tenantId, appId);
+
+        List<ConfigDtos.UpsertModelConfigRequest> models = tenantModelConfigRepository
+                .findByTenantIdAndAppIdOrderByCreatedAtDesc(tenantId, appId)
+                .stream()
+                .map(entity -> toExportModelConfig(entity, includeSecrets))
+                .collect(Collectors.toList());
+
+        ConfigDtos.Scope source = new ConfigDtos.Scope();
+        source.setTenantId(tenantId);
+        source.setAppId(appId);
+
+        ConfigDtos.ModelConfigExportResponse response = new ConfigDtos.ModelConfigExportResponse();
+        response.setSchemaVersion("1.0");
+        response.setExportedAt(LocalDateTime.now());
+        response.setSource(source);
+        response.setModels(models);
+        return response;
+    }
+
+    @Transactional
+    public ConfigDtos.ModelConfigImportResponse importModelConfigs(
+            String tenantId,
+            String appId,
+            ConfigDtos.ModelConfigImportRequest request) {
+        assertTenantActive(tenantId);
+        assertAppActive(tenantId, appId);
+
+        String mode = normalizeImportMode(request == null ? null : request.getMode());
+        boolean dryRun = request == null || request.isDryRun();
+        List<ConfigDtos.UpsertModelConfigRequest> models =
+                request == null || request.getModels() == null ? List.of() : request.getModels();
+
+        ConfigDtos.ModelConfigImportResponse response = new ConfigDtos.ModelConfigImportResponse();
+        response.setMode(mode);
+        response.setDryRun(dryRun);
+        response.setTotal(models.size());
+        response.setItems(new ArrayList<>());
+
+        for (ConfigDtos.UpsertModelConfigRequest model : models) {
+            ConfigDtos.ModelImportItemResult item = new ConfigDtos.ModelImportItemResult();
+            response.getItems().add(item);
+            try {
+                if (model == null) {
+                    throw new IllegalArgumentException("model item is null");
+                }
+                String modelName = normalizeRequired(model.getModelName(), "modelName");
+                String provider = normalizeOptional(model.getProvider());
+                if (provider == null) {
+                    provider = "other";
+                }
+                item.setModelName(modelName);
+
+                Optional<TenantModelConfigEntity> existingOpt = tenantModelConfigRepository
+                        .findByTenantIdAndAppIdAndModelName(tenantId, appId, modelName);
+
+                if (existingOpt.isPresent() && MODEL_IMPORT_MODE_SKIP_EXISTING.equals(mode)) {
+                    item.setAction("SKIPPED");
+                    item.setMessage("模型已存在，按策略跳过");
+                    response.setSkipped(response.getSkipped() + 1);
+                    continue;
+                }
+
+                TenantModelConfigEntity entity = existingOpt.orElseGet(TenantModelConfigEntity::new);
+                boolean create = existingOpt.isEmpty();
+                entity.setTenantId(tenantId);
+                entity.setAppId(appId);
+                entity.setModelName(modelName);
+                entity.setProvider(provider);
+                entity.setBaseUrl(normalizeOptional(model.getBaseUrl()));
+                entity.setActive(model.isActive());
+                entity.setConfigJson(mergeModelConfig(entity.getConfigJson(), model.getConfig()));
+
+                if (!dryRun) {
+                    tenantModelConfigRepository.save(entity);
+                }
+
+                if (create) {
+                    item.setAction("CREATED");
+                    item.setMessage(dryRun ? "预检通过，将新建模型" : "模型已新建");
+                    response.setCreated(response.getCreated() + 1);
+                } else {
+                    item.setAction("UPDATED");
+                    item.setMessage(dryRun ? "预检通过，将更新已有模型" : "模型已更新");
+                    response.setUpdated(response.getUpdated() + 1);
+                }
+            } catch (Exception ex) {
+                item.setAction("FAILED");
+                item.setMessage(ex.getMessage());
+                response.setFailed(response.getFailed() + 1);
+            }
+        }
+
+        log.info("配置中心: 模型配置导入 tenantId={}, appId={}, mode={}, dryRun={}, total={}, created={}, updated={}, skipped={}, failed={}",
+                tenantId, appId, mode, dryRun, response.getTotal(), response.getCreated(), response.getUpdated(),
+                response.getSkipped(), response.getFailed());
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -816,6 +921,49 @@ public class ControlPlaneService {
         }
         String value = raw.trim();
         return value.isEmpty() ? null : value;
+    }
+
+    private static ConfigDtos.UpsertModelConfigRequest toExportModelConfig(
+            TenantModelConfigEntity entity,
+            boolean includeSecrets) {
+        ConfigDtos.UpsertModelConfigRequest model = new ConfigDtos.UpsertModelConfigRequest();
+        model.setModelName(entity.getModelName());
+        model.setProvider(entity.getProvider());
+        model.setBaseUrl(entity.getBaseUrl());
+        model.setActive(entity.isActive());
+        Map<String, Object> config = new LinkedHashMap<>();
+        if (entity.getConfigJson() != null) {
+            config.putAll(entity.getConfigJson());
+        }
+        if (!includeSecrets) {
+            config.remove("apiKey");
+        }
+        model.setConfig(config);
+        return model;
+    }
+
+    private static String normalizeImportMode(String mode) {
+        String value = normalizeOptional(mode);
+        if (value == null) {
+            return MODEL_IMPORT_MODE_UPSERT;
+        }
+        String normalized = value.toUpperCase(Locale.ROOT);
+        if (MODEL_IMPORT_MODE_SKIP_EXISTING.equals(normalized)
+                || MODEL_IMPORT_MODE_OVERWRITE_EXISTING.equals(normalized)
+                || MODEL_IMPORT_MODE_UPSERT.equals(normalized)) {
+            return normalized;
+        }
+        throw new IllegalArgumentException("unsupported import mode: " + mode);
+    }
+
+    private static Map<String, Object> mergeModelConfig(
+            Map<String, Object> existing,
+            Map<String, Object> incoming) {
+        Map<String, Object> merged = incoming == null ? new LinkedHashMap<>() : new LinkedHashMap<>(incoming);
+        if (!merged.containsKey("apiKey") && existing != null && existing.containsKey("apiKey")) {
+            merged.put("apiKey", existing.get("apiKey"));
+        }
+        return merged;
     }
 
     private static String toString(Object value) {
