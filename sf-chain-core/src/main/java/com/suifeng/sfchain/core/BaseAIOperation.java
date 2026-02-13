@@ -513,6 +513,20 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
         return promptTemplateEngine.render(template, context, strictRender);
     }
 
+    /**
+     * 用于模板预览场景：将原始输入对象转换并补齐 input 扩展字段。
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> buildPromptInputForPreview(Object rawInput) {
+        INPUT typedInput = objectMapper.convertValue(rawInput, inputType);
+        Map<String, Object> inputContext = objectMapper.convertValue(typedInput, Map.class);
+        Map<String, Object> safeInputContext = inputContext == null ? new HashMap<>() : new HashMap<>(inputContext);
+        Map<String, Object> promptInputExtensions = buildPromptInputExtensions(typedInput);
+        Map<String, Object> safePromptInputExtensions = promptInputExtensions == null ? Map.of() : promptInputExtensions;
+        mergePromptInputExtensionsIntoInput(safeInputContext, safePromptInputExtensions);
+        return safeInputContext;
+    }
+
     private void mergePromptInputExtensionsIntoInput(Map<String, Object> inputContext, Map<String, Object> promptInputExtensions) {
         for (Map.Entry<String, Object> entry : promptInputExtensions.entrySet()) {
             inputContext.putIfAbsent(entry.getKey(), entry.getValue());

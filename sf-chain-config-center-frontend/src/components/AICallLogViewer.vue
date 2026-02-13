@@ -104,10 +104,7 @@
               >
                 <!-- 时间列 -->
                 <div class="cell time-cell">
-                  <div class="time-info">
-                    <span class="time-relative">{{ formatRelativeTime(log.callTime) }}</span>
-                    <span class="time-full">{{ formatTime(log.callTime) }}</span>
-                  </div>
+                  <span class="time-inline">{{ formatRelativeTime(log.callTime) }} · {{ formatTime(log.callTime) }}</span>
                 </div>
 
                 <!-- 状态列 -->
@@ -130,8 +127,12 @@
                       <img :src="getProviderIcon(getProviderFromModel(log.modelName))" alt="provider" class="provider-icon" />
                     </div>
                     <div class="model-details">
-                      <div class="model-name">{{ log.modelName }}</div>
-                      <div class="provider-name">{{ getProviderName(getProviderFromModel(log.modelName)) }}</div>
+                      <div
+                        class="model-name"
+                        :title="`${log.modelName} (${getProviderName(getProviderFromModel(log.modelName))})`"
+                      >
+                        {{ log.modelName }}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -544,17 +545,17 @@ onMounted(() => {
 
 .table-header {
   display: grid;
-  grid-template-columns: 140px 100px 400px 2fr 100px 80px;
+  grid-template-columns: 165px 88px 250px minmax(260px, 1.4fr) 92px 60px;
   gap: 0;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 2px solid #e2e8f0;
 }
 
 .header-cell {
-  padding: 1rem 0.75rem;
+  padding: 0.625rem 0.625rem;
   font-weight: 600;
   color: #4a5568;
-  font-size: 0.875rem;
+  font-size: 0.78rem;
   text-align: left;
   border-right: 1px solid #e2e8f0;
 }
@@ -569,7 +570,7 @@ onMounted(() => {
 
 .table-row {
   display: grid;
-  grid-template-columns: 140px 100px 400px 2fr 100px 80px;
+  grid-template-columns: 165px 88px 250px minmax(260px, 1.4fr) 92px 60px;
   gap: 0;
   border-bottom: 1px solid #f1f5f9;
   transition: all 0.2s ease;
@@ -578,8 +579,7 @@ onMounted(() => {
 
 .table-row:hover {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 0 0 1px #e2e8f0;
 }
 
 .table-row:last-child {
@@ -596,59 +596,49 @@ onMounted(() => {
 }
 
 .cell {
-  padding: 1rem 0.75rem;
+  padding: 0.4rem 0.625rem;
   display: flex;
   align-items: center;
   border-right: 1px solid #f1f5f9;
-  min-height: 60px;
+  min-height: 32px;
 }
 
 .cell:last-child {
   border-right: none;
 }
 
-/* 时间列样式 */
-.time-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.time-relative {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #2d3748;
-}
-
-.time-full {
+.time-inline {
   font-size: 0.75rem;
-  color: #718096;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 模型列样式 */
 .model-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.45rem;
   width: 100%;
 }
 
 .model-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid #e2e8f0;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 
 .provider-icon {
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   object-fit: contain;
 }
 
@@ -658,17 +648,17 @@ onMounted(() => {
 }
 
 .model-name {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 500;
   color: #2d3748;
-  margin: 0 0 0.25rem 0;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .provider-name {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #718096;
   font-weight: 500;
 }
@@ -677,20 +667,24 @@ onMounted(() => {
 .operation-tag {
   display: inline-flex;
   align-items: center;
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  font-size: 0.68rem;
   font-weight: 600;
   background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
   color: #2b6cb0;
   border: 1px solid #90cdf4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* 耗时列样式 */
 .duration-value {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
+  padding: 0.15rem 0.45rem;
   border-radius: 4px;
 }
 
@@ -718,14 +712,14 @@ onMounted(() => {
 .status-indicator {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
+  gap: 0.35rem;
+  font-size: 0.74rem;
   font-weight: 500;
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -754,9 +748,9 @@ onMounted(() => {
 }
 
 .action-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   border: 1px solid #e2e8f0;
   background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
   color: #718096;
@@ -772,8 +766,7 @@ onMounted(() => {
   background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
   border-color: #90cdf4;
   color: #2b6cb0;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 /* 分页样式 */
@@ -817,7 +810,7 @@ onMounted(() => {
 @media (max-width: 1200px) {
   .table-header,
   .table-row {
-    grid-template-columns: 120px 80px 250px 2fr 80px 60px;
+    grid-template-columns: 150px 76px 190px minmax(210px, 1.2fr) 82px 56px;
   }
 }
 
@@ -851,19 +844,13 @@ onMounted(() => {
 
   .table-header,
   .table-row {
-    grid-template-columns: 100px 80px 120px 1fr 80px 60px;
+    grid-template-columns: 125px 68px 120px minmax(120px, 1fr) 72px 48px;
   }
 
   .search-input {
     width: 150px;
   }
 
-  .model-name {
-    font-size: 0.75rem;
-  }
-
-  .provider-name {
-    font-size: 0.65rem;
-  }
+  .model-name { font-size: 0.72rem; }
 }
 </style>

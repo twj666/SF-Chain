@@ -15,8 +15,10 @@ import com.suifeng.sfchain.configcenter.repository.AppRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantModelConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantOperationConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantRepository;
+import com.suifeng.sfchain.core.AIOperationRegistry;
 import com.suifeng.sfchain.configcenter.logging.AICallLogRouteContext;
 import com.suifeng.sfchain.core.AIService;
+import com.suifeng.sfchain.core.BaseAIOperation;
 import com.suifeng.sfchain.core.PromptTemplateEngine;
 import com.suifeng.sfchain.core.openai.OpenAIModelConfig;
 import com.suifeng.sfchain.core.openai.OpenAIModelFactory;
@@ -66,6 +68,7 @@ public class ControlPlaneService {
     private final TenantOperationConfigRepository tenantOperationConfigRepository;
     private final OpenAIModelFactory openAIModelFactory;
     private final AIService aiService;
+    private final AIOperationRegistry aiOperationRegistry;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -599,9 +602,26 @@ public class ControlPlaneService {
     @Transactional(readOnly = true)
     public ConfigDtos.PromptTemplatePreviewResponse previewPromptTemplate(ConfigDtos.PromptTemplatePreviewRequest request) {
         String template = normalizeRequired(request.getTemplate(), "template");
-        Map<String, Object> input = request.getInput() == null ? Map.of() : request.getInput();
         String operationType = normalizeOptional(request.getOperationType());
         boolean strictRender = request.getStrictRender() == null || request.getStrictRender();
+        Object rawInput = request.getInput() == null ? Map.of() : request.getInput();
+
+        Map<String, Object> input = new LinkedHashMap<>();
+        if (rawInput instanceof Map<?, ?> rawMap) {
+            for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                input.put(String.valueOf(entry.getKey()), entry.getValue());
+            }
+        } else {
+            input.putAll(objectMapper.convertValue(rawInput, Map.class));
+        }
+        if (operationType != null && aiOperationRegistry.isOperationRegistered(operationType)) {
+            try {
+                BaseAIOperation<?, ?> operation = aiOperationRegistry.getOperation(operationType);
+                input = operation.buildPromptInputForPreview(rawInput);
+            } catch (Exception ex) {
+                log.debug("模板预览输入扩展构建失败, operationType={}, err={}", operationType, ex.getMessage());
+            }
+        }
 
         Map<String, Object> renderContext = new LinkedHashMap<>();
         renderContext.put("input", input);

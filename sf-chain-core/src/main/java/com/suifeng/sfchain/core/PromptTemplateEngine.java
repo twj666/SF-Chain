@@ -110,7 +110,7 @@ public class PromptTemplateEngine {
                 if (strictRender) {
                     throw new TemplateRenderException("EXPRESSION_NULL", expression, "模板表达式结果为空: " + expression);
                 }
-                matcher.appendReplacement(rendered, Matcher.quoteReplacement(matcher.group(0)));
+                matcher.appendReplacement(rendered, "");
                 continue;
             }
             matcher.appendReplacement(rendered, Matcher.quoteReplacement(String.valueOf(value)));

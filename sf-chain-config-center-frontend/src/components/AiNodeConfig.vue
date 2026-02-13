@@ -181,10 +181,10 @@
           <div class="card-actions">
             <button
               v-if="operation.modelName"
-              @click="testOperation(String(operationType))"
+              @click="testOperation(String(operationType), operation)"
               class="action-btn test large"
               :disabled="testing === operationType"
-              :title="testing === operationType ? '测试中...' : '测试操作'"
+              :title="testing === operationType ? '测试中...' : '测试当前绑定模型连通性'"
             >
               <svg v-if="testing === operationType" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -786,16 +786,26 @@ const refreshData = async () => {
   }
 }
 
-// 测试操作
-const testOperation = async (operationType: string) => {
+// 测试操作（测试当前节点绑定模型连通性）
+const testOperation = async (operationType: string, operation: OperationConfigData) => {
+  const modelName = operation.modelName?.trim()
+  if (!modelName) {
+    showToast('当前节点未绑定模型，无法测试', 'error')
+    return
+  }
+
   try {
     testing.value = operationType
-    // 这里可以添加测试逻辑
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    showToast('测试成功')
+    const result = await aiModelApi.testModel(modelName)
+    if (result.success) {
+      showToast(result.message || `模型 ${modelName} 连通性测试成功`)
+      return
+    }
+    showToast(result.message || `模型 ${modelName} 连通性测试失败`, 'error')
   } catch (error) {
     console.error('测试失败:', error)
-    showToast('测试失败，请检查配置', 'error')
+    const message = error instanceof Error ? error.message : '测试失败，请检查配置'
+    showToast(message, 'error')
   } finally {
     testing.value = null
   }
