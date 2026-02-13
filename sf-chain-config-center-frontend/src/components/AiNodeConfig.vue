@@ -9,7 +9,7 @@
         <!-- 统计信息 -->
         <div class="header-stats" v-if="operationsData">
           <div class="stat-item">
-            <span class="stat-number">{{ operationsData.totalOperations }}</span>
+            <span class="stat-number">{{ visibleTotalOperations }}</span>
             <span class="stat-label">总节点</span>
           </div>
           <div class="stat-item success">
@@ -97,7 +97,7 @@
       </div>
 
       <!-- 空状态 -->
-      <div v-else-if="operationsData && operationsData.totalOperations === 0" class="empty-state">
+      <div v-else-if="operationsData && visibleTotalOperations === 0" class="empty-state">
         <div class="empty-icon">🤖</div>
         <h3>暂无AI操作节点</h3>
         <p>系统中还没有注册任何AI操作节点</p>
@@ -246,7 +246,7 @@
             <div class="form-group">
               <label>选择操作节点</label>
               <div class="operation-checkboxes">
-                <label v-for="(operation, operationType) in operationsData?.configs" :key="operationType" class="checkbox-item">
+                <label v-for="(operation, operationType) in visibleOperations" :key="operationType" class="checkbox-item">
                   <input
                     type="checkbox"
                     v-model="selectedOperations"
@@ -603,6 +603,7 @@ const previewingTemplate = ref(false)
 const promptPreviewInputJson = ref('{\n  "topic": "AI模板优化"\n}')
 const promptPreviewRendered = ref('')
 const promptPreviewError = ref<{ expression?: string; message: string } | null>(null)
+const HIDDEN_OPERATION_TYPES = new Set(['MODEL_VALIDATION_OP'])
 
 // 数据
 const models = ref<ModelData[]>([])
@@ -652,12 +653,21 @@ const groupedModels = computed(() => {
   return groups
 })
 
+const visibleOperations = computed<Record<string, OperationConfigData>>(() => {
+  if (!operationsData.value?.configs) {
+    return {}
+  }
+  return Object.fromEntries(
+    Object.entries(operationsData.value.configs).filter(([operationType]) => !HIDDEN_OPERATION_TYPES.has(operationType))
+  )
+})
+
 const filteredOperations = computed(() => {
   if (!operationsData.value?.configs) {
     return {}
   }
 
-  let filtered = { ...operationsData.value.configs }
+  let filtered = { ...visibleOperations.value }
 
   // 按搜索关键词过滤
   if (searchQuery.value) {
@@ -685,14 +695,14 @@ const filteredOperations = computed(() => {
 })
 
 const configuredCount = computed(() => {
-  if (!operationsData.value?.configs) return 0
-  return Object.values(operationsData.value.configs).filter(op => op.modelName).length
+  return Object.values(visibleOperations.value).filter(op => op.modelName).length
 })
 
 const pendingCount = computed(() => {
-  if (!operationsData.value?.configs) return 0
-  return Object.values(operationsData.value.configs).filter(op => !op.modelName).length
+  return Object.values(visibleOperations.value).filter(op => !op.modelName).length
 })
+
+const visibleTotalOperations = computed(() => Object.keys(visibleOperations.value).length)
 
 const promptFunctionDocs = PROMPT_TEMPLATE_FUNCTIONS
 
@@ -1323,7 +1333,7 @@ refreshData()
   border-radius: 12px;
   border: 1px solid rgba(226, 232, 240, 0.6);
   padding: 16px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   position: relative;
   overflow: hidden;
@@ -1342,7 +1352,6 @@ refreshData()
 
 .operation-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
 }
 
 .operation-card.configured::before {

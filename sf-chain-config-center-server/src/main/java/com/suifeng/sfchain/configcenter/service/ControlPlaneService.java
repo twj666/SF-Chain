@@ -15,7 +15,12 @@ import com.suifeng.sfchain.configcenter.repository.AppRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantModelConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantOperationConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantRepository;
+import com.suifeng.sfchain.core.AIService;
 import com.suifeng.sfchain.core.PromptTemplateEngine;
+import com.suifeng.sfchain.core.openai.OpenAIModelConfig;
+import com.suifeng.sfchain.core.openai.OpenAIModelFactory;
+import com.suifeng.sfchain.operations.ModelValidationOperation.ValidationRequest;
+import com.suifeng.sfchain.operations.ModelValidationOperation.ValidationResult;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,11 +31,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -44,6 +44,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.suifeng.sfchain.constants.AIOperationConstant.MODEL_VALIDATION_OP;
 
 @Service
 @Slf4j
@@ -61,6 +63,8 @@ public class ControlPlaneService {
     private final ApiKeyRepository apiKeyRepository;
     private final TenantModelConfigRepository tenantModelConfigRepository;
     private final TenantOperationConfigRepository tenantOperationConfigRepository;
+    private final OpenAIModelFactory openAIModelFactory;
+    private final AIService aiService;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -411,40 +415,51 @@ public class ControlPlaneService {
         String endpoint = normalizeChatCompletionsEndpoint(baseUrl);
         Map<String, Object> config = model.getConfigJson() == null ? Map.of() : model.getConfigJson();
         String apiKey = normalizeRequired(toString(config.get("apiKey")), "apiKey");
-
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("model", model.getModelName());
-        payload.put("messages", List.of(Map.of("role", "user", "content", "Reply with OK only.")));
-        payload.put("max_tokens", 8);
+        String provider = normalizeOptional(model.getProvider()) == null ? "other" : model.getProvider();
+        String runtimeModelName = model.getModelName();
+        OpenAIModelConfig backupConfig = openAIModelFactory.getModelConfig(runtimeModelName);
 
         long start = System.currentTimeMillis();
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(endpoint))
-                    .timeout(Duration.ofSeconds(30))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + apiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(payload)))
+            Integer defaultMaxTokens = toInteger(config.get("defaultMaxTokens"));
+            Double defaultTemperature = toDouble(config.get("defaultTemperature"));
+
+            OpenAIModelConfig openAIModelConfig = OpenAIModelConfig.defaultConfig()
+                    .modelName(runtimeModelName)
+                    .provider(provider)
+                    .baseUrl(endpoint)
+                    .apiKey(apiKey)
+                    .enabled(model.isActive())
+                    .defaultMaxTokens(defaultMaxTokens == null ? 64 : defaultMaxTokens)
+                    .defaultTemperature(defaultTemperature == null ? 0.1d : defaultTemperature)
+                    .supportJsonOutput(toBoolean(config.get("supportJsonOutput"), false))
+                    .supportThinking(toBoolean(config.get("supportThinking"), false))
+                    .description(normalizeOptional(toString(config.get("description"))))
+                    .additionalHeaders(toStringMap(config.get("additionalHeaders")))
                     .build();
 
-            HttpResponse<String> response = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(10))
-                    .build()
-                    .send(request, HttpResponse.BodyHandlers.ofString());
+            openAIModelFactory.registerModel(openAIModelConfig);
+            ValidationResult validationResult = aiService.execute(
+                    MODEL_VALIDATION_OP,
+                    new ValidationRequest("1+1等于几？"),
+                    runtimeModelName,
+                    null
+            );
 
-            int statusCode = response.statusCode();
             long durationMs = System.currentTimeMillis() - start;
-            boolean success = statusCode >= 200 && statusCode < 300;
+            String validationAnswer = validationResult == null ? null : normalizeOptional(validationResult.getAnswer());
+            boolean success = validationAnswer != null;
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("success", success);
             result.put("modelName", model.getModelName());
             result.put("provider", model.getProvider());
-            result.put("statusCode", statusCode);
+            result.put("statusCode", success ? 200 : 500);
             result.put("durationMs", durationMs);
             result.put("endpoint", endpoint);
             result.put("message", success ? "模型测试成功" : "模型测试失败");
-            result.put("responsePreview", abbreviate(response.body(), 500));
+            result.put("responsePreview", abbreviate(toString(validationResult), 500));
+            result.put("validationAnswer", validationAnswer);
             return result;
         } catch (Exception ex) {
             long durationMs = System.currentTimeMillis() - start;
@@ -456,6 +471,12 @@ public class ControlPlaneService {
             result.put("endpoint", endpoint);
             result.put("message", "模型测试失败: " + ex.getMessage());
             return result;
+        } finally {
+            if (backupConfig != null) {
+                openAIModelFactory.registerModel(backupConfig);
+            } else {
+                openAIModelFactory.removeModel(runtimeModelName);
+            }
         }
     }
 
@@ -478,7 +499,7 @@ public class ControlPlaneService {
         entity.setOperationType(operationType);
         entity.setModelName(normalizeOptional(request.getModelName()));
         entity.setActive(request.isActive());
-        entity.setConfigJson(request.getConfig() == null ? Map.of() : request.getConfig());
+        entity.setConfigJson(mergeOperationConfig(entity.getConfigJson(), request.getConfig()));
 
         tenantOperationConfigRepository.save(entity);
         log.info("配置中心: 操作配置已更新 tenantId={}, appId={}, operationType={}, modelName={}, active={}",
@@ -1041,11 +1062,38 @@ public class ControlPlaneService {
         return merged;
     }
 
+    private static Map<String, Object> mergeOperationConfig(
+            Map<String, Object> existing,
+            Map<String, Object> incoming) {
+        Map<String, Object> merged = new LinkedHashMap<>();
+        if (existing != null) {
+            merged.putAll(existing);
+        }
+        if (incoming != null) {
+            merged.putAll(incoming);
+        }
+        return merged;
+    }
+
     private static String toString(Object value) {
         if (value == null) {
             return null;
         }
         return String.valueOf(value);
+    }
+
+    private static Map<String, String> toStringMap(Object value) {
+        if (!(value instanceof Map<?, ?> map)) {
+            return Map.of();
+        }
+        Map<String, String> result = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null) {
+                continue;
+            }
+            result.put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+        }
+        return result;
     }
 
     private static String normalizeChatCompletionsEndpoint(String baseUrl) {

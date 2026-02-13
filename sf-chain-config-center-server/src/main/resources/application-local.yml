@@ -16,7 +16,7 @@ spring:
       path: /h2-console
 
 sf-chain:
-  enabled: false
+  enabled: true
   authEnabled: false
   persistence:
     database-type: postgresql

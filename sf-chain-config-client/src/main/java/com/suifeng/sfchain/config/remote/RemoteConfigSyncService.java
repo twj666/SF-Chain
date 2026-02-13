@@ -66,6 +66,7 @@ public class RemoteConfigSyncService {
     private final AtomicLong finalizeRetryAttempts = new AtomicLong();
     private final AtomicLong finalizeRetrySuccess = new AtomicLong();
     private final AtomicLong finalizeRetryFailure = new AtomicLong();
+    private volatile boolean operationCatalogSynced;
     private volatile String currentVersion;
     private volatile String reconcileCursor;
     private volatile RemoteConfigSnapshot lastAppliedSnapshot;
@@ -98,7 +99,8 @@ public class RemoteConfigSyncService {
     public void start() {
         loadRuntimeState();
         loadCachedSnapshot();
-        syncOperationCatalogAtStartup();
+        operationCatalogSynced = false;
+        syncOperationCatalogIfNeeded();
         if (syncProperties.isStartupCheckEnabled()) {
             log.info("启动阶段远程配置严格检查已开启, maxAttempts={}, retryIntervalMs={}",
                     Math.max(syncProperties.getStartupMaxAttempts(), 1),
@@ -139,6 +141,7 @@ public class RemoteConfigSyncService {
             }
         }
         try {
+            syncOperationCatalogIfNeeded();
             if (leaseAcquired) {
                 reconcileFinalizeState();
                 flushPendingFinalizations();
@@ -192,18 +195,29 @@ public class RemoteConfigSyncService {
         }
     }
 
-    private void syncOperationCatalogAtStartup() {
+    private void syncOperationCatalogIfNeeded() {
         if (!syncProperties.isOperationCatalogSyncEnabled()) {
+            operationCatalogSynced = true;
+            return;
+        }
+        if (operationCatalogSynced) {
             return;
         }
         List<RemoteConfigClient.OperationCatalogItem> items = buildOperationCatalog();
         if (items.isEmpty()) {
-            log.info("Skip operation catalog sync: no available AIOp operations");
+            log.info("Skip operation catalog sync: no available AIOp operations, will retry on next sync tick");
             return;
         }
         try {
             remoteConfigClient.pushOperationCatalog(items);
-            log.info("Operation catalog sync completed: count={}", items.size());
+            operationCatalogSynced = true;
+            int withLocalTemplate = 0;
+            for (RemoteConfigClient.OperationCatalogItem item : items) {
+                if (StringUtils.hasText(item.getLocalPromptTemplate())) {
+                    withLocalTemplate++;
+                }
+            }
+            log.info("Operation catalog sync completed: count={}, withLocalTemplate={}", items.size(), withLocalTemplate);
         } catch (Exception ex) {
             if (!syncProperties.isFailOpen()) {
                 throw new IllegalStateException("Operation catalog sync failed and fail-open=false", ex);
