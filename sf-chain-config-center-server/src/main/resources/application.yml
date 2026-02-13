@@ -21,6 +21,8 @@ sf-chain:
   enabled: true
   authEnabled: true
   auth-token: ${SF_CHAIN_AUTH_TOKEN:change-me}
+  logging:
+    upload-content: ${SF_CHAIN_LOG_UPLOAD_CONTENT:true}
   features:
     management-api: true
     local-persistence: true
@@ -35,6 +37,7 @@ sf-chain:
     enabled: true
     api-key: ${SF_CHAIN_INGESTION_API_KEY:}
     require-tenant-app: true
+    file-persistence-dir: ${SF_CHAIN_INGESTION_FILE_DIR:/Users/suifeng/Code/SF-Chain/data/ai-logs}
     supported-contract-versions:
       - v1
       - v2

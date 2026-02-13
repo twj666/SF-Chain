@@ -15,6 +15,7 @@ import com.suifeng.sfchain.configcenter.repository.AppRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantModelConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantOperationConfigRepository;
 import com.suifeng.sfchain.configcenter.repository.TenantRepository;
+import com.suifeng.sfchain.configcenter.logging.AICallLogRouteContext;
 import com.suifeng.sfchain.core.AIService;
 import com.suifeng.sfchain.core.PromptTemplateEngine;
 import com.suifeng.sfchain.core.openai.OpenAIModelConfig;
@@ -439,12 +440,15 @@ public class ControlPlaneService {
                     .build();
 
             openAIModelFactory.registerModel(openAIModelConfig);
-            ValidationResult validationResult = aiService.execute(
-                    MODEL_VALIDATION_OP,
-                    new ValidationRequest("1+1等于几？"),
-                    runtimeModelName,
-                    null
-            );
+            ValidationResult validationResult;
+            try (AICallLogRouteContext.Scope ignored = AICallLogRouteContext.use(tenantId, appId)) {
+                validationResult = aiService.execute(
+                        MODEL_VALIDATION_OP,
+                        new ValidationRequest("1+1等于几？"),
+                        runtimeModelName,
+                        null
+                );
+            }
 
             long durationMs = System.currentTimeMillis() - start;
             String validationAnswer = validationResult == null ? null : normalizeOptional(validationResult.getAnswer());

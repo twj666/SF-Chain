@@ -14,20 +14,3 @@ spring:
     console:
       enabled: true
       path: /h2-console
-
-sf-chain:
-  enabled: true
-  authEnabled: false
-  persistence:
-    database-type: postgresql
-  features:
-    local-persistence: true
-    local-migration: false
-    management-api: true
-    static-ui: true
-  ingestion:
-    enabled: true
-
-ai:
-  openai-models:
-    enabled: false
