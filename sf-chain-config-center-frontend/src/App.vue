@@ -202,7 +202,12 @@
           <div class="content-area">
             <ApiInfoConfig v-if="activeTab === 'api'" :key="innerViewKey" />
             <AiNodeConfig v-if="activeTab === 'operations'" :key="innerViewKey" />
-            <AICallLogViewer v-if="activeTab === 'logs'" :key="innerViewKey" />
+            <AICallLogViewer
+              v-if="activeTab === 'logs'"
+              :key="innerViewKey"
+              :tenant-id="selectedTenantId"
+              :app-id="selectedAppId"
+            />
           </div>
         </div>
       </section>

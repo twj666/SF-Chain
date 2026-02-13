@@ -4,6 +4,8 @@
     <LogDetailModal
       v-if="showLogDetail"
       :log="selectedLog"
+      :tenant-id="tenantId"
+      :app-id="appId"
       @go-back="closeLogDetail"
     />
 
@@ -192,6 +194,18 @@ import type { AICallLogSummary } from '@/types/system'
 // 导入统一的AI提供商工具函数
 import { getProviderName, getProviderIcon, getProviderFromModel } from '@/utils/aiProviders'
 
+interface Props {
+  tenantId: string
+  appId: string
+}
+
+const props = defineProps<Props>()
+
+const scopedQuery = computed(() => ({
+  tenantId: props.tenantId,
+  appId: props.appId
+}))
+
 // 状态管理
 const loading = ref(false)
 const logs = ref<AICallLogSummary[]>([])
@@ -295,7 +309,7 @@ const getDurationClass = (duration: number | undefined) => {
 const loadLogs = async () => {
   try {
     loading.value = true
-    const logsData = await aiCallLogApi.getAllLogSummaries()
+    const logsData = await aiCallLogApi.getAllLogSummaries(scopedQuery.value)
     logs.value = logsData
   } catch (error) {
     console.error('加载日志失败:', error)
@@ -312,7 +326,7 @@ const clearAllLogs = async () => {
 
   try {
     loading.value = true
-    await aiCallLogApi.clearLogs()
+    await aiCallLogApi.clearLogs(scopedQuery.value)
     await loadLogs()
     alert('日志已清空')
   } catch (error) {

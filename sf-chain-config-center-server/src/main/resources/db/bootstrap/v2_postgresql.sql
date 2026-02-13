@@ -72,24 +72,8 @@ CREATE TABLE IF NOT EXISTS sfchain_cp_config_releases (
   CONSTRAINT uk_sfchain_cp_release UNIQUE (tenant_id, app_id, version)
 );
 
-CREATE TABLE IF NOT EXISTS sfchain_cp_call_logs (
-  id BIGSERIAL PRIMARY KEY,
-  tenant_id VARCHAR(64) NOT NULL,
-  app_id VARCHAR(128) NOT NULL,
-  instance_id VARCHAR(128),
-  trace_id VARCHAR(128),
-  operation_type VARCHAR(128),
-  model_name VARCHAR(128),
-  status VARCHAR(32),
-  latency_ms BIGINT,
-  input_tokens INTEGER,
-  output_tokens INTEGER,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE INDEX IF NOT EXISTS idx_sfchain_cp_api_keys_tenant_app ON sfchain_cp_api_keys(tenant_id, app_id);
 CREATE INDEX IF NOT EXISTS idx_sfchain_cp_models_tenant_app ON sfchain_cp_model_configs(tenant_id, app_id);
 CREATE INDEX IF NOT EXISTS idx_sfchain_cp_ops_tenant_app ON sfchain_cp_operation_configs(tenant_id, app_id);
-CREATE INDEX IF NOT EXISTS idx_sfchain_cp_logs_tenant_app ON sfchain_cp_call_logs(tenant_id, app_id);
 
 DROP TABLE IF EXISTS sfchain_cp_agent_instances;

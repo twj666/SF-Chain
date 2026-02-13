@@ -9,16 +9,14 @@ import com.suifeng.sfchain.core.logging.AICallLogManager;
 import com.suifeng.sfchain.core.logging.AICallLogSummary;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionRecord;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionStore;
-import org.springframework.dao.DataAccessException;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -45,23 +43,34 @@ public class AICallLogController {
     private final AICallLogIngestionStore ingestionStore;
     private final TenantRepository tenantRepository;
     private final AppRepository appRepository;
-    private final JdbcTemplate jdbcTemplate;
 
     public AICallLogController(
             ObjectProvider<AICallLogManager> logManagerProvider,
             ObjectProvider<AICallLogIngestionStore> ingestionStoreProvider,
             TenantRepository tenantRepository,
-            AppRepository appRepository,
-            JdbcTemplate jdbcTemplate) {
+            AppRepository appRepository) {
         this.logManager = logManagerProvider.getIfAvailable();
         this.ingestionStore = ingestionStoreProvider.getIfAvailable();
         this.tenantRepository = tenantRepository;
         this.appRepository = appRepository;
-        this.jdbcTemplate = jdbcTemplate;
     }
 
     @GetMapping
     public List<Map<String, Object>> getAllLogSummaries() {
+        return getAllLogSummaries(null, null);
+    }
+
+    @GetMapping(params = {"tenantId", "appId"})
+    public List<Map<String, Object>> getAllLogSummariesByScope(
+            @RequestParam String tenantId,
+            @RequestParam String appId) {
+        return getAllLogSummaries(tenantId, appId);
+    }
+
+    private List<Map<String, Object>> getAllLogSummaries(String tenantId, String appId) {
+        if (hasScope(tenantId, appId)) {
+            return loadPersistedSummaries(DEFAULT_LIMIT, tenantId, appId);
+        }
         if (logManager != null) {
             List<Map<String, Object>> inMemory = logManager.getAllLogSummaries().stream()
                     .map(this::summaryToMap)
@@ -69,92 +78,73 @@ public class AICallLogController {
             if (!inMemory.isEmpty()) {
                 return inMemory;
             }
-            List<Map<String, Object>> persisted = loadPersistedSummaries(DEFAULT_LIMIT);
-            if (!persisted.isEmpty()) {
-                return persisted;
-            }
         }
-        String sql = "SELECT id, trace_id, operation_type, model_name, status, latency_ms, created_at " +
-                "FROM sfchain_cp_call_logs ORDER BY created_at DESC LIMIT 500";
-        return safeQuery(sql);
+        return loadPersistedSummaries(DEFAULT_LIMIT, null, null);
     }
 
     @GetMapping("/{callId}")
-    public Map<String, Object> getFullLog(@PathVariable String callId) {
-        if (logManager != null) {
+    public Map<String, Object> getFullLog(
+            @PathVariable String callId,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String appId) {
+        if (!hasScope(tenantId, appId) && logManager != null) {
             AICallLog log = logManager.getFullLog(callId);
             if (log != null) {
                 return fullLogToMap(log);
             }
-            for (Map<String, Object> persisted : loadPersistedSummaries(2000)) {
-                if (Objects.equals(String.valueOf(persisted.get("callId")), callId)) {
-                    return withFullFields(persisted);
-                }
+        }
+        for (AICallLogIngestionRecord record : loadPersistedRecords(2000, tenantId, appId)) {
+            if (record == null || record.getItem() == null) {
+                continue;
             }
-            return withFullFields(defaultSummary("NOT_FOUND"));
-        }
-
-        String sqlByTrace = "SELECT id, trace_id, operation_type, model_name, status, latency_ms, created_at " +
-                "FROM sfchain_cp_call_logs WHERE trace_id = ? ORDER BY created_at DESC LIMIT 1";
-        List<Map<String, Object>> byTrace = safeQuery(sqlByTrace, callId);
-        if (!byTrace.isEmpty()) {
-            return withFullFields(byTrace.get(0));
-        }
-
-        try {
-            long id = Long.parseLong(callId);
-            String sqlById = "SELECT id, trace_id, operation_type, model_name, status, latency_ms, created_at " +
-                    "FROM sfchain_cp_call_logs WHERE id = ? ORDER BY created_at DESC LIMIT 1";
-            List<Map<String, Object>> byId = safeQuery(sqlById, id);
-            if (!byId.isEmpty()) {
-                return withFullFields(byId.get(0));
+            if (Objects.equals(defaultString(record.getItem().getCallId(), "UNKNOWN"), callId)) {
+                return recordToFullMap(record);
             }
-        } catch (NumberFormatException ignored) {
-            // not numeric id, ignore
         }
-
         return withFullFields(defaultSummary("NOT_FOUND"));
     }
 
     @GetMapping("/operation/{operationType}")
-    public List<Map<String, Object>> getByOperation(@PathVariable String operationType) {
-        if (logManager != null) {
+    public List<Map<String, Object>> getByOperation(
+            @PathVariable String operationType,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String appId) {
+        if (!hasScope(tenantId, appId) && logManager != null) {
             List<Map<String, Object>> inMemory = logManager.getLogSummariesByOperation(operationType).stream()
                     .map(this::summaryToMap)
                     .collect(Collectors.toList());
             if (!inMemory.isEmpty()) {
                 return inMemory;
             }
-            return loadPersistedSummaries(2000).stream()
-                    .filter(it -> Objects.equals(String.valueOf(it.get("operationType")), operationType))
-                    .collect(Collectors.toList());
         }
-        String sql = "SELECT id, trace_id, operation_type, model_name, status, latency_ms, created_at " +
-                "FROM sfchain_cp_call_logs WHERE operation_type = ? ORDER BY created_at DESC LIMIT 500";
-        return safeQuery(sql, operationType);
+        return loadPersistedSummaries(2000, tenantId, appId).stream()
+                .filter(it -> Objects.equals(String.valueOf(it.get("operationType")), operationType))
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/model/{modelName}")
-    public List<Map<String, Object>> getByModel(@PathVariable String modelName) {
-        if (logManager != null) {
+    public List<Map<String, Object>> getByModel(
+            @PathVariable String modelName,
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String appId) {
+        if (!hasScope(tenantId, appId) && logManager != null) {
             List<Map<String, Object>> inMemory = logManager.getLogSummariesByModel(modelName).stream()
                     .map(this::summaryToMap)
                     .collect(Collectors.toList());
             if (!inMemory.isEmpty()) {
                 return inMemory;
             }
-            return loadPersistedSummaries(2000).stream()
-                    .filter(it -> Objects.equals(String.valueOf(it.get("modelName")), modelName))
-                    .collect(Collectors.toList());
         }
-        String sql = "SELECT id, trace_id, operation_type, model_name, status, latency_ms, created_at " +
-                "FROM sfchain_cp_call_logs WHERE model_name = ? ORDER BY created_at DESC LIMIT 500";
-        return safeQuery(sql, modelName);
+        return loadPersistedSummaries(2000, tenantId, appId).stream()
+                .filter(it -> Objects.equals(String.valueOf(it.get("modelName")), modelName))
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/statistics")
-    public Map<String, Object> getStatistics() {
-        if (logManager != null) {
+    public Map<String, Object> getStatistics(
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String appId) {
+        if (!hasScope(tenantId, appId) && logManager != null) {
             AICallLogManager.LogStatistics stats = logManager.getStatistics();
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("totalCalls", stats.getTotalCalls());
@@ -167,7 +157,7 @@ public class AICallLogController {
             return result;
         }
 
-        List<Map<String, Object>> summaries = getAllLogSummaries();
+        List<Map<String, Object>> summaries = getAllLogSummaries(tenantId, appId);
         int totalCalls = summaries.size();
         int successfulCalls = (int) summaries.stream()
                 .filter(it -> "SUCCESS".equalsIgnoreCase(String.valueOf(it.get("status"))))
@@ -209,48 +199,12 @@ public class AICallLogController {
     public Map<String, Object> clearLogs() {
         if (logManager != null) {
             logManager.clearLogs();
-            Map<String, Object> response = new LinkedHashMap<>();
-            response.put("success", true);
-            response.put("message", "logs cleared");
-            response.put("data", Map.of("deleted", 0));
-            return response;
         }
-
         Map<String, Object> response = new LinkedHashMap<>();
-        try {
-            int affected = jdbcTemplate.update("DELETE FROM sfchain_cp_call_logs");
-            response.put("success", true);
-            response.put("message", "logs cleared");
-            response.put("data", Map.of("deleted", affected));
-            return response;
-        } catch (DataAccessException ex) {
-            response.put("success", true);
-            response.put("message", "logs table unavailable, nothing to clear");
-            response.put("data", Map.of("deleted", 0));
-            return response;
-        }
-    }
-
-    private List<Map<String, Object>> safeQuery(String sql, Object... args) {
-        try {
-            return jdbcTemplate.query(sql, (rs, rowNum) -> {
-                Map<String, Object> item = new LinkedHashMap<>();
-                String traceId = rs.getString("trace_id");
-                long id = rs.getLong("id");
-                item.put("callId", traceId == null || traceId.isBlank() ? String.valueOf(id) : traceId);
-                item.put("operationType", defaultString(rs.getString("operation_type"), "UNKNOWN"));
-                item.put("modelName", defaultString(rs.getString("model_name"), "UNKNOWN"));
-                item.put("callTime", toDateTime(rs.getTimestamp("created_at")));
-                item.put("duration", rs.getLong("latency_ms"));
-                item.put("status", defaultString(rs.getString("status"), "SUCCESS"));
-                item.put("errorMessage", null);
-                item.put("frequency", 1);
-                item.put("lastAccessTime", toDateTime(rs.getTimestamp("created_at")));
-                return item;
-            }, args);
-        } catch (DataAccessException ex) {
-            return new ArrayList<>();
-        }
+        response.put("success", true);
+        response.put("message", "in-memory logs cleared");
+        response.put("data", Map.of("deleted", 0));
+        return response;
     }
 
     private static Map<String, Object> withFullFields(Map<String, Object> summary) {
@@ -281,10 +235,6 @@ public class AICallLogController {
             return fallback;
         }
         return value;
-    }
-
-    private static LocalDateTime toDateTime(Timestamp timestamp) {
-        return timestamp == null ? LocalDateTime.now() : timestamp.toLocalDateTime();
     }
 
     private static long toLong(Object value) {
@@ -327,43 +277,59 @@ public class AICallLogController {
         return item;
     }
 
-    private List<Map<String, Object>> loadPersistedSummaries(int limit) {
-        if (ingestionStore == null) {
-            return List.of();
-        }
-        List<AICallLogIngestionRecord> records = new ArrayList<>();
-        Set<String> appKeys = new LinkedHashSet<>();
-
-        appKeys.add(CONFIG_CENTER_TENANT_ID + ":" + CONFIG_CENTER_APP_ID);
-
-        Set<String> activeTenants = tenantRepository.findAll().stream()
-                .filter(TenantEntity::isActive)
-                .map(TenantEntity::getTenantId)
-                .collect(Collectors.toSet());
-        for (AppEntity app : appRepository.findAll()) {
-            if (!app.isActive() || !activeTenants.contains(app.getTenantId())) {
-                continue;
-            }
-            appKeys.add(app.getTenantId() + ":" + app.getAppId());
-        }
-
-        int perAppLimit = Math.max(20, limit / Math.max(appKeys.size(), 1));
-        for (String key : appKeys) {
-            String[] parts = key.split(":", 2);
-            if (parts.length != 2) {
-                continue;
-            }
-            records.addAll(ingestionStore.query(parts[0], parts[1], perAppLimit));
-        }
-
-        return records.stream()
-                .sorted(Comparator.comparing(AICallLogIngestionRecord::getIngestedAt, Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(limit)
+    private List<Map<String, Object>> loadPersistedSummaries(int limit, String tenantId, String appId) {
+        return loadPersistedRecords(limit, tenantId, appId).stream()
                 .map(this::recordToSummaryMap)
                 .collect(Collectors.toList());
     }
 
+    private List<AICallLogIngestionRecord> loadPersistedRecords(int limit, String tenantId, String appId) {
+        if (ingestionStore == null) {
+            return List.of();
+        }
+        List<AICallLogIngestionRecord> records = new ArrayList<>();
+        if (hasScope(tenantId, appId)) {
+            records.addAll(ingestionStore.query(tenantId, appId, limit));
+        } else {
+            Set<String> appKeys = new LinkedHashSet<>();
+            appKeys.add(CONFIG_CENTER_TENANT_ID + ":" + CONFIG_CENTER_APP_ID);
+
+            Set<String> activeTenants = tenantRepository.findAll().stream()
+                    .filter(TenantEntity::isActive)
+                    .map(TenantEntity::getTenantId)
+                    .collect(Collectors.toSet());
+            for (AppEntity app : appRepository.findAll()) {
+                if (!app.isActive() || !activeTenants.contains(app.getTenantId())) {
+                    continue;
+                }
+                appKeys.add(app.getTenantId() + ":" + app.getAppId());
+            }
+
+            int perAppLimit = Math.max(20, limit / Math.max(appKeys.size(), 1));
+            for (String key : appKeys) {
+                String[] parts = key.split(":", 2);
+                if (parts.length != 2) {
+                    continue;
+                }
+                records.addAll(ingestionStore.query(parts[0], parts[1], perAppLimit));
+            }
+        }
+        return records.stream()
+                .sorted(Comparator.comparing(AICallLogIngestionRecord::getIngestedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
     private Map<String, Object> recordToSummaryMap(AICallLogIngestionRecord record) {
+        Map<String, Object> full = recordToFullMap(record);
+        full.remove("input");
+        full.remove("prompt");
+        full.remove("rawResponse");
+        full.remove("output");
+        return full;
+    }
+
+    private Map<String, Object> recordToFullMap(AICallLogIngestionRecord record) {
         Map<String, Object> item = new LinkedHashMap<>();
         if (record == null || record.getItem() == null) {
             item.put("callId", "UNKNOWN");
@@ -375,8 +341,16 @@ public class AICallLogController {
             item.put("errorMessage", "invalid ingestion record");
             item.put("frequency", 1);
             item.put("lastAccessTime", LocalDateTime.now());
+            item.put("tenantId", null);
+            item.put("appId", null);
+            item.put("input", null);
+            item.put("prompt", null);
+            item.put("rawResponse", null);
+            item.put("output", null);
             return item;
         }
+        item.put("tenantId", record.getTenantId());
+        item.put("appId", record.getAppId());
         item.put("callId", defaultString(record.getItem().getCallId(), "UNKNOWN"));
         item.put("operationType", defaultString(record.getItem().getOperationType(), "UNKNOWN"));
         item.put("modelName", defaultString(record.getItem().getModelName(), "UNKNOWN"));
@@ -386,6 +360,14 @@ public class AICallLogController {
         item.put("errorMessage", record.getItem().getErrorMessage());
         item.put("frequency", 1);
         item.put("lastAccessTime", record.getIngestedAt() == null ? LocalDateTime.now() : record.getIngestedAt());
+        item.put("input", record.getItem().getInput());
+        item.put("prompt", record.getItem().getPrompt());
+        item.put("rawResponse", record.getItem().getRawResponse());
+        item.put("output", record.getItem().getOutput());
         return item;
+    }
+
+    private static boolean hasScope(String tenantId, String appId) {
+        return tenantId != null && !tenantId.isBlank() && appId != null && !appId.isBlank();
     }
 }

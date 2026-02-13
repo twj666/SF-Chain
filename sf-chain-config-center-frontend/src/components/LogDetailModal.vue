@@ -277,6 +277,8 @@ import { getProviderName, getProviderIcon, getProviderFromModel } from '@/utils/
 
 interface Props {
   log: AICallLogSummary | null
+  tenantId: string
+  appId: string
 }
 
 const props = defineProps<Props>()
@@ -350,7 +352,10 @@ const loadFullLog = async () => {
 
   try {
     loading.value = true
-    fullLog.value = await aiCallLogApi.getFullLog(props.log.callId)
+    fullLog.value = await aiCallLogApi.getFullLog(props.log.callId, {
+      tenantId: props.tenantId,
+      appId: props.appId
+    })
   } catch (error) {
     console.error('获取日志详情失败:', error)
     alert('获取日志详情失败，请稍后重试')

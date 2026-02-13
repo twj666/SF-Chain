@@ -32,8 +32,7 @@ public class DatabaseBootstrapService {
             "sfchain_cp_api_keys",
             "sfchain_cp_model_configs",
             "sfchain_cp_operation_configs",
-            "sfchain_cp_config_releases",
-            "sfchain_cp_call_logs"
+            "sfchain_cp_config_releases"
     );
 
     public DatabaseStatus status() {
