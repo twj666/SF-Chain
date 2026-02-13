@@ -125,7 +125,6 @@ public final class ConfigDtos {
         private String template;
         private Boolean strictRender = Boolean.TRUE;
         private Map<String, Object> input;
-        private Map<String, Object> ctx;
         private String localPrompt;
     }
 

@@ -575,13 +575,11 @@ public class ControlPlaneService {
     public ConfigDtos.PromptTemplatePreviewResponse previewPromptTemplate(ConfigDtos.PromptTemplatePreviewRequest request) {
         String template = normalizeRequired(request.getTemplate(), "template");
         Map<String, Object> input = request.getInput() == null ? Map.of() : request.getInput();
-        Map<String, Object> ctx = request.getCtx() == null ? Map.of() : request.getCtx();
         String operationType = normalizeOptional(request.getOperationType());
         boolean strictRender = request.getStrictRender() == null || request.getStrictRender();
 
         Map<String, Object> renderContext = new LinkedHashMap<>();
         renderContext.put("input", input);
-        renderContext.put("ctx", ctx);
         renderContext.put("localPrompt", request.getLocalPrompt());
         renderContext.put("operationType", operationType == null ? "UNKNOWN_OPERATION" : operationType);
 

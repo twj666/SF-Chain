@@ -117,7 +117,6 @@ export interface PromptTemplatePreviewRequest {
   template: string
   strictRender: boolean
   input?: Record<string, unknown>
-  ctx?: Record<string, unknown>
   localPrompt?: string
 }
 

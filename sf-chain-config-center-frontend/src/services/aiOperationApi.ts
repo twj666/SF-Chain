@@ -154,7 +154,6 @@ export const aiOperationApi = {
     template: string
     strictRender: boolean
     input?: Record<string, unknown>
-    ctx?: Record<string, unknown>
     localPrompt?: string
   }): Promise<PromptTemplatePreviewResponse> {
     return controlPlaneApi.previewPromptTemplate(payload)

@@ -503,12 +503,20 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
             boolean strictRender) {
         Map<String, Object> context = new HashMap<>();
         Map<String, Object> inputContext = objectMapper.convertValue(input, Map.class);
-        context.put("input", inputContext == null ? Map.of() : inputContext);
-        Map<String, Object> promptContext = preparePromptContext(input);
-        context.put("ctx", promptContext == null ? Map.of() : promptContext);
+        Map<String, Object> safeInputContext = inputContext == null ? new HashMap<>() : new HashMap<>(inputContext);
+        Map<String, Object> promptInputExtensions = buildPromptInputExtensions(input);
+        Map<String, Object> safePromptInputExtensions = promptInputExtensions == null ? Map.of() : promptInputExtensions;
+        mergePromptInputExtensionsIntoInput(safeInputContext, safePromptInputExtensions);
+        context.put("input", safeInputContext);
         context.put("localPrompt", localPrompt);
         context.put("operationType", annotation.value());
         return promptTemplateEngine.render(template, context, strictRender);
+    }
+
+    private void mergePromptInputExtensionsIntoInput(Map<String, Object> inputContext, Map<String, Object> promptInputExtensions) {
+        for (Map.Entry<String, Object> entry : promptInputExtensions.entrySet()) {
+            inputContext.putIfAbsent(entry.getKey(), entry.getValue());
+        }
     }
 
     private String normalizePromptMode(String promptMode) {
@@ -544,7 +552,11 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
 
     public abstract String promptTemplate();
 
-    protected Map<String, Object> preparePromptContext(INPUT input) {
+    /**
+     * 扩展模板可用的 input 字段。
+     * 返回的键值会合并到模板中的 input 对象（不覆盖原始 input 同名字段）。
+     */
+    protected Map<String, Object> buildPromptInputExtensions(INPUT input) {
         return Map.of();
     }
 

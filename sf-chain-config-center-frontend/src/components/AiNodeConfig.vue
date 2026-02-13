@@ -459,17 +459,7 @@
                   id="previewInputJson"
                   v-model="promptPreviewInputJson"
                   class="form-textarea preview-textarea"
-                  rows="6"
-                  spellcheck="false"
-                ></textarea>
-              </div>
-              <div class="template-preview-input">
-                <label for="previewCtxJson">ctx JSON（上下文参数）</label>
-                <textarea
-                  id="previewCtxJson"
-                  v-model="promptPreviewCtxJson"
-                  class="form-textarea preview-textarea"
-                  rows="6"
+                  rows="12"
                   spellcheck="false"
                 ></textarea>
               </div>
@@ -482,9 +472,7 @@
               <div class="hint-section-title">可用变量</div>
               <div class="hint-code-row">
                 <code v-pre>{{ input.xxx }}</code>
-                <code v-pre>{{ ctx.xxx }}</code>
                 <code v-pre>{{ operationType }}</code>
-                <code v-pre>{{ localPrompt }}</code>
                 <code v-pre>{{ fn.xxx(...) }}</code>
               </div>
             </div>
@@ -493,7 +481,7 @@
               <div class="hint-section-title">语法示例</div>
               <div class="hint-code-list">
                 <code v-pre>{{#if input.debug}}调试模式{{else}}正常模式{{/if}}</code>
-                <code v-pre>{{#each ctx.items}}- {{ item }}{{/each}}</code>
+                <code v-pre>{{#each input.items}}- {{ item }}{{/each}}</code>
               </div>
             </div>
 
@@ -613,7 +601,6 @@ const templateWorkspaceOperationType = ref('')
 const templateWorkspaceOperationDesc = ref('')
 const previewingTemplate = ref(false)
 const promptPreviewInputJson = ref('{\n  "topic": "AI模板优化"\n}')
-const promptPreviewCtxJson = ref('{\n  "keywords": ["模板", "渲染", "调试"]\n}')
 const promptPreviewRendered = ref('')
 const promptPreviewError = ref<{ expression?: string; message: string } | null>(null)
 
@@ -904,7 +891,7 @@ const saveTemplateWorkspace = async () => {
   }
 }
 
-const parsePreviewJson = (raw: string, field: 'input' | 'ctx') => {
+const parsePreviewJson = (raw: string, field: 'input') => {
   const text = raw.trim()
   if (!text) {
     return {}
@@ -935,14 +922,11 @@ const previewPromptTemplate = async () => {
     promptPreviewRendered.value = ''
 
     const input = parsePreviewJson(promptPreviewInputJson.value, 'input')
-    const ctx = parsePreviewJson(promptPreviewCtxJson.value, 'ctx')
-
     const response = await aiOperationApi.previewPromptTemplate({
       operationType: templateWorkspaceOperationType.value,
       template: templateWorkspace.promptTemplate || '',
       strictRender: templateWorkspace.promptStrictRender ?? false,
-      input,
-      ctx
+      input
     })
 
     if (response.success) {

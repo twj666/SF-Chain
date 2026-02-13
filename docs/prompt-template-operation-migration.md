@@ -2,6 +2,10 @@
 
 本文档用于落地 SF-Chain 模板化能力：在不改 Operation 输入输出签名的前提下，启用配置中心可编辑的远程提示词模板。
 
+Operation 若需要在运行时补充模板变量，请重写：
+
+- `buildPromptInputExtensions(input)`：返回要追加到 `input` 的字段（同名不覆盖）
+
 ## 1. 运行时规则
 
 Operation 配置新增字段：
@@ -23,7 +27,6 @@ Operation 配置新增字段：
 支持以下变量（Mustache 风格）：
 
 - `{{ input.xxx }}`：读取 Operation 输入对象字段
-- `{{ ctx.xxx }}`：读取 Operation `preparePromptContext(input)` 产出的上下文
 - `{{ localPrompt }}`：本地 `buildPrompt(input)` 结果
 - `{{ operationType }}`：当前操作类型
 - `{{ fn.xxx(...) }}`：调用模板内置函数
