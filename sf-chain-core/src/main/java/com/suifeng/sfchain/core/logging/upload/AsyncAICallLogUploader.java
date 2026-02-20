@@ -12,6 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class AsyncAICallLogUploader implements AICallLogUploadGateway {
 
+    private static final int MAX_BATCHES_PER_CYCLE = 8;
     private final SfChainLoggingProperties loggingProperties;
     private final AICallLogUploadClient uploadClient;
     private final LinkedBlockingQueue<AICallLogUploadItem> queue;
@@ -39,7 +41,7 @@ public class AsyncAICallLogUploader implements AICallLogUploadGateway {
 
     @PostConstruct
     public void start() {
-        long interval = Math.max(loggingProperties.getFlushIntervalMs(), 1000L);
+        long interval = Math.max(loggingProperties.getUploadIntervalSeconds(), 1) * 1000L;
         scheduler.scheduleWithFixedDelay(this::flushSafely, interval, interval, TimeUnit.MILLISECONDS);
         log.info("AI调用日志异步上报已启动, interval={}ms, batchSize={}", interval, loggingProperties.getBatchSize());
     }
@@ -52,7 +54,7 @@ public class AsyncAICallLogUploader implements AICallLogUploadGateway {
 
     @Override
     public void publish(AICallLog callLog) {
-        if (Math.random() > clampSampleRate(loggingProperties.getSampleRate())) {
+        if (ThreadLocalRandom.current().nextDouble() > clampSampleRate(loggingProperties.getSampleRate())) {
             sampledOutCount.incrementAndGet();
             return;
         }
@@ -84,28 +86,31 @@ public class AsyncAICallLogUploader implements AICallLogUploadGateway {
         }
     }
 
-    private void flushBatch() throws InterruptedException {
+    private void flushBatch() {
         int batchSize = Math.max(loggingProperties.getBatchSize(), 1);
-        List<AICallLogUploadItem> batch = new ArrayList<>(batchSize);
-        queue.drainTo(batch, batchSize);
-        if (batch.isEmpty()) {
-            return;
+        for (int i = 0; i < MAX_BATCHES_PER_CYCLE; i++) {
+            List<AICallLogUploadItem> batch = new ArrayList<>(batchSize);
+            queue.drainTo(batch, batchSize);
+            if (batch.isEmpty()) {
+                return;
+            }
+            if (uploadWithRetry(batch)) {
+                successCount.addAndGet(batch.size());
+                continue;
+            }
+            failedCount.addAndGet(batch.size());
+            log.warn("AI调用日志上报失败且超过重试次数，丢弃 {} 条", batch.size());
         }
+    }
 
+    private boolean uploadWithRetry(List<AICallLogUploadItem> batch) {
         int maxRetry = Math.max(loggingProperties.getMaxRetry(), 0);
         for (int attempt = 0; attempt <= maxRetry; attempt++) {
             if (uploadClient.upload(batch)) {
-                successCount.incrementAndGet();
-                return;
-            }
-            if (attempt < maxRetry) {
-                long backoffMs = Math.min(1000L * (1L << attempt), 8000L);
-                Thread.sleep(backoffMs);
+                return true;
             }
         }
-
-        failedCount.incrementAndGet();
-        log.warn("AI调用日志上报失败且超过重试次数，丢弃 {} 条", batch.size());
+        return false;
     }
 
     private static double clampSampleRate(double sampleRate) {

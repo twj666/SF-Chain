@@ -28,6 +28,11 @@ public class SfChainLoggingProperties {
     private String uploadEndpoint = "/v1/logs/ai-calls/batch";
 
     /**
+     * 上报周期（秒）
+     */
+    private int uploadIntervalSeconds = 3;
+
+    /**
      * 异步队列容量
      */
     private int queueCapacity = 10000;
@@ -38,14 +43,9 @@ public class SfChainLoggingProperties {
     private int batchSize = 200;
 
     /**
-     * 刷新间隔（毫秒）
-     */
-    private long flushIntervalMs = 3000;
-
-    /**
      * 失败重试次数
      */
-    private int maxRetry = 3;
+    private int maxRetry = 1;
 
     /**
      * 日志采样率 [0,1]
@@ -55,5 +55,5 @@ public class SfChainLoggingProperties {
     /**
      * 是否上报输入输出内容
      */
-    private boolean uploadContent = false;
+    private boolean uploadContent = true;
 }

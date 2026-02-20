@@ -1,6 +1,9 @@
 package com.suifeng.sfchain.configcenter.controller;
 
 import com.suifeng.sfchain.config.SfChainIngestionProperties;
+import com.suifeng.sfchain.configcenter.dto.ApiKeyDtos;
+import com.suifeng.sfchain.configcenter.logging.AICallLogRouteContext;
+import com.suifeng.sfchain.configcenter.service.ControlPlaneService;
 import com.suifeng.sfchain.core.logging.AICallLog;
 import com.suifeng.sfchain.core.logging.AICallLogManager;
 import com.suifeng.sfchain.core.logging.ingestion.AICallLogIngestionPage;
@@ -41,6 +44,7 @@ public class AICallLogIngestionController {
     private final MinuteWindowQuotaService quotaService;
     private final AICallLogIngestionStore ingestionStore;
     private final IngestionContractHealthTracker contractHealthTracker;
+    private final ControlPlaneService controlPlaneService;
 
     @PostMapping("/batch")
     public ResponseEntity<Map<String, Object>> ingestBatch(
@@ -48,7 +52,11 @@ public class AICallLogIngestionController {
             @RequestHeader(value = "X-SF-CONTRACT-VERSION", required = false) String headerContractVersion,
             @RequestBody AICallLogUploadBatchRequest request) {
         if (!isApiKeyValid(apiKey)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "invalid api key"));
+            String tenantId = request == null ? null : request.getTenantId();
+            String appId = request == null ? null : request.getAppId();
+            if (!isTenantApiKeyValid(apiKey, tenantId, appId)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "invalid api key"));
+            }
         }
         String contractVersion = resolveContractVersion(request, headerContractVersion);
         if (!isContractVersionSupported(contractVersion)) {
@@ -71,9 +79,11 @@ public class AICallLogIngestionController {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("message", "quota exceeded"));
         }
 
-        ingestionStore.saveBatch(request.getTenantId(), request.getAppId(), items);
-        for (AICallLogUploadItem item : items) {
-            logManager.addLog(toAICallLog(item));
+        try (AICallLogRouteContext.Scope ignored =
+                     AICallLogRouteContext.use(request.getTenantId(), request.getAppId())) {
+            for (AICallLogUploadItem item : items) {
+                logManager.addLog(toAICallLog(item));
+            }
         }
         contractHealthTracker.recordAccepted();
 
@@ -137,6 +147,18 @@ public class AICallLogIngestionController {
     private boolean isApiKeyValid(String apiKey) {
         String expected = ingestionProperties.getApiKey();
         return expected != null && !expected.isBlank() && expected.equals(apiKey);
+    }
+
+    private boolean isTenantApiKeyValid(String apiKey, String tenantId, String appId) {
+        if (isBlank(apiKey) || isBlank(tenantId) || isBlank(appId)) {
+            return false;
+        }
+        ApiKeyDtos.ValidateApiKeyRequest request = new ApiKeyDtos.ValidateApiKeyRequest();
+        request.setApiKey(apiKey);
+        request.setTenantId(tenantId);
+        request.setAppId(appId);
+        ApiKeyDtos.ValidateApiKeyResponse response = controlPlaneService.validateApiKey(request);
+        return response != null && response.isValid();
     }
 
     private static boolean isBlank(String value) {
