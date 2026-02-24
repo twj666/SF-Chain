@@ -1,0 +1,4 @@
+version: 1
+display_name: SF-Chain AI Node Builder
+short_description: 编写 SF-Chain Operation 节点
+default_prompt: 帮我创建或重构一个 SF-Chain Operation，包含注解、DTO、提示词模板和渲染校验。
