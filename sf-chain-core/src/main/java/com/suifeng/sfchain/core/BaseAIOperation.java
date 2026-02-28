@@ -36,23 +36,25 @@ import static com.suifeng.sfchain.constants.AIOperationConstant.JSON_REPAIR_OP;
  */
 @Slf4j
 public abstract class BaseAIOperation<INPUT, OUTPUT> {
-    @Autowired
+    @Autowired(required = false)
     protected AIOperationRegistry operationRegistry;
 
-    @Autowired
+    @Autowired(required = false)
     protected ModelRegistry modelRegistry;
 
-    @Autowired
+    @Autowired(required = false)
     protected ObjectMapper objectMapper;
 
-    @Autowired
+    @Autowired(required = false)
     protected ChatContextService chatContextService;
 
-    @Autowired
+    @Autowired(required = false)
     private AICallLogManager logManager;
 
-    @Autowired
+    @Autowired(required = false)
     private PromptTemplateEngine promptTemplateEngine;
+
+    private boolean runtimeReady;
 
     /**
      * 操作的注解信息
@@ -120,6 +122,14 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
             }
         }
 
+        // sf-chain 关闭时，核心运行时Bean不会装配；此时仅跳过注册，不阻断应用启动。
+        if (!isRuntimeWired()) {
+            runtimeReady = false;
+            log.info("检测到SF-Chain运行时未启用，跳过AI操作注册: {} [{}]",
+                    annotation.value(), this.getClass().getSimpleName());
+            return;
+        }
+
         // 注册到操作注册中心
         operationRegistry.registerOperation(annotation.value(), this);
 
@@ -143,6 +153,7 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
                 annotation.value(), this.getClass().getSimpleName(),
                 inputType != null ? inputType.getSimpleName() : "Unknown",
                 outputType != null ? outputType.getSimpleName() : "Unknown");
+        runtimeReady = true;
     }
 
     /**
@@ -166,6 +177,7 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
      */
     @SuppressWarnings("unchecked")
     public Flux<String> executeStream(INPUT input, String modelName, String sessionId) {
+        ensureRuntimeReady();
         String callId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
         AtomicLong startMillis = new AtomicLong(System.currentTimeMillis());
@@ -327,6 +339,7 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
      * @return 输出结果
      */
     public OUTPUT execute(INPUT input, String modelName, String sessionId) {
+        ensureRuntimeReady();
         String callId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
         long startMillis = System.currentTimeMillis();
@@ -572,6 +585,22 @@ public abstract class BaseAIOperation<INPUT, OUTPUT> {
      */
     protected Map<String, Object> buildPromptInputExtensions(INPUT input) {
         return Map.of();
+    }
+
+    private boolean isRuntimeWired() {
+        return operationRegistry != null
+                && modelRegistry != null
+                && objectMapper != null
+                && chatContextService != null
+                && logManager != null
+                && promptTemplateEngine != null;
+    }
+
+    private void ensureRuntimeReady() {
+        if (runtimeReady) {
+            return;
+        }
+        throw new IllegalStateException("SF-Chain未启用或运行时依赖未就绪，无法执行操作: " + getClass().getSimpleName());
     }
 
     /**

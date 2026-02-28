@@ -1,131 +1,68 @@
-/Users/suifeng/Library/Java/JavaVirtualMachines/ms-17.0.16/Contents/Home/bin/java -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:58185,suspend=y,server=n -javaagent:/Users/suifeng/Library/Caches/JetBrains/IntelliJIdea2025.2/captureAgent/debugger-agent.jar=file:///var/folders/yn/c4kt9q791pvdb48ct21_z0240000gn/T/capture2982357838239570303.props -agentpath:/private/var/folders/yn/c4kt9q791pvdb48ct21_z0240000gn/T/idea_libasyncProfiler_dylib_temp_folder/libasyncProfiler.dylib=version,jfr,event=wall,interval=10ms,cstack=no,file=/Users/suifeng/IdeaSnapshots/ProjectManagementApplication_2026_02_20_174600.jfr,log=/private/var/folders/yn/c4kt9q791pvdb48ct21_z0240000gn/T/ProjectManagementApplication_2026_02_20_174600.jfr.log.txt,logLevel=DEBUG -XX:TieredStopAtLevel=1 -Dspring.output.ansi.enabled=always -Dcom.sun.management.jmxremote -Dspring.jmx.enabled=true -Dspring.liveBeansView.mbeanDomain -Dspring.application.admin.enabled=true -Dmanagement.endpoints.jmx.exposure.include=* -Dkotlinx.coroutines.debug.enable.creation.stack.trace=false -Ddebugger.agent.enable.coroutines=true -Dkotlinx.coroutines.debug.enable.flows.stack.trace=true -Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true -Dfile.encoding=UTF-8 -classpath /Users/suifeng/Code/ai-poet/poet-agent/target/classes:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-web/2.7.18/spring-boot-starter-web-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter/2.7.18/spring-boot-starter-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot/2.7.18/spring-boot-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-logging/2.7.18/spring-boot-starter-logging-2.7.18.jar:/Users/suifeng/.m2/repository/ch/qos/logback/logback-classic/1.2.12/logback-classic-1.2.12.jar:/Users/suifeng/.m2/repository/ch/qos/logback/logback-core/1.2.12/logback-core-1.2.12.jar:/Users/suifeng/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.17.2/log4j-to-slf4j-2.17.2.jar:/Users/suifeng/.m2/repository/org/slf4j/jul-to-slf4j/1.7.36/jul-to-slf4j-1.7.36.jar:/Users/suifeng/.m2/repository/jakarta/annotation/jakarta.annotation-api/1.3.5/jakarta.annotation-api-1.3.5.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-json/2.7.18/spring-boot-starter-json-2.7.18.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/module/jackson-module-parameter-names/2.13.5/jackson-module-parameter-names-2.13.5.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-tomcat/2.7.18/spring-boot-starter-tomcat-2.7.18.jar:/Users/suifeng/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/9.0.83/tomcat-embed-core-9.0.83.jar:/Users/suifeng/.m2/repository/org/apache/tomcat/embed/tomcat-embed-websocket/9.0.83/tomcat-embed-websocket-9.0.83.jar:/Users/suifeng/.m2/repository/org/springframework/spring-web/5.3.31/spring-web-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-beans/5.3.31/spring-beans-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-webmvc/5.3.31/spring-webmvc-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-aop/5.3.31/spring-aop-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-context/5.3.31/spring-context-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-expression/5.3.31/spring-expression-5.3.31.jar:/Users/suifeng/.m2/repository/com/huaweicloud/esdk-obs-java/3.24.12/esdk-obs-java-3.24.12.jar:/Users/suifeng/.m2/repository/com/squareup/okhttp3/okhttp/4.9.3/okhttp-4.9.3.jar:/Users/suifeng/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.6.21/kotlin-stdlib-1.6.21.jar:/Users/suifeng/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.21/kotlin-stdlib-common-1.6.21.jar:/Users/suifeng/.m2/repository/org/jetbrains/annotations/13.0/annotations-13.0.jar:/Users/suifeng/.m2/repository/com/squareup/okio/okio/3.8.0/okio-3.8.0.jar:/Users/suifeng/.m2/repository/com/squareup/okio/okio-jvm/3.8.0/okio-jvm-3.8.0.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.13.5/jackson-core-2.13.5.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.13.5/jackson-annotations-2.13.5.jar:/Users/suifeng/.m2/repository/org/apache/logging/log4j/log4j-core/2.17.2/log4j-core-2.17.2.jar:/Users/suifeng/.m2/repository/org/apache/logging/log4j/log4j-api/2.17.2/log4j-api-2.17.2.jar:/Users/suifeng/.m2/repository/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar:/Users/suifeng/.m2/repository/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar:/Users/suifeng/.m2/repository/com/huaweicloud/sdk/huaweicloud-sdk-core/3.1.148/huaweicloud-sdk-core-3.1.148.jar:/Users/suifeng/.m2/repository/org/yaml/snakeyaml/1.30/snakeyaml-1.30.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.13.5/jackson-datatype-jsr310-2.13.5.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.13.5/jackson-datatype-jdk8-2.13.5.jar:/Users/suifeng/.m2/repository/org/openeuler/bgmprovider/1.1.2/bgmprovider-1.1.2.jar:/Users/suifeng/.m2/repository/org/openeuler/jca/1.1.2/jca-1.1.2.jar:/Users/suifeng/.m2/repository/org/bouncycastle/bcprov-jdk18on/1.75/bcprov-jdk18on-1.75.jar:/Users/suifeng/.m2/repository/org/openeuler/jsse/1.1.2/jsse-1.1.2.jar:/Users/suifeng/.m2/repository/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar:/Users/suifeng/.m2/repository/cn/hutool/hutool-all/5.1.2/hutool-all-5.1.2.jar:/Users/suifeng/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-data-jpa/2.7.18/spring-boot-starter-data-jpa-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-aop/2.7.18/spring-boot-starter-aop-2.7.18.jar:/Users/suifeng/.m2/repository/org/aspectj/aspectjweaver/1.9.7/aspectjweaver-1.9.7.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-jdbc/2.7.18/spring-boot-starter-jdbc-2.7.18.jar:/Users/suifeng/.m2/repository/com/zaxxer/HikariCP/4.0.3/HikariCP-4.0.3.jar:/Users/suifeng/.m2/repository/org/springframework/spring-jdbc/5.3.31/spring-jdbc-5.3.31.jar:/Users/suifeng/.m2/repository/jakarta/transaction/jakarta.transaction-api/1.3.3/jakarta.transaction-api-1.3.3.jar:/Users/suifeng/.m2/repository/jakarta/persistence/jakarta.persistence-api/2.2.3/jakarta.persistence-api-2.2.3.jar:/Users/suifeng/.m2/repository/org/hibernate/hibernate-core/5.6.15.Final/hibernate-core-5.6.15.Final.jar:/Users/suifeng/.m2/repository/org/jboss/logging/jboss-logging/3.4.3.Final/jboss-logging-3.4.3.Final.jar:/Users/suifeng/.m2/repository/net/bytebuddy/byte-buddy/1.12.23/byte-buddy-1.12.23.jar:/Users/suifeng/.m2/repository/antlr/antlr/2.7.7/antlr-2.7.7.jar:/Users/suifeng/.m2/repository/org/jboss/jandex/2.4.2.Final/jandex-2.4.2.Final.jar:/Users/suifeng/.m2/repository/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar:/Users/suifeng/.m2/repository/org/hibernate/common/hibernate-commons-annotations/5.1.2.Final/hibernate-commons-annotations-5.1.2.Final.jar:/Users/suifeng/.m2/repository/org/glassfish/jaxb/jaxb-runtime/2.3.9/jaxb-runtime-2.3.9.jar:/Users/suifeng/.m2/repository/org/glassfish/jaxb/txw2/2.3.9/txw2-2.3.9.jar:/Users/suifeng/.m2/repository/com/sun/istack/istack-commons-runtime/3.0.12/istack-commons-runtime-3.0.12.jar:/Users/suifeng/.m2/repository/org/springframework/data/spring-data-jpa/2.7.18/spring-data-jpa-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/data/spring-data-commons/2.7.18/spring-data-commons-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/spring-orm/5.3.31/spring-orm-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-tx/5.3.31/spring-tx-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-aspects/5.3.31/spring-aspects-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-validation/2.7.18/spring-boot-starter-validation-2.7.18.jar:/Users/suifeng/.m2/repository/org/apache/tomcat/embed/tomcat-embed-el/9.0.83/tomcat-embed-el-9.0.83.jar:/Users/suifeng/.m2/repository/org/hibernate/validator/hibernate-validator/6.2.5.Final/hibernate-validator-6.2.5.Final.jar:/Users/suifeng/.m2/repository/jakarta/validation/jakarta.validation-api/2.0.2/jakarta.validation-api-2.0.2.jar:/Users/suifeng/.m2/repository/org/postgresql/postgresql/42.3.8/postgresql-42.3.8.jar:/Users/suifeng/.m2/repository/org/checkerframework/checker-qual/3.5.0/checker-qual-3.5.0.jar:/Users/suifeng/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/2.3.3/jakarta.xml.bind-api-2.3.3.jar:/Users/suifeng/.m2/repository/jakarta/activation/jakarta.activation-api/1.2.2/jakarta.activation-api-1.2.2.jar:/Users/suifeng/.m2/repository/org/springframework/spring-core/5.3.31/spring-core-5.3.31.jar:/Users/suifeng/.m2/repository/org/springframework/spring-jcl/5.3.31/spring-jcl-5.3.31.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.13.5/jackson-databind-2.13.5.jar:/Users/suifeng/.m2/repository/com/vladmihalcea/hibernate-types-55/2.16.3/hibernate-types-55-2.16.3.jar:/Users/suifeng/.m2/repository/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.13.5/jackson-module-jaxb-annotations-2.13.5.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-data-redis/2.7.18/spring-boot-starter-data-redis-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/data/spring-data-redis/2.7.18/spring-data-redis-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/data/spring-data-keyvalue/2.7.18/spring-data-keyvalue-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/spring-oxm/5.3.31/spring-oxm-5.3.31.jar:/Users/suifeng/.m2/repository/io/lettuce/lettuce-core/6.1.10.RELEASE/lettuce-core-6.1.10.RELEASE.jar:/Users/suifeng/.m2/repository/io/netty/netty-common/4.1.101.Final/netty-common-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-handler/4.1.101.Final/netty-handler-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-resolver/4.1.101.Final/netty-resolver-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-buffer/4.1.101.Final/netty-buffer-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-transport-native-unix-common/4.1.101.Final/netty-transport-native-unix-common-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-codec/4.1.101.Final/netty-codec-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/netty/netty-transport/4.1.101.Final/netty-transport-4.1.101.Final.jar:/Users/suifeng/.m2/repository/io/projectreactor/reactor-core/3.4.34/reactor-core-3.4.34.jar:/Users/suifeng/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar:/Users/suifeng/.m2/repository/org/apache/commons/commons-pool2/2.11.1/commons-pool2-2.11.1.jar:/Users/suifeng/.m2/repository/com/github/spullara/mustache/java/compiler/0.9.10/compiler-0.9.10.jar:/Users/suifeng/.m2/repository/cn/hutool/hutool-core/5.8.25/hutool-core-5.8.25.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-starter-mail/2.7.18/spring-boot-starter-mail-2.7.18.jar:/Users/suifeng/.m2/repository/org/springframework/spring-context-support/5.3.31/spring-context-support-5.3.31.jar:/Users/suifeng/.m2/repository/com/sun/mail/jakarta.mail/1.6.7/jakarta.mail-1.6.7.jar:/Users/suifeng/.m2/repository/com/sun/activation/jakarta.activation/1.2.2/jakarta.activation-1.2.2.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-spring-boot-starter/1.35.0.RC/sa-token-spring-boot-starter-1.35.0.RC.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-servlet/1.35.0.RC/sa-token-servlet-1.35.0.RC.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-spring-boot-autoconfig/1.35.0.RC/sa-token-spring-boot-autoconfig-1.35.0.RC.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-redis-jackson/1.35.0.RC/sa-token-redis-jackson-1.35.0.RC.jar:/Users/suifeng/.m2/repository/cn/dev33/sa-token-core/1.35.0.RC/sa-token-core-1.35.0.RC.jar:/Users/suifeng/.m2/repository/commons-codec/commons-codec/1.15/commons-codec-1.15.jar:/Users/suifeng/.m2/repository/io/github/twj666/sf-chain-spring-boot-starter-lite/1.0.11/sf-chain-spring-boot-starter-lite-1.0.11.jar:/Users/suifeng/.m2/repository/io/github/twj666/sf-chain-core/1.0.11/sf-chain-core-1.0.11.jar:/Users/suifeng/.m2/repository/com/alibaba/fastjson2/fastjson2/2.0.40/fastjson2-2.0.40.jar:/Users/suifeng/.m2/repository/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar:/Users/suifeng/.m2/repository/io/github/twj666/sf-chain-config-client/1.0.11/sf-chain-config-client-1.0.11.jar:/Users/suifeng/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/2.7.18/spring-boot-autoconfigure-2.7.18.jar:/Applications/IntelliJ IDEA.app/Contents/lib/idea_rt.jar com.example.ProjectManagementApplication
-已连接到地址为 ''127.0.0.1:58185'，传输: '套接字'' 的目标虚拟机
-
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
- :: Spring Boot ::               (v2.7.18)
-
-2026-02-20 17:46:01.189  INFO 28900 --- [           main] c.example.ProjectManagementApplication   : Starting ProjectManagementApplication using Java 17.0.16 on suifengdeMac-mini.local with PID 28900 (/Users/suifeng/Code/ai-poet/poet-agent/target/classes started by suifeng in /Users/suifeng/Code/ai-poet)
-2026-02-20 17:46:01.190  INFO 28900 --- [           main] c.example.ProjectManagementApplication   : No active profile set, falling back to 1 default profile: "default"
-2026-02-20 17:46:01.465  INFO 28900 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2026-02-20 17:46:01.466  INFO 28900 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-02-20 17:46:01.539  INFO 28900 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 69 ms. Found 7 JPA repository interfaces.
-2026-02-20 17:46:01.635  INFO 28900 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
-2026-02-20 17:46:01.635  INFO 28900 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
-2026-02-20 17:46:01.645  INFO 28900 --- [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.example.repository.AnnotationRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-02-20 17:46:01.646  INFO 28900 --- [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.example.repository.ArticleRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-02-20 17:46:01.648  INFO 28900 --- [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.example.repository.BilibiliVideoRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-02-20 17:46:01.648  INFO 28900 --- [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.example.repository.ProjectRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-02-20 17:46:01.648  INFO 28900 --- [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.example.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-02-20 17:46:01.649  INFO 28900 --- [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.example.repository.VoiceRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-02-20 17:46:01.649  INFO 28900 --- [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.example.repository.VoiceoverRecordRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
-2026-02-20 17:46:01.649  INFO 28900 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 8 ms. Found 0 Redis repository interfaces.
-2026-02-20 17:46:01.952  INFO 28900 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
-2026-02-20 17:46:01.956  INFO 28900 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2026-02-20 17:46:01.956  INFO 28900 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.83]
-2026-02-20 17:46:01.999  INFO 28900 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2026-02-20 17:46:02.000  INFO 28900 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 786 ms
-2026-02-20 17:46:02.059  INFO 28900 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-02-20 17:46:02.079  INFO 28900 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 5.6.15.Final
-2026-02-20 17:46:02.136  INFO 28900 --- [           main] o.hibernate.annotations.common.Version   : HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
-2026-02-20 17:46:02.178  INFO 28900 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariCP-PoetAgent - Starting...
-2026-02-20 17:46:02.854  INFO 28900 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariCP-PoetAgent - Start completed.
-2026-02-20 17:46:02.864  INFO 28900 --- [           main] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.PostgreSQLDialect
-2026-02-20 17:46:03.111  INFO 28900 --- [           main] Hibernate Types                          : This framework is proudly powered by:
-
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
- _    _                           _     _
-| |  | |                         (_)   | |
-| |__| |_   _ _ __   ___ _ __ ___ _ ___| |_ ___ _ __   ___ ___
-|  __  | | | | '_ \ / _ \ '__/ __| / __| __/ _ \ '_ \ / __/ _ \
-| |  | | |_| | |_) |  __/ |  \__ \ \__ \ ||  __/ | | | (_|  __/
-|_|  |_|\__, | .__/ \___|_|  |___/_|___/\__\___|_| |_|\___\___|
-         __/ | |
-        |___/|_|
-
-At Hypersistence, we only build amazing tools, like Hibernate Types, Flexy Pool, or Hypersistence Optimizer.
-
-What if there were a tool that could automatically detect JPA and Hibernate performance issues?
-
-Hypersistence Optimizer is that tool! For more details, go to:
-
-https://vladmihalcea.com/hypersistence-optimizer/
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-2026-02-20 17:46:03.530  INFO 28900 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
-2026-02-20 17:46:03.535  INFO 28900 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-02-20 17:46:03.541  INFO 28900 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain AI操作注册表
-2026-02-20 17:46:03.546  INFO 28900 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain 模型注册表
-2026-02-20 17:46:03.567  INFO 28900 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain 聊天上下文服务
-2026-02-20 17:46:03.568  INFO 28900 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain AI调用日志管理器
-2026-02-20 17:46:03.630  INFO 28900 --- [           main] c.s.s.c.l.upload.AsyncAICallLogUploader  : AI调用日志异步上报已启动, interval=3000ms, batchSize=200
-2026-02-20 17:46:03.632  INFO 28900 --- [           main] c.s.sfchain.core.AIOperationRegistry     : 注册AI操作: ANNOTATION_ANALYSIS_OP -> AnnotationAnalysisOperation
-2026-02-20 17:46:03.632  INFO 28900 --- [           main] c.suifeng.sfchain.core.BaseAIOperation   : 初始化AI操作: ANNOTATION_ANALYSIS_OP [AnnotationAnalysisOperation] -> 输入类型: AiAnnotationAnalysisInput, 输出类型: AiAnnotationAnalysisOutput
-2026-02-20 17:46:03.646  INFO 28900 --- [           main] c.s.sfchain.core.AIOperationRegistry     : 注册AI操作: CONTENT_MODIFICATION_OP -> ContentModificationOperation
-2026-02-20 17:46:03.646  INFO 28900 --- [           main] c.suifeng.sfchain.core.BaseAIOperation   : 初始化AI操作: CONTENT_MODIFICATION_OP [ContentModificationOperation] -> 输入类型: ContentModificationInput, 输出类型: AiModificationResponse
-2026-02-20 17:46:03.649  INFO 28900 --- [           main] c.s.sfchain.core.AIOperationRegistry     : 注册AI操作: COPYWRITING_GENERATION -> CopywritingGenerationOperation
-2026-02-20 17:46:03.649  INFO 28900 --- [           main] c.suifeng.sfchain.core.BaseAIOperation   : 初始化AI操作: COPYWRITING_GENERATION [CopywritingGenerationOperation] -> 输入类型: CopywritingGenerationInput, 输出类型: String
-2026-02-20 17:46:03.659  INFO 28900 --- [           main] c.e.c.h.config.HuaweiCloudClientFactory  : 创建华为云OBS客户端: endpoint=https://obs.cn-north-4.myhuaweicloud.com, region=cn-north-4
-2026-02-20 17:46:03.705  INFO 28900 --- [           main] c.obs.services.internal.utils.RestUtils  : use Default Dns
-2026-02-20 17:46:03.709  INFO 28900 --- [           main] com.obs.services.AbstractClient          : Storage|1|HTTP+XML|ObsClient||||2026-02-20 17:46:03|2026-02-20 17:46:03|||0|
-2026-02-20 17:46:03.709  WARN 28900 --- [           main] com.obs.services.AbstractClient          : [OBS SDK Version=3.24.12];[Endpoint=https://obs.cn-north-4.myhuaweicloud.com:443/];[Access Mode=Virtul Hosting]
-2026-02-20 17:46:04.001  INFO 28900 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain AI服务
-____ ____    ___ ____ _  _ ____ _  _
-[__  |__| __  |  |  | |_/  |___ |\ |
-___] |  |     |  |__| | \_ |___ | \|
-https://sa-token.cc (v1.35.0.RC)
-SA [INFO] -->: 全局配置 SaTokenConfig [tokenName=Authorization, timeout=259200, activeTimeout=-1, dynamicActiveTimeout=false, isConcurrent=true, isShare=true, maxLoginCount=12, maxTryTimes=12, isReadBody=true, isReadHeader=true, isReadCookie=false, isWriteHeader=false, tokenStyle=uuid, dataRefreshPeriod=30, tokenSessionCheckLogin=true, autoRenew=true, tokenPrefix=null, isPrint=true, isLog=true, logLevel=trace, logLevelInt=1, isColorLog=true, jwtSecretKey=null, basic=, currDomain=null, sameTokenTimeout=86400, checkSameToken=false, cookie=SaCookieConfig [domain=null, path=null, secure=false, httpOnly=false, sameSite=null], sign=SaSignConfig [secretKey=null, timestampDisparity=900000, isCheckNonce=true]]
-SA [INFO] -->: 全局组件 SaTokenDao 载入成功: cn.dev33.satoken.dao.SaTokenDaoRedisJackson
-SA [INFO] -->: 全局组件 SaTokenContext 载入成功: cn.dev33.satoken.spring.SaTokenContextForSpring
-SA [INFO] -->: 全局组件 SaJsonTemplate 载入成功: cn.dev33.satoken.spring.json.SaJsonTemplateForJackson
-2026-02-20 17:46:04.245  INFO 28900 --- [           main] c.s.s.config.SfChainAutoConfiguration    : 初始化SF-Chain AI调用日志切面
-2026-02-20 17:46:04.246  INFO 28900 --- [           main] c.s.sfchain.core.AIOperationRegistry     : 注册AI操作: JSON_REPAIR_OP -> JSONRepairOperation
-2026-02-20 17:46:04.246  INFO 28900 --- [           main] c.suifeng.sfchain.core.BaseAIOperation   : 初始化AI操作: JSON_REPAIR_OP [JSONRepairOperation] -> 输入类型: String, 输出类型: JSONObject
-2026-02-20 17:46:04.249  INFO 28900 --- [           main] c.s.sfchain.core.AIOperationRegistry     : 注册AI操作: MODEL_VALIDATION_OP -> ModelValidationOperation
-2026-02-20 17:46:04.249  INFO 28900 --- [           main] c.suifeng.sfchain.core.BaseAIOperation   : 初始化AI操作: MODEL_VALIDATION_OP [ModelValidationOperation] -> 输入类型: ValidationRequest, 输出类型: ValidationResult
-2026-02-20 17:46:04.286  INFO 28900 --- [           main] c.s.s.core.openai.OpenAIModelFactory     : 注册模型配置: kimi-k2-turbo-preview (other)
-2026-02-20 17:46:04.286  INFO 28900 --- [           main] c.s.s.c.remote.RemoteConfigSyncService   : 已加载本地配置快照, version=v1771608585556_m1_o5
-2026-02-20 17:46:04.679  INFO 28900 --- [           main] c.s.s.c.remote.RemoteConfigSyncService   : Operation catalog sync completed: count=5, withLocalTemplate=5
-2026-02-20 17:46:04.679  INFO 28900 --- [           main] c.s.s.c.remote.RemoteConfigSyncService   : 启动阶段远程配置严格检查已开启, maxAttempts=3, retryIntervalMs=2000
-2026-02-20 17:46:05.171  INFO 28900 --- [           main] c.s.s.c.remote.RemoteConfigSyncService   : 远程配置同步已启动, interval=10s
-2026-02-20 17:46:05.246  INFO 28900 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
-2026-02-20 17:46:05.251  INFO 28900 --- [           main] c.example.ProjectManagementApplication   : Started ProjectManagementApplication in 4.205 seconds (JVM running for 4.682)
-2026-02-20 17:46:16.586  INFO 28900 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2026-02-20 17:46:16.586  INFO 28900 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2026-02-20 17:46:16.588  INFO 28900 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
-2026-02-20 17:46:16.951 TRACE 28900 --- [nio-8080-exec-2] o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [BIGINT] - [50]
-2026-02-20 17:46:17.011  INFO 28900 --- [nio-8080-exec-2] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.PostgreSQL10Dialect
-2026-02-20 17:46:17.156 TRACE 28900 --- [nio-8080-exec-4] o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [BIGINT] - [50]
-2026-02-20 17:46:19.255 TRACE 28900 --- [nio-8080-exec-6] o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [BIGINT] - [45]
-2026-02-20 17:46:19.255 TRACE 28900 --- [nio-8080-exec-6] o.h.type.descriptor.sql.BasicBinder      : binding parameter [2] as [VARCHAR] - [ACTIVE]
-2026-02-20 17:46:24.115  INFO 28900 --- [nio-8080-exec-8] c.e.controller.AnnotationController      : 开始根据批注修改文案，批注ID: 522
-2026-02-20 17:46:24.366 TRACE 28900 --- [nio-8080-exec-8] o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [BIGINT] - [522]
-2026-02-20 17:46:24.468 TRACE 28900 --- [nio-8080-exec-8] o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [BIGINT] - [45]
-2026-02-20 17:46:24.579  INFO 28900 --- [nio-8080-exec-8] c.s.s.core.openai.OpenAICompatibleModel  : 初始化OpenAI兼容模型: kimi-k2-turbo-preview (other)
-2026-02-20 17:46:24.679  INFO 28900 --- [nio-8080-exec-8] c.s.s.core.openai.OpenAIHttpClient       : 构建的API端点: https://api.moonshot.cn/v1/chat/completions
-2026-02-20 17:46:26.761  INFO 28900 --- [nio-8080-exec-8] c.e.controller.AnnotationController      : 文案修改建议生成成功，批注ID: 522
-2026-02-20 17:46:27.673  WARN 28900 --- [pool-2-thread-1] c.s.s.s.l.l.u.HttpAICallLogUploadClient  : AI调用日志上报失败, status=401
-2026-02-20 17:46:28.678  WARN 28900 --- [pool-2-thread-1] c.s.s.s.l.l.u.HttpAICallLogUploadClient  : AI调用日志上报失败, status=401
-2026-02-20 17:46:30.687  WARN 28900 --- [pool-2-thread-1] c.s.s.s.l.l.u.HttpAICallLogUploadClient  : AI调用日志上报失败, status=401
-2026-02-20 17:46:34.697  WARN 28900 --- [pool-2-thread-1] c.s.s.s.l.l.u.HttpAICallLogUploadClient  : AI调用日志上报失败, status=401
-2026-02-20 17:46:34.697  WARN 28900 --- [pool-2-thread-1] c.s.s.c.l.upload.AsyncAICallLogUploader  : AI调用日志上报失败且超过重试次数，丢弃 1 条
-2026-02-20 17:46:39.825  INFO 28900 --- [io-8080-exec-10] c.e.controller.AiAnnotationController    : 开始AI批注预览分析，文章ID: 45
-2026-02-20 17:46:39.880 TRACE 28900 --- [io-8080-exec-10] o.h.type.descriptor.sql.BasicBinder      : binding parameter [1] as [BIGINT] - [45]
-2026-02-20 17:46:39.995  INFO 28900 --- [io-8080-exec-10] c.s.s.core.openai.OpenAIHttpClient       : 构建的API端点: https://api.moonshot.cn/v1/chat/completions
-2026-02-20 17:46:49.765  INFO 28900 --- [io-8080-exec-10] c.e.c.util.AnnotationPositionAdjuster    : 批注 0 位置调整完成，策略: EXACT_MATCH_WITH_CONTEXT, 置信度: {:.2f}
-2026-02-20 17:46:49.766  INFO 28900 --- [io-8080-exec-10] c.e.c.util.AnnotationPositionAdjuster    : 批注 0 位置调整完成，策略: EXACT_MATCH_WITH_CONTEXT, 置信度: {:.2f}
-2026-02-20 17:46:49.766  INFO 28900 --- [io-8080-exec-10] c.e.c.util.AnnotationPositionAdjuster    : 批注 0 位置调整完成，策略: EXACT_MATCH_WITH_CONTEXT, 置信度: {:.2f}
-2026-02-20 17:46:49.766  INFO 28900 --- [io-8080-exec-10] c.e.c.util.AnnotationPositionAdjuster    : 批注 0 位置调整完成，策略: EXACT_MATCH_WITH_CONTEXT, 置信度: {:.2f}
-2026-02-20 17:46:49.766  INFO 28900 --- [io-8080-exec-10] c.e.c.util.AnnotationPositionAdjuster    : 批注 0 位置调整完成，策略: EXACT_MATCH_WITH_CONTEXT, 置信度: {:.2f}
-2026-02-20 17:46:49.767  INFO 28900 --- [io-8080-exec-10] c.e.c.util.AnnotationPositionAdjuster    : 批注 0 位置调整完成，策略: EXACT_MATCH_WITH_CONTEXT, 置信度: {:.2f}
-2026-02-20 17:46:49.767  INFO 28900 --- [io-8080-exec-10] c.e.c.util.AnnotationPositionAdjuster    : 批注 0 位置调整完成，策略: EXACT_MATCH_WITH_CONTEXT, 置信度: {:.2f}
-2026-02-20 17:46:49.768  INFO 28900 --- [io-8080-exec-10] c.e.controller.AiAnnotationController    : AI批注预览完成，文章ID: 45, 预览批注数量: 7
-2026-02-20 17:46:52.720  WARN 28900 --- [pool-2-thread-1] c.s.s.s.l.l.u.HttpAICallLogUploadClient  : AI调用日志上报失败, status=401
-2026-02-20 17:46:53.727  WARN 28900 --- [pool-2-thread-1] c.s.s.s.l.l.u.HttpAICallLogUploadClient  : AI调用日志上报失败, status=401
-2026-02-20 17:46:55.734  WARN 28900 --- [pool-2-thread-1] c.s.s.s.l.l.u.HttpAICallLogUploadClient  : AI调用日志上报失败, status=401
-2026-02-20 17:46:59.745  WARN 28900 --- [pool-2-thread-1] c.s.s.s.l.l.u.HttpAICallLogUploadClient  : AI调用日志上报失败, status=401
-2026-02-20 17:46:59.746  WARN 28900 --- [pool-2-thread-1] c.s.s.c.l.upload.AsyncAICallLogUploader  : AI调用日志上报失败且超过重试次数，丢弃 1 条
+/bin/sh /Users/suifeng/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/maven/lib/maven3/bin/mvn -Didea.version=2025.2.6 -Dmaven.ext.class.path=/Users/suifeng/Library/Application Support/JetBrains/IntelliJIdea2025.2/plugins/maven/lib/maven-event-listener.jar -Djansi.passthrough=true -Dstyle.color=always -Dmaven.repo.local=/Users/suifeng/.m2/repository deploy -f pom.xml
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] SF-Chain Core                                                      [jar]
+[INFO] SF-Chain Config Client                                             [jar]
+[INFO] SF-Chain Starter Lite                                              [jar]
+[INFO] SF-Chain Parent                                                    [pom]
+[INFO] sf-chain-config-center-server                                      [jar]
+[INFO]
+[INFO] -------------------< io.github.twj666:sf-chain-core >-------------------
+[INFO] Building SF-Chain Core 1.0.11                                      [1/5]
+[INFO]   from sf-chain-core/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- resources:3.2.0:resources (default-resources) @ sf-chain-core ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] Copying 0 resource
+[INFO] Copying 1 resource
+[INFO]
+[INFO] --- compiler:3.10.1:compile (default-compile) @ sf-chain-core ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- resources:3.2.0:testResources (default-testResources) @ sf-chain-core ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] skip non existing resourceDirectory /Users/suifeng/Code/SF-Chain/sf-chain-core/src/test/resources
+[INFO]
+[INFO] --- compiler:3.10.1:testCompile (default-testCompile) @ sf-chain-core ---
+[INFO] No sources to compile
+[INFO]
+[INFO] --- surefire:2.22.2:test (default-test) @ sf-chain-core ---
+[INFO] No tests to run.
+[INFO]
+[INFO] --- jar:3.2.2:jar (default-jar) @ sf-chain-core ---
+[INFO] Building jar: /Users/suifeng/Code/SF-Chain/sf-chain-core/target/sf-chain-core-1.0.11.jar
+[INFO]
+[INFO] --- install:2.5.2:install (default-install) @ sf-chain-core ---
+[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-core/target/sf-chain-core-1.0.11.jar to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-core/1.0.11/sf-chain-core-1.0.11.jar
+[INFO] Installing /Users/suifeng/Code/SF-Chain/sf-chain-core/pom.xml to /Users/suifeng/.m2/repository/io/github/twj666/sf-chain-core/1.0.11/sf-chain-core-1.0.11.pom
+[INFO]
+[INFO] --- deploy:2.8.2:deploy (default-deploy) @ sf-chain-core ---
+Uploading to central: https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/io/github/twj666/sf-chain-core/1.0.11/sf-chain-core-1.0.11.jar
+Uploading to central: https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/io/github/twj666/sf-chain-core/1.0.11/sf-chain-core-1.0.11.pom
+[IJ]-1-INTERR-[IJ]-error=org/apache/commons/lang3/exception/ExceptionUtilsorg.jetbrains.maven.server.IntellijMavenSpy.getErrorMessage(IntellijMavenSpy.java:131)-[N]-org.jetbrains.maven.server.IntellijMavenSpy.onExecutionEvent(IntellijMavenSpy.java:113)-[N]-org.jetbrains.maven.server.IntellijMavenSpy.onEvent(IntellijMavenSpy.java:51)-[N]-org.apache.maven.eventspy.internal.EventSpyDispatcher.onEvent(EventSpyDispatcher.java:86)-[N]-org.apache.maven.eventspy.internal.EventSpyExecutionListener.mojoFailed(EventSpyExecutionListener.java:120)-[N]-org.apache.maven.lifecycle.internal.DefaultExecutionEventCatapult.fire(DefaultExecutionEventCatapult.java:83)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2(MojoExecutor.java:338)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.doExecute(MojoExecutor.java:316)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:212)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:174)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.access$000(MojoExecutor.java:75)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor$1.run(MojoExecutor.java:162)-[N]-org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute(DefaultMojosExecutionStrategy.java:39)-[N]-org.apache.maven.lifecycle.internal.MojoExecutor.execute(MojoExecutor.java:159)-[N]-org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:105)-[N]-org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject(LifecycleModuleBuilder.java:73)-[N]-org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build(SingleThreadedBuilder.java:53)-[N]-org.apache.maven.lifecycle.internal.LifecycleStarter.execute(LifecycleStarter.java:118)-[N]-org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:261)-[N]-org.apache.maven.DefaultMaven.doExecute(DefaultMaven.java:173)-[N]-org.apache.maven.DefaultMaven.execute(DefaultMaven.java:101)-[N]-org.apache.maven.cli.MavenCli.execute(MavenCli.java:906)-[N]-org.apache.maven.cli.MavenCli.doMain(MavenCli.java:283)-[N]-org.apache.maven.cli.MavenCli.main(MavenCli.java:206)-[N]-java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)-[N]-java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)-[N]-java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)-[N]-java.base/java.lang.reflect.Method.invoke(Method.java:569)-[N]-org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced(Launcher.java:255)-[N]-org.codehaus.plexus.classworlds.launcher.Launcher.launch(Launcher.java:201)-[N]-org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode(Launcher.java:361)-[N]-org.codehaus.plexus.classworlds.launcher.Launcher.main(Launcher.java:314)-[N]-
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for SF-Chain Parent 1.0.11:
+[INFO]
+[INFO] SF-Chain Core ...................................... FAILURE [  7.228 s]
+[INFO] SF-Chain Config Client ............................. SKIPPED
+[INFO] SF-Chain Starter Lite .............................. SKIPPED
+[INFO] SF-Chain Parent .................................... SKIPPED
+[INFO] sf-chain-config-center-server ...................... SKIPPED
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  7.360 s
+[INFO] Finished at: 2026-02-24T10:45:44+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy (default-deploy) on project sf-chain-core: Failed to deploy artifacts: Could not transfer artifact io.github.twj666:sf-chain-core:jar:1.0.11 from/to central (https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/): status code: 402, reason phrase: Payment Required (402) -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
